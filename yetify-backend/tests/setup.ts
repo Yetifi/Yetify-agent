@@ -246,4 +246,36 @@ global.console = {
   error: jest.fn(),
 };
 
+// Mock logger for testing
+jest.mock('../src/utils/logger', () => ({
+  createLogger: () => ({
+    info: jest.fn(),
+    error: jest.fn(),
+    warn: jest.fn(),
+    debug: jest.fn(),
+    strategy: jest.fn(),
+    ai: jest.fn(),
+    execution: jest.fn(),
+    monitoring: jest.fn(),
+    blockchain: jest.fn(),
+    performance: jest.fn(),
+    security: jest.fn(),
+    request: jest.fn(),
+  }),
+  logger: {
+    info: jest.fn(),
+    error: jest.fn(),
+    warn: jest.fn(),
+    debug: jest.fn(),
+    strategy: jest.fn(),
+    ai: jest.fn(),
+    execution: jest.fn(),
+    monitoring: jest.fn(),
+    blockchain: jest.fn(),
+    performance: jest.fn(),
+    security: jest.fn(),
+    request: jest.fn(),
+  },
+}));
+
 export default testUtils;

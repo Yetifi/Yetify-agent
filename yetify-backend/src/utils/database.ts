@@ -185,8 +185,7 @@ export const UserSchema = new mongoose.Schema(
     walletAddress: {
       type: String,
       required: true,
-      unique: true,
-      index: true
+      unique: true
     },
     walletType: {
       type: String,
