@@ -1,0 +1,178 @@
+{
+  "strategyExamples": [
+    {
+      "id": "eth-staking-low-risk",
+      "name": "ETH Staking Low Risk",
+      "description": "Conservative ETH staking strategy with minimal risk",
+      "goal": "Maximize my ETH yield with low risk",
+      "chains": ["Ethereum", "NEAR"],
+      "protocols": ["Lido", "Rocket Pool"],
+      "steps": [
+        {
+          "action": "stake",
+          "protocol": "Lido",
+          "asset": "ETH",
+          "amount": "1.0",
+          "expectedApy": 4.2,
+          "riskScore": 2
+        },
+        {
+          "action": "deposit",
+          "protocol": "Rocket Pool",
+          "asset": "stETH",
+          "expectedApy": 4.8,
+          "riskScore": 3
+        }
+      ],
+      "riskLevel": "Low",
+      "estimatedApy": 4.5,
+      "estimatedTvl": "$2,500",
+      "executionTime": "~3 minutes"
+    },
+    {
+      "id": "stablecoin-yield-safe",
+      "name": "Stablecoin Yield Safe",
+      "description": "Low-risk stablecoin yield farming strategy",
+      "goal": "Get stable returns on USDC with minimal risk",
+      "chains": ["NEAR", "Arbitrum"],
+      "protocols": ["Ref Finance", "Curve", "Aave"],
+      "steps": [
+        {
+          "action": "deposit",
+          "protocol": "Curve",
+          "asset": "USDC",
+          "amount": "1000",
+          "expectedApy": 8.5,
+          "riskScore": 1
+        },
+        {
+          "action": "yield_farm",
+          "protocol": "Ref Finance",
+          "asset": "USDC-USDT",
+          "expectedApy": 12.2,
+          "riskScore": 2
+        }
+      ],
+      "riskLevel": "Low",
+      "estimatedApy": 9.2,
+      "estimatedTvl": "$1,000",
+      "executionTime": "~2 minutes"
+    },
+    {
+      "id": "aggressive-multi-chain",
+      "name": "Aggressive Multi-Chain",
+      "description": "High-yield strategy across multiple chains",
+      "goal": "Maximum yield across multiple chains with higher risk tolerance",
+      "chains": ["Ethereum", "Polygon", "NEAR", "Arbitrum"],
+      "protocols": ["Uniswap", "SushiSwap", "Ref Finance", "Balancer"],
+      "steps": [
+        {
+          "action": "provide_liquidity",
+          "protocol": "Uniswap",
+          "asset": "ETH-USDC",
+          "expectedApy": 15.2,
+          "riskScore": 7
+        },
+        {
+          "action": "stake",
+          "protocol": "SushiSwap",
+          "asset": "UNI-LP",
+          "expectedApy": 22.1,
+          "riskScore": 8
+        },
+        {
+          "action": "yield_farm",
+          "protocol": "Ref Finance",
+          "asset": "NEAR-USDC",
+          "expectedApy": 28.5,
+          "riskScore": 6
+        }
+      ],
+      "riskLevel": "High",
+      "estimatedApy": 21.9,
+      "estimatedTvl": "$5,000",
+      "executionTime": "~10 minutes"
+    },
+    {
+      "id": "balanced-diversified",
+      "name": "Balanced Diversified",
+      "description": "Medium-risk diversified strategy",
+      "goal": "Balanced approach with moderate risk and good returns",
+      "chains": ["Ethereum", "NEAR"],
+      "protocols": ["Aave", "Compound", "Ref Finance"],
+      "steps": [
+        {
+          "action": "deposit",
+          "protocol": "Aave",
+          "asset": "USDC",
+          "expectedApy": 6.8,
+          "riskScore": 3
+        },
+        {
+          "action": "leverage",
+          "protocol": "Compound",
+          "asset": "ETH",
+          "expectedApy": 11.5,
+          "riskScore": 5
+        },
+        {
+          "action": "yield_farm",
+          "protocol": "Ref Finance",
+          "asset": "NEAR",
+          "expectedApy": 15.1,
+          "riskScore": 4
+        }
+      ],
+      "riskLevel": "Medium",
+      "estimatedApy": 11.1,
+      "estimatedTvl": "$3,000",
+      "executionTime": "~5 minutes"
+    },
+    {
+      "id": "near-native-strategy",
+      "name": "NEAR Native Strategy",
+      "description": "NEAR Protocol focused yield strategy",
+      "goal": "Maximize NEAR token yield using native protocols",
+      "chains": ["NEAR"],
+      "protocols": ["Ref Finance", "Meta Pool", "Burrow"],
+      "steps": [
+        {
+          "action": "stake",
+          "protocol": "Meta Pool",
+          "asset": "NEAR",
+          "expectedApy": 10.2,
+          "riskScore": 3
+        },
+        {
+          "action": "provide_liquidity",
+          "protocol": "Ref Finance",
+          "asset": "stNEAR-NEAR",
+          "expectedApy": 18.5,
+          "riskScore": 5
+        },
+        {
+          "action": "deposit",
+          "protocol": "Burrow",
+          "asset": "LP-tokens",
+          "expectedApy": 14.8,
+          "riskScore": 4
+        }
+      ],
+      "riskLevel": "Medium",
+      "estimatedApy": 14.5,
+      "estimatedTvl": "$2,000",
+      "executionTime": "~4 minutes"
+    }
+  ],
+  "metadata": {
+    "version": "1.0.0",
+    "lastUpdated": "2024-01-20",
+    "totalExamples": 5,
+    "riskLevels": ["Low", "Medium", "High"],
+    "supportedChains": ["Ethereum", "NEAR", "Arbitrum", "Polygon"],
+    "supportedProtocols": [
+      "Lido", "Rocket Pool", "Ref Finance", "Curve", "Aave",
+      "Uniswap", "SushiSwap", "Balancer", "Compound", "Meta Pool", "Burrow"
+    ]
+  }
+}
