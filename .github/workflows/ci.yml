@@ -34,7 +34,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          cache-dependency-path: ${{ env.WORKING_DIRECTORY }}/package-lock.json
+          cache-dependency-path: yetify-backend/package-lock.json
 
       - name: 📥 Install dependencies
         run: npm ci
@@ -61,7 +61,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          cache-dependency-path: ${{ env.WORKING_DIRECTORY }}/package-lock.json
+          cache-dependency-path: yetify-backend/package-lock.json
 
       - name: 📥 Install dependencies
         run: npm ci
@@ -93,7 +93,7 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
-          cache-dependency-path: ${{ env.WORKING_DIRECTORY }}/package-lock.json
+          cache-dependency-path: yetify-backend/package-lock.json
 
       - name: 📥 Install dependencies
         run: npm ci
@@ -148,7 +148,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          cache-dependency-path: ${{ env.WORKING_DIRECTORY }}/package-lock.json
+          cache-dependency-path: yetify-backend/package-lock.json
 
       - name: 📥 Install dependencies
         run: npm ci
@@ -183,7 +183,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          cache-dependency-path: ${{ env.WORKING_DIRECTORY }}/package-lock.json
+          cache-dependency-path: yetify-backend/package-lock.json
 
       - name: 📥 Install dependencies
         run: npm ci
@@ -238,15 +238,15 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          cache-dependency-path: ${{ env.WORKING_DIRECTORY }}/package-lock.json
+          cache-dependency-path: yetify-backend/package-lock.json
 
       - name: 📥 Install dependencies
         run: npm ci
 
       - name: 🐳 Start services with Docker Compose
         run: |
-          cp .env.example .env
-          docker-compose up -d mongodb redis
+          cp yetify-backend/.env.example yetify-backend/.env
+          docker compose up -d mongodb redis
           
           # Wait for services to be ready
           sleep 15
@@ -262,7 +262,7 @@ jobs:
 
       - name: 🧹 Cleanup
         if: always()
-        run: docker-compose down -v
+        run: docker compose down -v
 
   # Performance Tests
   performance-tests:
@@ -278,15 +278,15 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          cache-dependency-path: ${{ env.WORKING_DIRECTORY }}/package-lock.json
+          cache-dependency-path: yetify-backend/package-lock.json
 
       - name: 📥 Install dependencies
         run: npm ci
 
       - name: 🐳 Start test environment
         run: |
-          cp .env.example .env
-          docker-compose up -d
+          cp yetify-backend/.env.example yetify-backend/.env
+          docker compose up -d
 
       - name: ⚡ Run performance tests
         run: |
@@ -301,7 +301,7 @@ jobs:
 
       - name: 🧹 Cleanup
         if: always()
-        run: docker-compose down -v
+        run: docker compose down -v
 
   # Deployment Readiness Check
   deployment-check:
