@@ -8,6 +8,9 @@ CLAUDE.md
 *.swo
 *~
 
+# test
+yetify-backend/coverage
+
 # Dependencies
 node_modules/
 npm-debug.log*

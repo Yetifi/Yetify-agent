@@ -3,4 +3,3 @@ dist/
 coverage/
 *.log
 .env*
-src/controllers/monitoringController.ts
