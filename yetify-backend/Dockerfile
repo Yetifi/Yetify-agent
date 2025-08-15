@@ -50,7 +50,7 @@ RUN addgroup -g 1001 -S nodejs && \
 
 # Install production dependencies only
 COPY package*.json ./
-RUN npm ci --only=production --ignore-scripts && \
+RUN npm ci --omit=dev --ignore-scripts && \
     npm cache clean --force
 
 # Copy built application from builder stage
