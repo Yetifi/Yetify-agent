@@ -240,7 +240,11 @@ export const StrategySchema = new mongoose.Schema(
     protocols: [{ type: String, required: true }],
     steps: [
       {
-        action: { type: String, required: true },
+        action: { 
+          type: String, 
+          required: true,
+          enum: ['deposit', 'stake', 'yield_farm', 'provide_liquidity', 'leverage', 'bridge']
+        },
         protocol: { type: String, required: true },
         asset: { type: String, required: true },
         amount: String,

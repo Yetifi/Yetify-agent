@@ -1,5 +1,5 @@
 import cron from 'node-cron';
-import { logger } from '../utils/logger';
+import { logger, createLogger } from '../utils/logger';
 import { MarketDataService } from '../services/MarketDataService';
 import { ProtocolDataService } from '../services/ProtocolDataService';
 import { Strategy, User } from '../utils/database';
