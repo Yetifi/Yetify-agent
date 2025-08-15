@@ -38,9 +38,11 @@
   "author": "Yetify Team",
   "license": "MIT",
   "dependencies": {
-    "@chainlink/contracts": "^0.6.1",
+    "@chainlink/contracts": "^1.4.0",
     "@google/generative-ai": "^0.2.1",
+    "@langchain/core": "^0.3.70",
     "@langchain/openai": "^0.6.7",
+    "@langchain/pinecone": "^0.2.0",
     "@pinecone-database/pinecone": "^1.1.2",
     "apollo-server-express": "^3.12.1",
     "axios": "^1.6.2",
