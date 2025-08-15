@@ -1,0 +1,211 @@
+name: 📚 Documentation Improvement
+description: Suggest improvements to documentation, guides, or help content
+title: "[DOCS] "
+labels: ["documentation", "good first issue"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Help us improve Yetify's documentation! Clear documentation makes the platform more accessible to everyone.
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Pre-submission Checklist
+      description: Please confirm the following
+      options:
+        - label: I have searched existing documentation issues
+          required: true
+        - label: I have checked the current documentation is outdated/incomplete
+          required: true
+
+  - type: dropdown
+    id: doc-type
+    attributes:
+      label: Documentation Type
+      description: What type of documentation needs improvement?
+      options:
+        - README files
+        - API Documentation
+        - User Guide/Tutorial
+        - Developer Documentation
+        - Installation Guide
+        - Configuration Guide
+        - Troubleshooting Guide
+        - Architecture Documentation
+        - Smart Contract Documentation
+        - Security Documentation
+        - FAQ
+        - Code Comments
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: audience
+    attributes:
+      label: Target Audience
+      description: Who is the primary audience for this documentation?
+      options:
+        - End Users (DeFi Investors)
+        - Developers/Integrators
+        - System Administrators
+        - Contributors
+        - All Audiences
+    validations:
+      required: true
+
+  - type: input
+    id: location
+    attributes:
+      label: Documentation Location
+      description: Where is the documentation that needs improvement?
+      placeholder: "e.g., README.md, docs/api.md, https://docs.yetify.ai/guide"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: issue-type
+    attributes:
+      label: Type of Issue
+      description: What kind of documentation issue is this?
+      options:
+        - Missing Information
+        - Outdated Information
+        - Incorrect Information
+        - Unclear/Confusing Content
+        - Poor Organization
+        - Missing Examples
+        - Broken Links
+        - Formatting Issues
+        - Translation Needed
+        - Accessibility Issues
+    validations:
+      required: true
+
+  - type: textarea
+    id: current-problem
+    attributes:
+      label: Current Problem
+      description: What's wrong with the current documentation?
+      placeholder: |
+        Describe the specific issues you've encountered:
+        - What information is missing or unclear?
+        - What confused you or others?
+        - What errors did you find?
+    validations:
+      required: true
+
+  - type: textarea
+    id: suggested-improvement
+    attributes:
+      label: Suggested Improvement
+      description: How should the documentation be improved?
+      placeholder: |
+        Provide specific suggestions:
+        - What content should be added?
+        - How should existing content be clarified?
+        - What examples would be helpful?
+        - How should it be reorganized?
+    validations:
+      required: true
+
+  - type: textarea
+    id: user-scenario
+    attributes:
+      label: User Scenario
+      description: Describe the scenario where this documentation is needed
+      placeholder: |
+        Example: "As a new developer trying to integrate Yetify's API, 
+        I need clear examples of authentication so that I can successfully 
+        make my first API calls."
+
+  - type: textarea
+    id: examples-needed
+    attributes:
+      label: Examples Needed
+      description: What examples, code snippets, or tutorials would be helpful?
+      placeholder: |
+        - Code examples
+        - Step-by-step tutorials
+        - Configuration examples
+        - Use case scenarios
+        - Screenshots/diagrams
+
+  - type: checkboxes
+    id: components
+    attributes:
+      label: Affected Components
+      description: Which parts of Yetify does this documentation cover?
+      options:
+        - label: Getting Started
+        - label: Installation/Setup
+        - label: Frontend Usage
+        - label: Backend API
+        - label: AI Strategy Engine
+        - label: Wallet Integration
+        - label: Smart Contracts
+        - label: Deployment
+        - label: Troubleshooting
+        - label: Security
+        - label: Contributing
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: How important is this documentation improvement?
+      options:
+        - High (Blocks user onboarding/adoption)
+        - Medium (Improves user experience)
+        - Low (Nice to have improvement)
+    validations:
+      required: true
+
+  - type: textarea
+    id: impact
+    attributes:
+      label: Impact
+      description: How would improving this documentation help users?
+      placeholder: |
+        - Faster onboarding for new users
+        - Reduced support questions
+        - Clearer understanding of features
+        - Better developer experience
+        - Increased adoption
+
+  - type: textarea
+    id: references
+    attributes:
+      label: Reference Materials
+      description: Any reference materials, examples from other projects, or resources?
+      placeholder: |
+        - Links to good documentation examples
+        - Relevant technical resources
+        - User feedback or questions that inspired this request
+
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: Contribution Offer
+      description: Can you help improve the documentation?
+      options:
+        - label: I can write the improved content
+        - label: I can provide examples/code snippets
+        - label: I can review and provide feedback
+        - label: I can help with formatting/structure
+        - label: I can provide translations
+        - label: I need someone else to write it
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Any other information that would help improve the documentation
+      placeholder: |
+        - Screenshots of confusing sections
+        - Links to related issues or discussions
+        - Feedback from other users
+        - Any other relevant context

@@ -1,0 +1,243 @@
+name: ❓ Question / Support
+description: Ask a question or get help using Yetify
+title: "[QUESTION] "
+labels: ["question", "support"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Welcome to Yetify Support! 👋
+        
+        We're here to help you get the most out of Yetify. Before submitting your question, please check:
+        - [Documentation](https://docs.yetify.ai) 
+        - [FAQ](https://docs.yetify.ai/faq)
+        - [Existing discussions](https://github.com/Yetifi/Yetify-agent/discussions)
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Pre-submission Checklist
+      description: Please confirm you've done the following
+      options:
+        - label: I have searched existing issues and discussions
+          required: true
+        - label: I have checked the documentation and FAQ
+          required: true
+        - label: This is not a bug report (use Bug Report template for bugs)
+          required: true
+
+  - type: dropdown
+    id: question-type
+    attributes:
+      label: Question Type
+      description: What type of question is this?
+      options:
+        - Getting Started / Onboarding
+        - How to Use Feature
+        - Configuration Help
+        - Integration Support
+        - Best Practices
+        - Troubleshooting
+        - Architecture Understanding
+        - Performance Optimization
+        - Security Guidance
+        - Development Help
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: urgency
+    attributes:
+      label: Urgency
+      description: How urgent is this question?
+      options:
+        - Low (General inquiry, no rush)
+        - Medium (Blocking development, but workaround exists)
+        - High (Blocking production use)
+        - Critical (Production issue, immediate help needed)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: user-type
+    attributes:
+      label: User Type
+      description: Which best describes you?
+      options:
+        - Individual DeFi User
+        - Developer/Integrator
+        - Institutional User
+        - Researcher/Student
+        - Contributor
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: question
+    attributes:
+      label: Your Question
+      description: What would you like help with?
+      placeholder: |
+        Please be as specific as possible. Include:
+        - What you're trying to accomplish
+        - What you've already tried
+        - What's not working as expected
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Context & Background
+      description: Provide context about your situation
+      placeholder: |
+        - What are you building/trying to do?
+        - What's your experience level with DeFi/blockchain?
+        - Any specific requirements or constraints?
+        - Timeline considerations?
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component (if specific)
+      description: Which part of Yetify is your question about?
+      options:
+        - General/Multiple Components
+        - Strategy Creation
+        - AI Strategy Engine
+        - Wallet Connection
+        - Strategy Execution
+        - Performance Monitoring
+        - API Integration
+        - Smart Contracts
+        - Frontend Interface
+        - Backend Setup
+        - Deployment
+        - Security
+    validations:
+      required: false
+
+  - type: dropdown
+    id: blockchain
+    attributes:
+      label: Blockchain Network (if applicable)
+      description: Which blockchain network is your question related to?
+      options:
+        - Not blockchain-specific
+        - Ethereum
+        - NEAR Protocol
+        - Arbitrum
+        - Polygon
+        - Multiple networks
+        - Other/Unsure
+    validations:
+      required: false
+
+  - type: textarea
+    id: attempted-solutions
+    attributes:
+      label: What Have You Tried?
+      description: What steps have you already taken to solve this?
+      placeholder: |
+        - Documentation sections you've read
+        - Code you've tried
+        - Configurations you've attempted
+        - Similar issues you've found
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment Details
+      description: If relevant, provide environment information
+      placeholder: |
+        - Operating System: [e.g., Windows 11, macOS 13, Ubuntu 22.04]
+        - Node.js Version: [e.g., 18.17.0]
+        - Yetify Version: [e.g., 1.0.0]
+        - Development/Production environment
+        - Any relevant configuration details
+      render: markdown
+
+  - type: textarea
+    id: code-examples
+    attributes:
+      label: Code Examples (if applicable)
+      description: Share relevant code snippets or configurations
+      placeholder: |
+        Include any relevant code, configuration files, or examples that relate to your question.
+        Remove any sensitive information like API keys or private data.
+      render: javascript
+
+  - type: textarea
+    id: error-messages
+    attributes:
+      label: Error Messages/Logs (if any)
+      description: Include any error messages or relevant log output
+      placeholder: |
+        If you're encountering errors, paste them here.
+        Remove any sensitive information.
+      render: shell
+
+  - type: textarea
+    id: expected-outcome
+    attributes:
+      label: Expected Outcome
+      description: What would success look like for you?
+      placeholder: |
+        - What specific result are you hoping to achieve?
+        - How will you know when your question is answered?
+        - What would the ideal solution be?
+
+  - type: checkboxes
+    id: help-type
+    attributes:
+      label: Type of Help Needed
+      description: What kind of help would be most useful?
+      options:
+        - label: Step-by-step guidance
+        - label: Code examples/snippets
+        - label: Architecture advice
+        - label: Best practices recommendations
+        - label: Troubleshooting assistance
+        - label: Documentation clarification
+        - label: Live discussion/call
+
+  - type: dropdown
+    id: timeline
+    attributes:
+      label: Timeline
+      description: When do you need this resolved?
+      options:
+        - No specific timeline
+        - Within a few days
+        - Within a week
+        - Within a month
+        - ASAP (explain in additional context)
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Anything else that might help us assist you?
+      placeholder: |
+        - Links to relevant resources
+        - Screenshots or diagrams
+        - Similar issues from other projects
+        - Any other context that might be helpful
+
+  - type: markdown
+    attributes:
+      value: |
+        ## Alternative Support Channels
+        
+        For real-time help, you can also:
+        - Join our [Discord community](https://discord.gg/yetify)
+        - Start a [GitHub Discussion](https://github.com/Yetifi/Yetify-agent/discussions)
+        - Check our [Knowledge Base](https://docs.yetify.ai/kb)
+        
+        We'll do our best to help you succeed with Yetify! 🚀
