@@ -265,8 +265,8 @@ export const resolvers = {
               arbitrum: strategy.gasEstimate?.arbitrum || '0.005 ETH'
             },
             confidence: strategy.confidence || 85,
-            reasoning: strategy.reasoning,
-            warnings: strategy.warnings
+            reasoning: strategy.reasoning || 'Strategy generated based on market conditions',
+            warnings: strategy.warnings || []
           },
           walletType: input.walletType || 'metamask',
           investmentAmount: input.investmentAmount,

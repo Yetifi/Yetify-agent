@@ -80,8 +80,8 @@ router.post('/estimate', async (req: AuthenticatedRequest, res: Response) => {
           arbitrum: strategy.gasEstimate?.arbitrum || '0.005 ETH'
         },
         confidence: strategy.confidence || 85,
-        reasoning: strategy.reasoning,
-        warnings: strategy.warnings
+        reasoning: strategy.reasoning || 'Strategy generated based on market conditions',
+        warnings: strategy.warnings || []
       },
       walletType: req.user!.walletType as 'metamask' | 'near' | 'walletconnect',
       investmentAmount,
@@ -226,8 +226,8 @@ router.post('/execute', executionRateLimit, async (req: AuthenticatedRequest, re
           arbitrum: strategy.gasEstimate?.arbitrum || '0.005 ETH'
         },
         confidence: strategy.confidence || 85,
-        reasoning: strategy.reasoning,
-        warnings: strategy.warnings
+        reasoning: strategy.reasoning || 'Strategy generated based on market conditions',
+        warnings: strategy.warnings || []
       },
       walletType: req.user!.walletType as 'metamask' | 'near' | 'walletconnect',
       investmentAmount,
