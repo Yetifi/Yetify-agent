@@ -281,9 +281,116 @@ jest.mock('../src/services/ProtocolDataService', () => ({
 jest.mock('@google/generative-ai', () => ({
   GoogleGenerativeAI: jest.fn().mockImplementation(() => ({
     getGenerativeModel: jest.fn().mockReturnValue({
-      generateContent: jest.fn().mockResolvedValue({
-        response: {
-          text: () => JSON.stringify({
+      generateContent: jest.fn().mockImplementation((prompt) => {
+        const promptText = typeof prompt === 'string' ? prompt : '';
+        
+        // High risk strategy
+        if (promptText.includes('Maximum yield strategy') || promptText.includes('high') || promptText.includes('aggressive')) {
+          return Promise.resolve({
+            response: {
+              text: () => JSON.stringify({
+                goal: 'Aggressive high-yield strategy',
+                chains: ['Ethereum'],
+                protocols: ['Yearn', 'Compound'],
+                steps: [{ action: 'leverage', protocol: 'Yearn', asset: 'ETH', expectedApy: 15.5 }],
+                riskLevel: 'High',
+                estimatedApy: 15.5,
+                confidence: 70,
+                reasoning: 'High-risk leveraged strategy for maximum returns',
+                warnings: ['High liquidation risk', 'Extreme volatility']
+              })
+            }
+          });
+        }
+        
+        // Stablecoin strategy
+        if (promptText.includes('stablecoin') || promptText.includes('USDC') || promptText.includes('USDT')) {
+          return Promise.resolve({
+            response: {
+              text: () => JSON.stringify({
+                goal: 'Stable yield with stablecoins',
+                chains: ['Ethereum'],
+                protocols: ['Aave'],
+                steps: [{ action: 'yield_farm', protocol: 'Aave', asset: 'USDC', expectedApy: 8.2 }],
+                riskLevel: 'Low',
+                estimatedApy: 8.2,
+                confidence: 90,
+                reasoning: 'Stable income with minimal volatility',
+                warnings: ['Smart contract risks']
+              })
+            }
+          });
+        }
+        
+        // Error case for invalid prompts
+        if (promptText.includes('invalid') || promptText.includes('test strategy that should fail')) {
+          return Promise.reject(new Error('AI service error'));
+        }
+        
+        // Default low risk strategy
+        return Promise.resolve({
+          response: {
+            text: () => JSON.stringify({
+              goal: 'Maximize my ETH yield with low risk',
+              chains: ['Ethereum'],
+              protocols: ['Aave'],
+              steps: [{ action: 'deposit', protocol: 'Aave', asset: 'ETH', expectedApy: 4.2 }],
+              riskLevel: 'Low',
+              estimatedApy: 4.2,
+              confidence: 85,
+              reasoning: 'This strategy focuses on low-risk ETH yield generation',
+              warnings: ['Smart contract risks apply']
+            })
+          }
+        });
+      })
+    })
+  }))
+}));
+
+// Mock OpenAI/LangChain
+jest.mock('@langchain/openai', () => ({
+  OpenAI: jest.fn().mockImplementation(() => ({
+    invoke: jest.fn().mockImplementation(() => {
+      return Promise.resolve({
+        content: JSON.stringify({
+          goal: 'Maximize my ETH yield with low risk',
+          chains: ['Ethereum'],
+          protocols: ['Aave'],
+          steps: [{ action: 'deposit', protocol: 'Aave', asset: 'ETH', expectedApy: 4.2 }],
+          riskLevel: 'Low',
+          estimatedApy: 4.2,
+          confidence: 85,
+          reasoning: 'This strategy focuses on low-risk ETH yield generation',
+          warnings: ['Smart contract risks apply']
+        })
+      });
+    })
+  })),
+  ChatOpenAI: jest.fn().mockImplementation(() => ({
+    invoke: jest.fn().mockResolvedValue({
+      content: JSON.stringify({
+        goal: 'Maximize my ETH yield with low risk',
+        chains: ['Ethereum'],
+        protocols: ['Aave'],
+        steps: [{ action: 'deposit', protocol: 'Aave', asset: 'ETH', expectedApy: 4.2 }],
+        riskLevel: 'Low',
+        estimatedApy: 4.2,
+        confidence: 85,
+        reasoning: 'This strategy focuses on low-risk ETH yield generation',
+        warnings: ['Smart contract risks apply']
+      })
+    })
+  }))
+}));
+
+// Mock LangChain components
+jest.mock('langchain/prompts', () => ({
+  ChatPromptTemplate: {
+    fromMessages: jest.fn().mockReturnValue({
+      pipe: jest.fn().mockReturnValue({
+        invoke: jest.fn().mockResolvedValue({
+          content: JSON.stringify({
             goal: 'Test strategy',
             chains: ['Ethereum'],
             protocols: ['Aave'],
@@ -294,29 +401,29 @@ jest.mock('@google/generative-ai', () => ({
             reasoning: 'Test strategy reasoning',
             warnings: ['Test warning']
           })
-        }
+        })
       })
     })
-  }))
+  }
 }));
 
-// Mock OpenAI/LangChain
-jest.mock('@langchain/openai', () => ({
-  ChatOpenAI: jest.fn().mockImplementation(() => ({
-    invoke: jest.fn().mockResolvedValue({
-      content: JSON.stringify({
-        goal: 'Test strategy',
-        chains: ['Ethereum'],
-        protocols: ['Aave'],
-        steps: [{ action: 'deposit', protocol: 'Aave', asset: 'ETH', expectedApy: 4.2 }],
-        riskLevel: 'Low',
-        estimatedApy: 4.2,
-        confidence: 85,
-        reasoning: 'Test strategy reasoning',
-        warnings: ['Test warning']
-      })
+// Mock Pinecone
+jest.mock('@pinecone-database/pinecone', () => ({
+  Pinecone: jest.fn().mockImplementation(() => ({}))
+}));
+
+jest.mock('langchain/vectorstores/pinecone', () => ({
+  PineconeStore: {
+    fromExistingIndex: jest.fn().mockResolvedValue({
+      similaritySearch: jest.fn().mockResolvedValue([
+        { pageContent: 'Mock knowledge base content' }
+      ])
     })
-  }))
+  }
+}));
+
+jest.mock('langchain/embeddings/openai', () => ({
+  OpenAIEmbeddings: jest.fn().mockImplementation(() => ({}))
 }));
 
 // Mock logger for testing
