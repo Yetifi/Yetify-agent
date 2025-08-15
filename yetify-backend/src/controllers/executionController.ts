@@ -65,10 +65,10 @@ router.post('/estimate', async (req: AuthenticatedRequest, res: Response) => {
           protocol: step.protocol,
           asset: step.asset,
           amount: step.amount || undefined,
-          expectedApy: step.expectedApy,
-          riskScore: step.riskScore,
-          gasEstimate: step.gasEstimate,
-          dependencies: step.dependencies
+          expectedApy: step.expectedApy || undefined,
+          riskScore: step.riskScore || undefined,
+          gasEstimate: step.gasEstimate || undefined,
+          dependencies: step.dependencies || []
         })),
         riskLevel: strategy.riskLevel,
         estimatedApy: strategy.estimatedApy,
@@ -207,10 +207,10 @@ router.post('/execute', executionRateLimit, async (req: AuthenticatedRequest, re
           protocol: step.protocol,
           asset: step.asset,
           amount: step.amount || undefined,
-          expectedApy: step.expectedApy,
-          riskScore: step.riskScore,
-          gasEstimate: step.gasEstimate,
-          dependencies: step.dependencies
+          expectedApy: step.expectedApy || undefined,
+          riskScore: step.riskScore || undefined,
+          gasEstimate: step.gasEstimate || undefined,
+          dependencies: step.dependencies || []
         })),
         riskLevel: strategy.riskLevel,
         estimatedApy: strategy.estimatedApy,
