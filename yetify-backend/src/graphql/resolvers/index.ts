@@ -264,7 +264,7 @@ export const resolvers = {
               near: strategy.gasEstimate?.near || '0.1 NEAR',
               arbitrum: strategy.gasEstimate?.arbitrum || '0.005 ETH'
             },
-            confidence: strategy.confidence,
+            confidence: strategy.confidence || 85,
             reasoning: strategy.reasoning,
             warnings: strategy.warnings
           },

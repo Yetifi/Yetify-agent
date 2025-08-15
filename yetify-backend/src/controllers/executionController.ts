@@ -79,7 +79,7 @@ router.post('/estimate', async (req: AuthenticatedRequest, res: Response) => {
           near: strategy.gasEstimate?.near || '0.1 NEAR', 
           arbitrum: strategy.gasEstimate?.arbitrum || '0.005 ETH'
         },
-        confidence: strategy.confidence,
+        confidence: strategy.confidence || 85,
         reasoning: strategy.reasoning,
         warnings: strategy.warnings
       },
@@ -225,7 +225,7 @@ router.post('/execute', executionRateLimit, async (req: AuthenticatedRequest, re
           near: strategy.gasEstimate?.near || '0.1 NEAR', 
           arbitrum: strategy.gasEstimate?.arbitrum || '0.005 ETH'
         },
-        confidence: strategy.confidence,
+        confidence: strategy.confidence || 85,
         reasoning: strategy.reasoning,
         warnings: strategy.warnings
       },
