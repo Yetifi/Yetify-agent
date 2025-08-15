@@ -348,41 +348,7 @@ jest.mock('@google/generative-ai', () => ({
   }))
 }));
 
-// Mock OpenAI/LangChain
-jest.mock('@langchain/openai', () => ({
-  OpenAI: jest.fn().mockImplementation(() => ({
-    invoke: jest.fn().mockImplementation(() => {
-      return Promise.resolve({
-        content: JSON.stringify({
-          goal: 'Maximize my ETH yield with low risk',
-          chains: ['Ethereum'],
-          protocols: ['Aave'],
-          steps: [{ action: 'deposit', protocol: 'Aave', asset: 'ETH', expectedApy: 4.2 }],
-          riskLevel: 'Low',
-          estimatedApy: 4.2,
-          confidence: 85,
-          reasoning: 'This strategy focuses on low-risk ETH yield generation',
-          warnings: ['Smart contract risks apply']
-        })
-      });
-    })
-  })),
-  ChatOpenAI: jest.fn().mockImplementation(() => ({
-    invoke: jest.fn().mockResolvedValue({
-      content: JSON.stringify({
-        goal: 'Maximize my ETH yield with low risk',
-        chains: ['Ethereum'],
-        protocols: ['Aave'],
-        steps: [{ action: 'deposit', protocol: 'Aave', asset: 'ETH', expectedApy: 4.2 }],
-        riskLevel: 'Low',
-        estimatedApy: 4.2,
-        confidence: 85,
-        reasoning: 'This strategy focuses on low-risk ETH yield generation',
-        warnings: ['Smart contract risks apply']
-      })
-    })
-  }))
-}));
+// Removed duplicate mock - now handled above in consolidated @langchain/openai mock
 
 // Mock LangChain components
 jest.mock('langchain/prompts', () => ({
@@ -423,6 +389,42 @@ jest.mock('langchain/vectorstores/pinecone', () => ({
 }));
 
 jest.mock('langchain/embeddings/openai', () => ({
+  OpenAIEmbeddings: jest.fn().mockImplementation(() => ({}))
+}));
+
+jest.mock('@langchain/openai', () => ({
+  OpenAI: jest.fn().mockImplementation(() => ({
+    invoke: jest.fn().mockImplementation(() => {
+      return Promise.resolve({
+        content: JSON.stringify({
+          goal: 'Maximize my ETH yield with low risk',
+          chains: ['Ethereum'],
+          protocols: ['Aave'],
+          steps: [{ action: 'deposit', protocol: 'Aave', asset: 'ETH', expectedApy: 4.2 }],
+          riskLevel: 'Low',
+          estimatedApy: 4.2,
+          confidence: 85,
+          reasoning: 'This strategy focuses on low-risk ETH yield generation',
+          warnings: ['Smart contract risks apply']
+        })
+      });
+    })
+  })),
+  ChatOpenAI: jest.fn().mockImplementation(() => ({
+    invoke: jest.fn().mockResolvedValue({
+      content: JSON.stringify({
+        goal: 'Maximize my ETH yield with low risk',
+        chains: ['Ethereum'],
+        protocols: ['Aave'],
+        steps: [{ action: 'deposit', protocol: 'Aave', asset: 'ETH', expectedApy: 4.2 }],
+        riskLevel: 'Low',
+        estimatedApy: 4.2,
+        confidence: 85,
+        reasoning: 'This strategy focuses on low-risk ETH yield generation',
+        warnings: ['Smart contract risks apply']
+      })
+    })
+  })),
   OpenAIEmbeddings: jest.fn().mockImplementation(() => ({}))
 }));
 
