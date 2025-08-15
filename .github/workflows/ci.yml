@@ -225,46 +225,16 @@ jobs:
           docker stop yetify-test
           docker rm yetify-test
 
-  # End-to-End Tests
-  e2e-tests:
-    name: 🎭 E2E Tests
-    runs-on: ubuntu-latest
-    needs: [lint-and-format, unit-tests, integration-tests]
-    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
-    steps:
-      - name: 📚 Checkout code
-        uses: actions/checkout@v4
-
-      - name: 📦 Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-          cache-dependency-path: yetify-backend/package-lock.json
-
-      - name: 📥 Install dependencies
-        run: npm ci
-
-      - name: 🐳 Start services with Docker Compose
-        run: |
-          cp yetify-backend/.env.example yetify-backend/.env
-          docker compose up -d mongodb redis
-          
-          # Wait for services to be ready
-          sleep 15
-
-      - name: 🎭 Run E2E tests
-        run: npm run test:e2e
-        env:
-          NODE_ENV: test
-          MONGODB_URI: mongodb://localhost:27017/yetify-test
-          REDIS_URL: redis://localhost:6379
-          JWT_SECRET: test_jwt_secret_key
-          ENCRYPTION_KEY: test_encryption_key_32_characters
-
-      - name: 🧹 Cleanup
-        if: always()
-        run: docker compose down -v
+  # E2E Tests - Disabled until implementation
+  # e2e-tests:
+  #   name: 🎭 E2E Tests  
+  #   runs-on: ubuntu-latest
+  #   needs: [lint-and-format, unit-tests, integration-tests]
+  #   steps:
+  #     - name: 📚 Checkout code
+  #       uses: actions/checkout@v4
+  #     - name: 🎭 E2E tests placeholder
+  #       run: echo "E2E tests will be implemented in future PR"
 
   # Performance Tests
   performance-tests:
