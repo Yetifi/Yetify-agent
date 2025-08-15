@@ -204,6 +204,7 @@ jobs:
           target: production
           push: false
           tags: yetify-backend:test
+          load: true
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
