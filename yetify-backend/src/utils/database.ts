@@ -42,7 +42,7 @@ export class DatabaseConnection {
       logger.info('Successfully connected to MongoDB');
     } catch (error) {
       logger.error('Failed to connect to MongoDB:', error);
-      throw new Error(`Database connection failed: ${error.message}`);
+      throw new Error(`Database connection failed: ${(error as Error).message}`);
     }
   }
 
@@ -80,7 +80,7 @@ export class DatabaseConnection {
       }
 
       // Perform a simple ping operation
-      await mongoose.connection.db.admin().ping();
+      await mongoose.connection.db?.admin().ping();
       
       const latency = Date.now() - startTime;
       
@@ -100,7 +100,7 @@ export class DatabaseConnection {
       return {
         status: 'error',
         latency,
-        details: { error: error.message }
+        details: { error: (error as Error).message }
       };
     }
   }
