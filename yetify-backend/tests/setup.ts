@@ -1,7 +1,7 @@
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import mongoose from 'mongoose';
 import { RedisMemoryServer } from 'redis-memory-server';
-import Redis from 'redis';
+import { createClient } from 'redis';
 
 // Global test setup
 let mongoServer: MongoMemoryServer;
@@ -39,7 +39,7 @@ beforeAll(async () => {
   const redisPort = await redisServer.getPort();
   
   // Connect to Redis
-  redisClient = Redis.createClient({
+  redisClient = createClient({
     url: `redis://${redisHost}:${redisPort}`
   });
   
