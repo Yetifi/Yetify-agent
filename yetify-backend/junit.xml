@@ -1,91 +1,135 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuites name="jest tests" tests="40" failures="0" errors="0" time="82.513">
-  <testsuite name="Logger" errors="0" failures="0" skipped="0" timestamp="2025-08-15T21:19:43" time="3.411" tests="2">
-    <testcase classname="Logger should create logger instance" name="Logger should create logger instance" time="0.007">
+<testsuites name="jest tests" tests="61" failures="0" errors="0" time="82.075">
+  <testsuite name="StrategyEngine" errors="0" failures="0" skipped="0" timestamp="2025-08-15T21:23:01" time="3.304" tests="10">
+    <testcase classname="StrategyEngine generateStrategy should handle stablecoin strategies" name="StrategyEngine generateStrategy should handle stablecoin strategies" time="0.008">
+    </testcase>
+    <testcase classname="StrategyEngine generateStrategy should include execution time estimation" name="StrategyEngine generateStrategy should include execution time estimation" time="0.002">
+    </testcase>
+    <testcase classname="StrategyEngine storeStrategyKnowledge should store positive feedback" name="StrategyEngine storeStrategyKnowledge should store positive feedback" time="0.001">
+    </testcase>
+    <testcase classname="StrategyEngine storeStrategyKnowledge should store negative feedback" name="StrategyEngine storeStrategyKnowledge should store negative feedback" time="0.001">
+    </testcase>
+    <testcase classname="StrategyEngine storeStrategyKnowledge should handle vector store unavailability gracefully" name="StrategyEngine storeStrategyKnowledge should handle vector store unavailability gracefully" time="0.001">
+    </testcase>
+    <testcase classname="StrategyEngine private methods via public interface should calculate execution time based on step count" name="StrategyEngine private methods via public interface should calculate execution time based on step count" time="0.001">
+    </testcase>
+    <testcase classname="StrategyEngine private methods via public interface should provide reasoning for generated strategies" name="StrategyEngine private methods via public interface should provide reasoning for generated strategies" time="0.002">
+    </testcase>
+    <testcase classname="StrategyEngine private methods via public interface should include warnings for risky strategies" name="StrategyEngine private methods via public interface should include warnings for risky strategies" time="0.001">
+    </testcase>
+    <testcase classname="StrategyEngine performance and reliability should generate strategy within reasonable time" name="StrategyEngine performance and reliability should generate strategy within reasonable time" time="0.001">
+    </testcase>
+    <testcase classname="StrategyEngine performance and reliability should handle concurrent strategy generation" name="StrategyEngine performance and reliability should handle concurrent strategy generation" time="0.002">
+    </testcase>
+  </testsuite>
+  <testsuite name="Logger" errors="0" failures="0" skipped="0" timestamp="2025-08-15T21:23:01" time="3.4" tests="2">
+    <testcase classname="Logger should create logger instance" name="Logger should create logger instance" time="0.004">
     </testcase>
     <testcase classname="Logger should have custom methods" name="Logger should have custom methods" time="0.002">
     </testcase>
   </testsuite>
-  <testsuite name="StrategyEngine" errors="0" failures="0" skipped="0" timestamp="2025-08-15T21:19:43" time="3.661" tests="10">
-    <testcase classname="StrategyEngine generateStrategy should handle stablecoin strategies" name="StrategyEngine generateStrategy should handle stablecoin strategies" time="0.01">
+  <testsuite name="MonitoringEngine" errors="0" failures="0" skipped="0" timestamp="2025-08-15T21:23:01" time="3.615" tests="16">
+    <testcase classname="MonitoringEngine getStrategyPerformance should calculate strategy performance metrics" name="MonitoringEngine getStrategyPerformance should calculate strategy performance metrics" time="0.038">
     </testcase>
-    <testcase classname="StrategyEngine generateStrategy should include execution time estimation" name="StrategyEngine generateStrategy should include execution time estimation" time="0.005">
+    <testcase classname="MonitoringEngine getStrategyPerformance should return null for non-existent strategy" name="MonitoringEngine getStrategyPerformance should return null for non-existent strategy" time="0.01">
     </testcase>
-    <testcase classname="StrategyEngine storeStrategyKnowledge should store positive feedback" name="StrategyEngine storeStrategyKnowledge should store positive feedback" time="0.004">
+    <testcase classname="MonitoringEngine getStrategyPerformance should handle strategies with no performance data" name="MonitoringEngine getStrategyPerformance should handle strategies with no performance data" time="0.011">
     </testcase>
-    <testcase classname="StrategyEngine storeStrategyKnowledge should store negative feedback" name="StrategyEngine storeStrategyKnowledge should store negative feedback" time="0.002">
+    <testcase classname="MonitoringEngine getActiveAlerts should return active alerts for user" name="MonitoringEngine getActiveAlerts should return active alerts for user" time="0.014">
     </testcase>
-    <testcase classname="StrategyEngine storeStrategyKnowledge should handle vector store unavailability gracefully" name="StrategyEngine storeStrategyKnowledge should handle vector store unavailability gracefully" time="0.001">
+    <testcase classname="MonitoringEngine getActiveAlerts should return empty array for user with no strategies" name="MonitoringEngine getActiveAlerts should return empty array for user with no strategies" time="0.015">
     </testcase>
-    <testcase classname="StrategyEngine private methods via public interface should calculate execution time based on step count" name="StrategyEngine private methods via public interface should calculate execution time based on step count" time="0.005">
+    <testcase classname="MonitoringEngine getActiveAlerts should filter out acknowledged alerts" name="MonitoringEngine getActiveAlerts should filter out acknowledged alerts" time="0.018">
     </testcase>
-    <testcase classname="StrategyEngine private methods via public interface should provide reasoning for generated strategies" name="StrategyEngine private methods via public interface should provide reasoning for generated strategies" time="0.002">
+    <testcase classname="MonitoringEngine getRebalanceRecommendations should generate rebalancing recommendations" name="MonitoringEngine getRebalanceRecommendations should generate rebalancing recommendations" time="0.015">
     </testcase>
-    <testcase classname="StrategyEngine private methods via public interface should include warnings for risky strategies" name="StrategyEngine private methods via public interface should include warnings for risky strategies" time="0.003">
+    <testcase classname="MonitoringEngine getRebalanceRecommendations should not recommend rebalancing for small gains" name="MonitoringEngine getRebalanceRecommendations should not recommend rebalancing for small gains" time="0.015">
     </testcase>
-    <testcase classname="StrategyEngine performance and reliability should generate strategy within reasonable time" name="StrategyEngine performance and reliability should generate strategy within reasonable time" time="0.002">
+    <testcase classname="MonitoringEngine private methods via integration should detect price drop alerts" name="MonitoringEngine private methods via integration should detect price drop alerts" time="0.02">
     </testcase>
-    <testcase classname="StrategyEngine performance and reliability should handle concurrent strategy generation" name="StrategyEngine performance and reliability should handle concurrent strategy generation" time="0.005">
+    <testcase classname="MonitoringEngine private methods via integration should detect APY decline alerts" name="MonitoringEngine private methods via integration should detect APY decline alerts" time="0.012">
     </testcase>
-  </testsuite>
-  <testsuite name="MonitoringEngine" errors="0" failures="0" skipped="0" timestamp="2025-08-15T21:19:43" time="3.887" tests="16">
-    <testcase classname="MonitoringEngine getStrategyPerformance should calculate strategy performance metrics" name="MonitoringEngine getStrategyPerformance should calculate strategy performance metrics" time="0.061">
+    <testcase classname="MonitoringEngine private methods via integration should detect protocol risk alerts" name="MonitoringEngine private methods via integration should detect protocol risk alerts" time="0.017">
     </testcase>
-    <testcase classname="MonitoringEngine getStrategyPerformance should return null for non-existent strategy" name="MonitoringEngine getStrategyPerformance should return null for non-existent strategy" time="0.028">
+    <testcase classname="MonitoringEngine performance and reliability should handle monitoring multiple strategies efficiently" name="MonitoringEngine performance and reliability should handle monitoring multiple strategies efficiently" time="0.031">
     </testcase>
-    <testcase classname="MonitoringEngine getStrategyPerformance should handle strategies with no performance data" name="MonitoringEngine getStrategyPerformance should handle strategies with no performance data" time="0.026">
+    <testcase classname="MonitoringEngine performance and reliability should handle errors gracefully" name="MonitoringEngine performance and reliability should handle errors gracefully" time="0.01">
     </testcase>
-    <testcase classname="MonitoringEngine getActiveAlerts should return active alerts for user" name="MonitoringEngine getActiveAlerts should return active alerts for user" time="0.025">
+    <testcase classname="MonitoringEngine performance and reliability should cache results appropriately" name="MonitoringEngine performance and reliability should cache results appropriately" time="0.009">
     </testcase>
-    <testcase classname="MonitoringEngine getActiveAlerts should return empty array for user with no strategies" name="MonitoringEngine getActiveAlerts should return empty array for user with no strategies" time="0.016">
+    <testcase classname="MonitoringEngine edge cases should handle strategies with zero investment" name="MonitoringEngine edge cases should handle strategies with zero investment" time="0.009">
     </testcase>
-    <testcase classname="MonitoringEngine getActiveAlerts should filter out acknowledged alerts" name="MonitoringEngine getActiveAlerts should filter out acknowledged alerts" time="0.025">
-    </testcase>
-    <testcase classname="MonitoringEngine getRebalanceRecommendations should generate rebalancing recommendations" name="MonitoringEngine getRebalanceRecommendations should generate rebalancing recommendations" time="0.014">
-    </testcase>
-    <testcase classname="MonitoringEngine getRebalanceRecommendations should not recommend rebalancing for small gains" name="MonitoringEngine getRebalanceRecommendations should not recommend rebalancing for small gains" time="0.009">
-    </testcase>
-    <testcase classname="MonitoringEngine private methods via integration should detect price drop alerts" name="MonitoringEngine private methods via integration should detect price drop alerts" time="0.014">
-    </testcase>
-    <testcase classname="MonitoringEngine private methods via integration should detect APY decline alerts" name="MonitoringEngine private methods via integration should detect APY decline alerts" time="0.015">
-    </testcase>
-    <testcase classname="MonitoringEngine private methods via integration should detect protocol risk alerts" name="MonitoringEngine private methods via integration should detect protocol risk alerts" time="0.016">
-    </testcase>
-    <testcase classname="MonitoringEngine performance and reliability should handle monitoring multiple strategies efficiently" name="MonitoringEngine performance and reliability should handle monitoring multiple strategies efficiently" time="0.036">
-    </testcase>
-    <testcase classname="MonitoringEngine performance and reliability should handle errors gracefully" name="MonitoringEngine performance and reliability should handle errors gracefully" time="0.021">
-    </testcase>
-    <testcase classname="MonitoringEngine performance and reliability should cache results appropriately" name="MonitoringEngine performance and reliability should cache results appropriately" time="0.02">
-    </testcase>
-    <testcase classname="MonitoringEngine edge cases should handle strategies with zero investment" name="MonitoringEngine edge cases should handle strategies with zero investment" time="0.017">
-    </testcase>
-    <testcase classname="MonitoringEngine edge cases should handle very old strategies" name="MonitoringEngine edge cases should handle very old strategies" time="0.01">
+    <testcase classname="MonitoringEngine edge cases should handle very old strategies" name="MonitoringEngine edge cases should handle very old strategies" time="0.007">
     </testcase>
   </testsuite>
-  <testsuite name="ExecutionEngine" errors="0" failures="0" skipped="0" timestamp="2025-08-15T21:19:43" time="82.114" tests="12">
-    <testcase classname="ExecutionEngine executeStrategy should execute strategy successfully" name="ExecutionEngine executeStrategy should execute strategy successfully" time="10.017">
+  <testsuite name="Strategy Controller Integration Tests" errors="0" failures="0" skipped="0" timestamp="2025-08-15T21:23:04" time="1.933" tests="21">
+    <testcase classname="Strategy Controller Integration Tests GET /api/v1/strategies should return user strategies" name="Strategy Controller Integration Tests GET /api/v1/strategies should return user strategies" time="0.083">
     </testcase>
-    <testcase classname="ExecutionEngine executeStrategy should handle different wallet types" name="ExecutionEngine executeStrategy should handle different wallet types" time="10.009">
+    <testcase classname="Strategy Controller Integration Tests GET /api/v1/strategies should filter strategies by status" name="Strategy Controller Integration Tests GET /api/v1/strategies should filter strategies by status" time="0.013">
+    </testcase>
+    <testcase classname="Strategy Controller Integration Tests GET /api/v1/strategies should implement pagination" name="Strategy Controller Integration Tests GET /api/v1/strategies should implement pagination" time="0.017">
+    </testcase>
+    <testcase classname="Strategy Controller Integration Tests GET /api/v1/strategies/:id should return specific strategy" name="Strategy Controller Integration Tests GET /api/v1/strategies/:id should return specific strategy" time="0.009">
+    </testcase>
+    <testcase classname="Strategy Controller Integration Tests GET /api/v1/strategies/:id should return 404 for non-existent strategy" name="Strategy Controller Integration Tests GET /api/v1/strategies/:id should return 404 for non-existent strategy" time="0.005">
+    </testcase>
+    <testcase classname="Strategy Controller Integration Tests GET /api/v1/strategies/:id should deny access to other users strategies" name="Strategy Controller Integration Tests GET /api/v1/strategies/:id should deny access to other users strategies" time="0.006">
+    </testcase>
+    <testcase classname="Strategy Controller Integration Tests POST /api/v1/strategies/generate should generate new strategy" name="Strategy Controller Integration Tests POST /api/v1/strategies/generate should generate new strategy" time="0.015">
+    </testcase>
+    <testcase classname="Strategy Controller Integration Tests POST /api/v1/strategies/generate should validate input parameters" name="Strategy Controller Integration Tests POST /api/v1/strategies/generate should validate input parameters" time="0.004">
+    </testcase>
+    <testcase classname="Strategy Controller Integration Tests POST /api/v1/strategies/generate should handle missing required fields" name="Strategy Controller Integration Tests POST /api/v1/strategies/generate should handle missing required fields" time="0.005">
+    </testcase>
+    <testcase classname="Strategy Controller Integration Tests PUT /api/v1/strategies/:id should update strategy" name="Strategy Controller Integration Tests PUT /api/v1/strategies/:id should update strategy" time="0.011">
+    </testcase>
+    <testcase classname="Strategy Controller Integration Tests PUT /api/v1/strategies/:id should validate update data" name="Strategy Controller Integration Tests PUT /api/v1/strategies/:id should validate update data" time="0.006">
+    </testcase>
+    <testcase classname="Strategy Controller Integration Tests POST /api/v1/strategies/:id/activate should activate strategy" name="Strategy Controller Integration Tests POST /api/v1/strategies/:id/activate should activate strategy" time="0.009">
+    </testcase>
+    <testcase classname="Strategy Controller Integration Tests POST /api/v1/strategies/:id/pause should pause strategy" name="Strategy Controller Integration Tests POST /api/v1/strategies/:id/pause should pause strategy" time="0.006">
+    </testcase>
+    <testcase classname="Strategy Controller Integration Tests DELETE /api/v1/strategies/:id should delete strategy" name="Strategy Controller Integration Tests DELETE /api/v1/strategies/:id should delete strategy" time="0.009">
+    </testcase>
+    <testcase classname="Strategy Controller Integration Tests DELETE /api/v1/strategies/:id should not delete non-existent strategy" name="Strategy Controller Integration Tests DELETE /api/v1/strategies/:id should not delete non-existent strategy" time="0.005">
+    </testcase>
+    <testcase classname="Strategy Controller Integration Tests POST /api/v1/strategies/:id/feedback should accept positive feedback" name="Strategy Controller Integration Tests POST /api/v1/strategies/:id/feedback should accept positive feedback" time="0.008">
+    </testcase>
+    <testcase classname="Strategy Controller Integration Tests POST /api/v1/strategies/:id/feedback should accept negative feedback" name="Strategy Controller Integration Tests POST /api/v1/strategies/:id/feedback should accept negative feedback" time="0.005">
+    </testcase>
+    <testcase classname="Strategy Controller Integration Tests POST /api/v1/strategies/:id/feedback should validate feedback data" name="Strategy Controller Integration Tests POST /api/v1/strategies/:id/feedback should validate feedback data" time="0.005">
+    </testcase>
+    <testcase classname="Strategy Controller Integration Tests GET /api/v1/strategies/:id/performance should return strategy performance data" name="Strategy Controller Integration Tests GET /api/v1/strategies/:id/performance should return strategy performance data" time="0.005">
+    </testcase>
+    <testcase classname="Strategy Controller Integration Tests GET /api/v1/strategies/:id/performance should return default performance data for new strategies" name="Strategy Controller Integration Tests GET /api/v1/strategies/:id/performance should return default performance data for new strategies" time="0.005">
+    </testcase>
+    <testcase classname="Strategy Controller Integration Tests GET /api/v1/strategies/analytics/summary should return user analytics summary" name="Strategy Controller Integration Tests GET /api/v1/strategies/analytics/summary should return user analytics summary" time="0.01">
+    </testcase>
+  </testsuite>
+  <testsuite name="ExecutionEngine" errors="0" failures="0" skipped="0" timestamp="2025-08-15T21:23:01" time="81.696" tests="12">
+    <testcase classname="ExecutionEngine executeStrategy should execute strategy successfully" name="ExecutionEngine executeStrategy should execute strategy successfully" time="10.026">
+    </testcase>
+    <testcase classname="ExecutionEngine executeStrategy should handle different wallet types" name="ExecutionEngine executeStrategy should handle different wallet types" time="10.008">
     </testcase>
     <testcase classname="ExecutionEngine executeStrategy should handle different gas preferences" name="ExecutionEngine executeStrategy should handle different gas preferences" time="10.01">
     </testcase>
-    <testcase classname="ExecutionEngine estimateGasForStrategy should estimate gas costs for strategy" name="ExecutionEngine estimateGasForStrategy should estimate gas costs for strategy" time="0.005">
+    <testcase classname="ExecutionEngine estimateGasForStrategy should estimate gas costs for strategy" name="ExecutionEngine estimateGasForStrategy should estimate gas costs for strategy" time="0.006">
     </testcase>
     <testcase classname="ExecutionEngine estimateGasForStrategy should handle strategies with no steps" name="ExecutionEngine estimateGasForStrategy should handle strategies with no steps" time="0.002">
     </testcase>
-    <testcase classname="ExecutionEngine estimateGasForStrategy should aggregate gas costs for multiple steps on same chain" name="ExecutionEngine estimateGasForStrategy should aggregate gas costs for multiple steps on same chain" time="0.003">
+    <testcase classname="ExecutionEngine estimateGasForStrategy should aggregate gas costs for multiple steps on same chain" name="ExecutionEngine estimateGasForStrategy should aggregate gas costs for multiple steps on same chain" time="0.002">
     </testcase>
     <testcase classname="ExecutionEngine validation should validate execution context" name="ExecutionEngine validation should validate execution context" time="10.008">
     </testcase>
     <testcase classname="ExecutionEngine chain-specific execution should handle Ethereum-specific protocols" name="ExecutionEngine chain-specific execution should handle Ethereum-specific protocols" time="10.008">
     </testcase>
-    <testcase classname="ExecutionEngine chain-specific execution should handle NEAR-specific protocols" name="ExecutionEngine chain-specific execution should handle NEAR-specific protocols" time="8.009">
+    <testcase classname="ExecutionEngine chain-specific execution should handle NEAR-specific protocols" name="ExecutionEngine chain-specific execution should handle NEAR-specific protocols" time="8.008">
     </testcase>
-    <testcase classname="ExecutionEngine chain-specific execution should handle Arbitrum protocols with lower gas costs" name="ExecutionEngine chain-specific execution should handle Arbitrum protocols with lower gas costs" time="0.002">
+    <testcase classname="ExecutionEngine chain-specific execution should handle Arbitrum protocols with lower gas costs" name="ExecutionEngine chain-specific execution should handle Arbitrum protocols with lower gas costs" time="0.003">
     </testcase>
-    <testcase classname="ExecutionEngine performance and reliability should execute strategy within reasonable time" name="ExecutionEngine performance and reliability should execute strategy within reasonable time" time="10.009">
+    <testcase classname="ExecutionEngine performance and reliability should execute strategy within reasonable time" name="ExecutionEngine performance and reliability should execute strategy within reasonable time" time="10.006">
     </testcase>
-    <testcase classname="ExecutionEngine performance and reliability should handle concurrent executions" name="ExecutionEngine performance and reliability should handle concurrent executions" time="10.012">
+    <testcase classname="ExecutionEngine performance and reliability should handle concurrent executions" name="ExecutionEngine performance and reliability should handle concurrent executions" time="10.011">
     </testcase>
   </testsuite>
 </testsuites>
