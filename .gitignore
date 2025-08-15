@@ -11,6 +11,9 @@ CLAUDE.md
 # test
 yetify-backend/coverage
 
+# Dist
+yetify-backend/dist
+
 # Dependencies
 node_modules/
 npm-debug.log*

@@ -121,7 +121,7 @@ export class StrategyEngine {
       return optimizedStrategy;
     } catch (error) {
       logger.error('Strategy generation failed:', error);
-      throw new Error('Failed to generate strategy: ' + error.message);
+      throw new Error('Failed to generate strategy: ' + (error instanceof Error ? error.message : String(error)));
     }
   }
 
@@ -203,7 +203,7 @@ export class StrategyEngine {
         
         const chain = chatPrompt.pipe(this.openAI);
         const result = await chain.invoke({});
-        response = result.content as string;
+        response = typeof result.content === 'string' ? result.content : String(result.content);
         logger.ai('Strategy generated using OpenAI');
       }
 
