@@ -1,5 +1,7 @@
 import cron from 'node-cron';
-import { logger, createLogger } from '../utils/logger';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger();
 import { MarketDataService } from '../services/MarketDataService';
 import { ProtocolDataService } from '../services/ProtocolDataService';
 import { Strategy, User } from '../utils/database';

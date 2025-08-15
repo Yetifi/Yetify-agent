@@ -78,7 +78,9 @@ afterEach(async () => {
   }
   
   // Clear Redis
-  await redisClient.flushAll();
+  if (redisClient && redisClient.isOpen) {
+    await redisClient.flushAll();
+  }
   
   // Reset all mocks
   jest.clearAllMocks();

@@ -184,7 +184,7 @@ export class ExecutionEngine {
       } catch (error) {
         validations.push({
           isValid: false,
-          error: error.message
+          error: error instanceof Error ? error.message : String(error)
         });
       }
     }
