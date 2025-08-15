@@ -18,7 +18,6 @@
     "format": "prettier --write \"src/**/*.ts\"",
     "format:check": "prettier --check \"src/**/*.ts\"",
     "typecheck": "tsc --noEmit",
-    "prepare": "husky install",
     "docker:build": "docker build -t yetify-backend .",
     "docker:run": "docker run -p 3001:3001 yetify-backend",
     "compose:up": "docker-compose up -d",
