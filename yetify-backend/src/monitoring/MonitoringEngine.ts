@@ -100,7 +100,7 @@ export class MonitoringEngine {
   async monitorAllStrategies(): Promise<void> {
     try {
       const activeStrategies = await Strategy.find({ status: 'active' }).populate('userId');
-      
+
       logger.monitoring(`Monitoring ${activeStrategies.length} active strategies`);
 
       for (const strategy of activeStrategies) {
@@ -119,7 +119,7 @@ export class MonitoringEngine {
     try {
       const performance = await this.calculatePerformance(strategy);
       const alerts = await this.checkForAlerts(strategy, performance);
-      
+
       // Update strategy performance in database
       await Strategy.findByIdAndUpdate(strategy._id, {
         'performance.totalInvested': performance.totalInvested,
@@ -151,17 +151,17 @@ export class MonitoringEngine {
     try {
       // Get current market prices
       const tokenPrices = await this.marketService.getTokenPrices(['ETH', 'NEAR', 'USDC', 'USDT']);
-      
+
       // Calculate current value based on positions
       const currentValue = await this.calculateCurrentValue(strategy, tokenPrices);
-      
+
       // Get total invested amount
       const totalInvested = strategy.performance?.totalInvested || 0;
-      
+
       // Calculate returns and ROI
       const totalReturns = currentValue - totalInvested;
       const roi = totalInvested > 0 ? (totalReturns / totalInvested) * 100 : 0;
-      
+
       // Calculate realized APY
       const timeElapsed = Date.now() - new Date(strategy.createdAt).getTime();
       const yearInMs = 365 * 24 * 60 * 60 * 1000;
@@ -186,7 +186,10 @@ export class MonitoringEngine {
     }
   }
 
-  private async calculateCurrentValue(strategy: any, tokenPrices: Map<string, any>): Promise<number> {
+  private async calculateCurrentValue(
+    strategy: any,
+    tokenPrices: Map<string, any>
+  ): Promise<number> {
     let totalValue = 0;
 
     // This would calculate actual position values based on on-chain data
@@ -194,15 +197,15 @@ export class MonitoringEngine {
     for (const step of strategy.steps) {
       const tokenPrice = tokenPrices.get(step.asset);
       const amount = parseFloat(step.amount || '1000');
-      
+
       if (tokenPrice) {
         const baseValue = amount * tokenPrice.price;
-        
+
         // Apply estimated APY gains over time
         const timeElapsed = Date.now() - new Date(strategy.createdAt).getTime();
         const daysElapsed = timeElapsed / (1000 * 60 * 60 * 24);
-        const apyGain = baseValue * (step.expectedApy || 0) / 100 * (daysElapsed / 365);
-        
+        const apyGain = ((baseValue * (step.expectedApy || 0)) / 100) * (daysElapsed / 365);
+
         totalValue += baseValue + apyGain;
       }
     }
@@ -210,7 +213,10 @@ export class MonitoringEngine {
     return totalValue;
   }
 
-  private async checkForAlerts(strategy: any, performance: PerformanceMetrics): Promise<RiskAlert[]> {
+  private async checkForAlerts(
+    strategy: any,
+    performance: PerformanceMetrics
+  ): Promise<RiskAlert[]> {
     const alerts: RiskAlert[] = [];
 
     // ROI Alert
@@ -279,7 +285,7 @@ export class MonitoringEngine {
 
     for (const step of strategy.steps) {
       const protocolRisk = riskScores.get(step.protocol);
-      
+
       if (protocolRisk && protocolRisk.score > 7) {
         alerts.push({
           id: `risk_alert_${strategy.id}_${step.protocol}_${Date.now()}`,
@@ -315,7 +321,6 @@ export class MonitoringEngine {
 
         // Store alert in database for user access
         // await AlertModel.create(alert);
-
       } catch (error) {
         logger.error('Failed to process alert:', error);
       }
@@ -350,12 +355,14 @@ export class MonitoringEngine {
     }
   }
 
-  private async analyzeRebalancingOpportunity(strategy: any): Promise<RebalanceRecommendation | null> {
+  private async analyzeRebalancingOpportunity(
+    strategy: any
+  ): Promise<RebalanceRecommendation | null> {
     try {
       // Get current market conditions
       const marketSummary = await this.marketService.getCurrentAPYs();
       const currentAPY = await this.getCurrentStrategyAPY(strategy);
-      
+
       // Find better opportunities
       const betterProtocols = marketSummary.topPerformingProtocols.filter(
         protocol => protocol.apy > currentAPY * 1.2 && protocol.risk === 'low'
@@ -366,9 +373,11 @@ export class MonitoringEngine {
       }
 
       const bestProtocol = betterProtocols[0];
-      const estimatedGain = (bestProtocol.apy - currentAPY) * (strategy.performance?.totalInvested || 1000) / 100;
+      const estimatedGain =
+        ((bestProtocol.apy - currentAPY) * (strategy.performance?.totalInvested || 1000)) / 100;
 
-      if (estimatedGain < 100) { // Don't recommend for small gains
+      if (estimatedGain < 100) {
+        // Don't recommend for small gains
         return null;
       }
 
@@ -377,14 +386,16 @@ export class MonitoringEngine {
         reason: `Better APY opportunity: ${bestProtocol.protocol} offers ${bestProtocol.apy}% vs current ${currentAPY.toFixed(2)}%`,
         confidence: 75,
         estimatedGain,
-        actions: [{
-          type: 'rebalance',
-          fromProtocol: strategy.steps[0]?.protocol || 'current',
-          toProtocol: bestProtocol.protocol,
-          asset: bestProtocol.asset,
-          amount: strategy.performance?.totalInvested || 1000,
-          expectedImpact: `+${(bestProtocol.apy - currentAPY).toFixed(2)}% APY`
-        }],
+        actions: [
+          {
+            type: 'rebalance',
+            fromProtocol: strategy.steps[0]?.protocol || 'current',
+            toProtocol: bestProtocol.protocol,
+            asset: bestProtocol.asset,
+            amount: strategy.performance?.totalInvested || 1000,
+            expectedImpact: `+${(bestProtocol.apy - currentAPY).toFixed(2)}% APY`
+          }
+        ],
         timestamp: new Date().toISOString()
       };
     } catch (error) {
@@ -396,13 +407,13 @@ export class MonitoringEngine {
   async updatePositionData(): Promise<void> {
     try {
       const activeStrategies = await Strategy.find({ status: 'active' });
-      
+
       for (const strategy of activeStrategies) {
         const positions = await this.fetchPositionData(strategy);
-        
+
         // Update positions in database or cache
         // await PositionModel.updateMany({ strategyId: strategy.id }, positions);
-        
+
         logger.monitoring(`Position data updated for strategy ${strategy.id}`, {
           positionCount: positions.length
         });
@@ -418,7 +429,7 @@ export class MonitoringEngine {
     // Mock position fetching - in production, query actual on-chain data
     for (const step of strategy.steps) {
       const currentAPY = await this.marketService.getProtocolAPY(step.protocol, step.asset);
-      
+
       positions.push({
         strategyId: strategy.id,
         protocol: step.protocol,

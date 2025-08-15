@@ -67,14 +67,14 @@ export const authMiddleware = async (
     next();
   } catch (error) {
     logger.security('Authentication failed', {
-      error: error.message,
+      error: (error as Error).message,
       endpoint: req.path,
       ip: req.ip
     });
 
     res.status(401).json({
       error: 'Authentication failed',
-      message: error.message
+      message: (error as Error).message
     });
   }
 };
@@ -104,7 +104,7 @@ export const optionalAuth = async (
     next();
   } catch (error) {
     // For optional auth, continue without user if token is invalid
-    logger.warn('Optional auth failed, continuing without user', error.message);
+    logger.warn('Optional auth failed, continuing without user', (error as Error).message);
     next();
   }
 };
