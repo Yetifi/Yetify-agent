@@ -202,7 +202,7 @@ export class StrategyEngine {
         ]);
         
         const chain = chatPrompt.pipe(this.openAI);
-        const result = await chain.invoke({});
+        const result: any = await chain.invoke({});
         response = typeof result.content === 'string' ? result.content : String(result.content);
         logger.ai('Strategy generated using OpenAI');
       }
