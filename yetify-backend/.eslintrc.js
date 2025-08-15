@@ -16,7 +16,7 @@ module.exports = {
     jest: true,
     es6: true,
   },
-  ignorePatterns: ['.eslintrc.js', 'dist/', 'coverage/', 'node_modules/', 'src/controllers/monitoringController.ts'],
+  ignorePatterns: ['.eslintrc.js', 'dist/', 'coverage/', 'node_modules/'],
   rules: {
     // TypeScript-specific rules
     '@typescript-eslint/interface-name-prefix': 'off',

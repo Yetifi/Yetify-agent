@@ -55,9 +55,9 @@ router.get('/performance/:strategyId', async (req: AuthenticatedRequest, res: Re
         riskLevel: strategy.riskLevel
       },
       charts: {
-        performanceHistory: await this.getPerformanceHistory(strategyId),
-        apyTrend: await this.getAPYTrend(strategy),
-        riskMetrics: await this.getRiskMetrics(strategy)
+        performanceHistory: await getPerformanceHistory(strategyId),
+        apyTrend: await getAPYTrend(strategy),
+        riskMetrics: await getRiskMetrics(strategy)
       }
     };
 
@@ -191,7 +191,7 @@ router.get('/rebalance-recommendations', async (req: AuthenticatedRequest, res: 
             currentAPY: strategy.actualApy || strategy.estimatedApy,
             riskLevel: strategy.riskLevel
           } : null,
-          marketContext: await this.getMarketContext(rec)
+          marketContext: await getMarketContext(rec)
         };
       })
     );
@@ -289,12 +289,12 @@ router.get('/portfolio-summary', async (req: AuthenticatedRequest, res: Response
         medium: strategies.filter(s => s.riskLevel === 'Medium').length,
         high: strategies.filter(s => s.riskLevel === 'High').length
       },
-      chainDistribution: this.calculateChainDistribution(strategies),
-      protocolDistribution: this.calculateProtocolDistribution(strategies),
+      chainDistribution: calculateChainDistribution(strategies),
+      protocolDistribution: calculateProtocolDistribution(strategies),
       performance: {
-        last24h: await this.calculate24hPerformance(strategies),
-        last7d: await this.calculate7dPerformance(strategies),
-        last30d: await this.calculate30dPerformance(strategies)
+        last24h: await calculate24hPerformance(strategies),
+        last7d: await calculate7dPerformance(strategies),
+        last30d: await calculate30dPerformance(strategies)
       }
     };
 
@@ -335,9 +335,9 @@ router.get('/health-check', async (req: AuthenticatedRequest, res: Response) => 
         rebalanceRecommendations: 0 // Would come from recommendations collection
       },
       serviceStatus: {
-        priceFeeds: await this.checkPriceFeedsHealth(),
-        chainConnections: await this.checkChainConnectionsHealth(),
-        externalAPIs: await this.checkExternalAPIsHealth()
+        priceFeeds: await checkPriceFeedsHealth(),
+        chainConnections: await checkChainConnectionsHealth(),
+        externalAPIs: await checkExternalAPIsHealth()
       }
     };
 
@@ -351,8 +351,8 @@ router.get('/health-check', async (req: AuthenticatedRequest, res: Response) => 
   }
 });
 
-// Helper methods
-private async getPerformanceHistory(strategyId: string): Promise<any[]> {
+// Helper functions
+async function getPerformanceHistory(strategyId: string): Promise<any[]> {
   // Mock performance history - in production, would query time-series data
   const history = [];
   const now = Date.now();
@@ -366,7 +366,7 @@ private async getPerformanceHistory(strategyId: string): Promise<any[]> {
   return history;
 }
 
-private async getAPYTrend(strategy: any): Promise<any[]> {
+async function getAPYTrend(strategy: any): Promise<any[]> {
   // Mock APY trend data
   const trend = [];
   const now = Date.now();
@@ -379,7 +379,7 @@ private async getAPYTrend(strategy: any): Promise<any[]> {
   return trend;
 }
 
-private async getRiskMetrics(strategy: any): Promise<any> {
+async function getRiskMetrics(strategy: any): Promise<any> {
   return {
     currentRiskScore: strategy.riskLevel === 'Low' ? 2.5 : strategy.riskLevel === 'Medium' ? 5.0 : 7.5,
     volatility: Math.random() * 20 + 5,
@@ -388,7 +388,7 @@ private async getRiskMetrics(strategy: any): Promise<any> {
   };
 }
 
-private async getMarketContext(recommendation: any): Promise<any> {
+async function getMarketContext(recommendation: any): Promise<any> {
   return {
     marketTrend: 'bullish',
     protocolGrowth: '+15% TVL this week',
@@ -396,8 +396,8 @@ private async getMarketContext(recommendation: any): Promise<any> {
   };
 }
 
-private calculateChainDistribution(strategies: any[]): any {
-  const distribution = {};
+function calculateChainDistribution(strategies: any[]): Record<string, number> {
+  const distribution: Record<string, number> = {};
   strategies.forEach(strategy => {
     strategy.chains.forEach((chain: string) => {
       distribution[chain] = (distribution[chain] || 0) + 1;
@@ -406,8 +406,8 @@ private calculateChainDistribution(strategies: any[]): any {
   return distribution;
 }
 
-private calculateProtocolDistribution(strategies: any[]): any {
-  const distribution = {};
+function calculateProtocolDistribution(strategies: any[]): Record<string, number> {
+  const distribution: Record<string, number> = {};
   strategies.forEach(strategy => {
     strategy.protocols.forEach((protocol: string) => {
       distribution[protocol] = (distribution[protocol] || 0) + 1;
@@ -416,22 +416,22 @@ private calculateProtocolDistribution(strategies: any[]): any {
   return distribution;
 }
 
-private async calculate24hPerformance(strategies: any[]): Promise<number> {
+async function calculate24hPerformance(strategies: any[]): Promise<number> {
   // Mock 24h performance calculation
   return Math.random() * 10 - 2; // -2% to +8%
 }
 
-private async calculate7dPerformance(strategies: any[]): Promise<number> {
+async function calculate7dPerformance(strategies: any[]): Promise<number> {
   // Mock 7d performance calculation
   return Math.random() * 20 - 5; // -5% to +15%
 }
 
-private async calculate30dPerformance(strategies: any[]): Promise<number> {
+async function calculate30dPerformance(strategies: any[]): Promise<number> {
   // Mock 30d performance calculation
   return Math.random() * 50 - 10; // -10% to +40%
 }
 
-private async checkPriceFeedsHealth(): Promise<string> {
+async function checkPriceFeedsHealth(): Promise<string> {
   try {
     await marketDataService.getTokenPrices(['ETH']);
     return 'healthy';
@@ -440,7 +440,7 @@ private async checkPriceFeedsHealth(): Promise<string> {
   }
 }
 
-private async checkChainConnectionsHealth(): Promise<any> {
+async function checkChainConnectionsHealth(): Promise<any> {
   return {
     ethereum: 'healthy',
     near: 'healthy',
@@ -448,7 +448,7 @@ private async checkChainConnectionsHealth(): Promise<any> {
   };
 }
 
-private async checkExternalAPIsHealth(): Promise<any> {
+async function checkExternalAPIsHealth(): Promise<any> {
   return {
     coinGecko: 'healthy',
     defillama: 'healthy',
