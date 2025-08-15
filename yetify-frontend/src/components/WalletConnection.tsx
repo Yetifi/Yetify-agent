@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 interface WalletState {
   isConnected: boolean;
@@ -26,12 +26,12 @@ export default function WalletConnection() {
         setIsConnecting(true);
         const accounts = await window.ethereum.request({
           method: 'eth_requestAccounts',
-        });
+        }) as string[];
         
         const balance = await window.ethereum.request({
           method: 'eth_getBalance',
           params: [accounts[0], 'latest'],
-        });
+        }) as string;
 
         // Convert balance from wei to ETH (simplified)
         const ethBalance = (parseInt(balance, 16) / Math.pow(10, 18)).toFixed(4);
@@ -224,6 +224,8 @@ export default function WalletConnection() {
 
 declare global {
   interface Window {
-    ethereum?: any;
+    ethereum?: {
+      request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
+    };
   }
 }
