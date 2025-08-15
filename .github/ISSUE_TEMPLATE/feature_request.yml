@@ -1,0 +1,227 @@
+name: ✨ Feature Request
+description: Suggest a new feature or enhancement for Yetify
+title: "[FEATURE] "
+labels: ["enhancement", "needs-review"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for suggesting a new feature! Your ideas help make Yetify better for everyone.
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Pre-submission Checklist
+      description: Please confirm the following
+      options:
+        - label: I have searched existing issues and feature requests
+          required: true
+        - label: This feature doesn't exist in the current version
+          required: true
+        - label: I have considered if this aligns with Yetify's goals
+          required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Feature Category
+      description: What type of feature is this?
+      options:
+        - AI Strategy Generation
+        - Multi-Chain Execution
+        - Yield Monitoring
+        - User Interface/UX
+        - Wallet Integration
+        - DeFi Protocol Support
+        - Risk Management
+        - Performance/Analytics
+        - Developer Tools/API
+        - Security
+        - Documentation
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: How important is this feature to you?
+      options:
+        - Critical (Essential for platform adoption)
+        - High (Would significantly improve user experience)
+        - Medium (Nice to have, would add value)
+        - Low (Minor improvement)
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Statement
+      description: What problem does this feature solve?
+      placeholder: |
+        Is your feature request related to a problem? Please describe.
+        A clear and concise description of what the problem is.
+        Example: "I'm always frustrated when..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution
+      description: Describe the solution you'd like to see
+      placeholder: |
+        A clear and concise description of what you want to happen.
+        How should this feature work?
+    validations:
+      required: true
+
+  - type: textarea
+    id: user-story
+    attributes:
+      label: User Story
+      description: Describe this feature from a user's perspective
+      placeholder: |
+        As a [type of user], I want [goal] so that [benefit].
+        
+        Example:
+        As a DeFi investor, I want to set custom risk parameters for AI strategies
+        so that I can ensure the generated strategies match my risk tolerance.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: user-type
+    attributes:
+      label: Target User
+      description: Who would primarily benefit from this feature?
+      options:
+        - Individual DeFi Investors
+        - Institutional Investors
+        - DeFi Developers
+        - Protocol Integrators
+        - All Users
+        - Administrators
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance Criteria
+      description: What needs to be implemented for this feature to be considered complete?
+      placeholder: |
+        - [ ] Criteria 1
+        - [ ] Criteria 2
+        - [ ] Criteria 3
+        
+        Example:
+        - [ ] User can input custom risk parameters
+        - [ ] AI respects risk parameters when generating strategies
+        - [ ] Risk parameters are saved to user profile
+        - [ ] Validation prevents invalid risk configurations
+
+  - type: textarea
+    id: technical-considerations
+    attributes:
+      label: Technical Considerations
+      description: Any technical aspects or constraints to consider?
+      placeholder: |
+        - API changes required
+        - Database schema modifications
+        - Blockchain integrations needed
+        - Performance implications
+        - Security considerations
+
+  - type: dropdown
+    id: blockchain-networks
+    attributes:
+      label: Blockchain Networks (if applicable)
+      description: Which networks should this feature support?
+      multiple: true
+      options:
+        - Ethereum
+        - NEAR Protocol
+        - Arbitrum
+        - Polygon
+        - Optimism
+        - All Networks
+        - Not blockchain-specific
+    validations:
+      required: false
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternative Solutions
+      description: Have you considered any alternative solutions or features?
+      placeholder: |
+        Describe alternatives you've considered and why you prefer the proposed solution.
+
+  - type: textarea
+    id: mockups
+    attributes:
+      label: Mockups/Examples
+      description: Visual examples, mockups, or references
+      placeholder: |
+        If you have mockups, wireframes, or examples from other platforms,
+        please share them here or provide links.
+
+  - type: checkboxes
+    id: implementation
+    attributes:
+      label: Implementation Scope
+      description: What components would this feature affect?
+      options:
+        - label: Frontend (Next.js interface)
+        - label: Backend API
+        - label: AI Strategy Engine
+        - label: Execution Engine
+        - label: Database schema
+        - label: Smart contracts
+        - label: External integrations
+        - label: Documentation
+
+  - type: textarea
+    id: business-value
+    attributes:
+      label: Business Value
+      description: How would this feature benefit Yetify and its users?
+      placeholder: |
+        - Increased user adoption
+        - Improved user retention
+        - New market opportunities
+        - Competitive advantage
+        - Risk reduction
+
+  - type: input
+    id: timeline
+    attributes:
+      label: Desired Timeline
+      description: When would you like to see this feature implemented?
+      placeholder: "e.g., Next release, Q2 2024, No specific timeline"
+
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: Contribution
+      description: Are you willing to help implement this feature?
+      options:
+        - label: I can provide additional requirements/feedback
+        - label: I can help with design/mockups
+        - label: I can contribute code
+        - label: I can help with testing
+        - label: I can help with documentation
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Any other context, links, or references
+      placeholder: |
+        Add any other context, screenshots, links to similar features in other platforms,
+        or anything else that would help understand and implement this feature.
