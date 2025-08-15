@@ -72,7 +72,7 @@ router.get('/performance/:strategyId', async (req: AuthenticatedRequest, res: Re
     logger.error('Failed to get strategy performance:', error);
     res.status(500).json({
       error: 'Failed to retrieve performance data',
-      message: error.message
+      message: (error as Error).message
     });
   }
 });
@@ -136,7 +136,7 @@ router.get('/alerts', async (req: AuthenticatedRequest, res: Response) => {
     logger.error('Failed to get alerts:', error);
     res.status(500).json({
       error: 'Failed to retrieve alerts',
-      message: error.message
+      message: (error as Error).message
     });
   }
 });
@@ -170,7 +170,7 @@ router.post('/alerts/acknowledge', async (req: AuthenticatedRequest, res: Respon
     logger.error('Failed to acknowledge alerts:', error);
     res.status(500).json({
       error: 'Failed to acknowledge alerts',
-      message: error.message
+      message: (error as Error).message
     });
   }
 });
@@ -182,15 +182,17 @@ router.get('/rebalance-recommendations', async (req: AuthenticatedRequest, res: 
 
     // Enhance recommendations with market context
     const enhancedRecommendations = await Promise.all(
-      recommendations.map(async (rec) => {
+      recommendations.map(async rec => {
         const strategy = await Strategy.findOne({ id: rec.strategyId });
         return {
           ...rec,
-          strategy: strategy ? {
-            goal: strategy.goal,
-            currentAPY: strategy.actualApy || strategy.estimatedApy,
-            riskLevel: strategy.riskLevel
-          } : null,
+          strategy: strategy
+            ? {
+                goal: strategy.goal,
+                currentAPY: strategy.actualApy || strategy.estimatedApy,
+                riskLevel: strategy.riskLevel
+              }
+            : null,
           marketContext: await getMarketContext(rec)
         };
       })
@@ -213,7 +215,7 @@ router.get('/rebalance-recommendations', async (req: AuthenticatedRequest, res: 
     logger.error('Failed to get rebalance recommendations:', error);
     res.status(500).json({
       error: 'Failed to retrieve rebalance recommendations',
-      message: error.message
+      message: (error as Error).message
     });
   }
 });
@@ -267,7 +269,7 @@ router.get('/market-overview', async (req: AuthenticatedRequest, res: Response) 
     logger.error('Failed to get market overview:', error);
     res.status(500).json({
       error: 'Failed to retrieve market overview',
-      message: error.message
+      message: (error as Error).message
     });
   }
 });
@@ -301,8 +303,9 @@ router.get('/portfolio-summary', async (req: AuthenticatedRequest, res: Response
     // Calculate average ROI
     const strategiesWithROI = strategies.filter(s => s.performance?.roi);
     if (strategiesWithROI.length > 0) {
-      portfolioSummary.averageROI = strategiesWithROI.reduce((sum, s) => 
-        sum + (s.performance?.roi || 0), 0) / strategiesWithROI.length;
+      portfolioSummary.averageROI =
+        strategiesWithROI.reduce((sum, s) => sum + (s.performance?.roi || 0), 0) /
+        strategiesWithROI.length;
     }
 
     logger.monitoring('Portfolio summary generated', {
@@ -316,7 +319,7 @@ router.get('/portfolio-summary', async (req: AuthenticatedRequest, res: Response
     logger.error('Failed to get portfolio summary:', error);
     res.status(500).json({
       error: 'Failed to retrieve portfolio summary',
-      message: error.message
+      message: (error as Error).message
     });
   }
 });
@@ -346,7 +349,7 @@ router.get('/health-check', async (req: AuthenticatedRequest, res: Response) => 
     logger.error('Health check failed:', error);
     res.status(500).json({
       error: 'Health check failed',
-      message: error.message
+      message: (error as Error).message
     });
   }
 });
@@ -360,7 +363,7 @@ async function getPerformanceHistory(_strategyId: string): Promise<any[]> {
     history.push({
       timestamp: new Date(now - i * 24 * 60 * 60 * 1000).toISOString(),
       value: 1000 + Math.random() * 200 - 100,
-      roi: (Math.random() * 20) - 5
+      roi: Math.random() * 20 - 5
     });
   }
   return history;
@@ -373,7 +376,7 @@ async function getAPYTrend(strategy: any): Promise<any[]> {
   for (let i = 7; i >= 0; i--) {
     trend.push({
       date: new Date(now - i * 24 * 60 * 60 * 1000).toISOString(),
-      apy: strategy.estimatedApy + (Math.random() * 4) - 2
+      apy: strategy.estimatedApy + Math.random() * 4 - 2
     });
   }
   return trend;
@@ -381,7 +384,8 @@ async function getAPYTrend(strategy: any): Promise<any[]> {
 
 async function getRiskMetrics(strategy: any): Promise<any> {
   return {
-    currentRiskScore: strategy.riskLevel === 'Low' ? 2.5 : strategy.riskLevel === 'Medium' ? 5.0 : 7.5,
+    currentRiskScore:
+      strategy.riskLevel === 'Low' ? 2.5 : strategy.riskLevel === 'Medium' ? 5.0 : 7.5,
     volatility: Math.random() * 20 + 5,
     sharpeRatio: Math.random() * 2 + 0.5,
     maxDrawdown: Math.random() * 15 + 2

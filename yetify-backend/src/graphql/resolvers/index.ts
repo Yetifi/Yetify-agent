@@ -17,7 +17,7 @@ const protocolDataService = new ProtocolDataService();
 export const resolvers = {
   Query: {
     // Strategy queries
-    async getStrategy(_, { id }, context) {
+    async getStrategy(_: any, { id }: { id: string }, context: any) {
       try {
         const strategy = await Strategy.findOne({ id }).populate('userId');
         if (!strategy) {
@@ -36,7 +36,7 @@ export const resolvers = {
       }
     },
 
-    async getUserStrategies(_, { userId }, context) {
+    async getUserStrategies(_: any, { userId }: { userId: string }, context: any) {
       try {
         // Verify user access
         if (!context.user || context.user.id !== userId) {

@@ -42,7 +42,7 @@ export class ExecutionEngine {
 
   async executeStrategy(context: ExecutionContext): Promise<ExecutionResult[]> {
     const results: ExecutionResult[] = [];
-    
+
     try {
       logger.execution('Starting strategy execution', {
         strategyId: context.strategy.id,
@@ -53,13 +53,19 @@ export class ExecutionEngine {
       // Validate all steps before execution
       const validationResults = await this.validateAllSteps(context);
       if (validationResults.some(v => !v.isValid)) {
-        throw new Error('Strategy validation failed: ' + validationResults.filter(v => !v.isValid).map(v => v.error).join(', '));
+        throw new Error(
+          'Strategy validation failed: ' +
+            validationResults
+              .filter(v => !v.isValid)
+              .map(v => v.error)
+              .join(', ')
+        );
       }
 
       // Execute steps sequentially
       for (let i = 0; i < context.strategy.steps.length; i++) {
         const step = context.strategy.steps[i];
-        
+
         try {
           logger.execution(`Executing step ${i + 1}/${context.strategy.steps.length}`, {
             action: step.action,
@@ -78,7 +84,6 @@ export class ExecutionEngine {
 
           // Wait between steps to avoid nonce conflicts
           await this.delay(2000);
-
         } catch (error) {
           logger.error(`Error executing step ${i + 1}:`, error);
           results.push({
@@ -104,9 +109,13 @@ export class ExecutionEngine {
     }
   }
 
-  private async executeStep(step: StrategyStep, context: ExecutionContext, stepId: string): Promise<ExecutionResult> {
+  private async executeStep(
+    step: StrategyStep,
+    context: ExecutionContext,
+    stepId: string
+  ): Promise<ExecutionResult> {
     const executor = this.getExecutorForStep(step);
-    
+
     if (!executor) {
       throw new Error(`No executor available for protocol: ${step.protocol}`);
     }
@@ -128,18 +137,18 @@ export class ExecutionEngine {
   private getExecutorForStep(step: StrategyStep): ChainExecutor | null {
     // Determine which chain executor to use based on protocol
     const protocolChainMap: { [key: string]: string } = {
-      'aave': 'ethereum',
-      'lido': 'ethereum',
-      'uniswap': 'ethereum',
-      'curve': 'ethereum',
-      'compound': 'ethereum',
+      aave: 'ethereum',
+      lido: 'ethereum',
+      uniswap: 'ethereum',
+      curve: 'ethereum',
+      compound: 'ethereum',
       'ref finance': 'near',
-      'burrow': 'near',
+      burrow: 'near',
       'meta pool': 'near'
     };
 
     const chain = protocolChainMap[step.protocol.toLowerCase()];
-    
+
     switch (chain) {
       case 'ethereum':
         return this.ethereumExecutor;
@@ -153,12 +162,14 @@ export class ExecutionEngine {
     }
   }
 
-  private async validateAllSteps(context: ExecutionContext): Promise<Array<{isValid: boolean, error?: string}>> {
+  private async validateAllSteps(
+    context: ExecutionContext
+  ): Promise<Array<{ isValid: boolean; error?: string }>> {
     const validations = [];
-    
+
     for (const step of context.strategy.steps) {
       const executor = this.getExecutorForStep(step);
-      
+
       if (!executor) {
         validations.push({
           isValid: false,
@@ -183,18 +194,20 @@ export class ExecutionEngine {
 
   async estimateGasForStrategy(context: ExecutionContext): Promise<{ [chain: string]: string }> {
     const gasEstimates: { [chain: string]: string } = {};
-    
+
     for (const step of context.strategy.steps) {
       const executor = this.getExecutorForStep(step);
-      
+
       if (executor) {
         try {
           const gasEstimate = await executor.estimateGas(step, context);
           const chain = this.getChainForStep(step);
-          
+
           if (gasEstimates[chain]) {
             // Sum gas estimates for the same chain
-            gasEstimates[chain] = (parseFloat(gasEstimates[chain]) + parseFloat(gasEstimate)).toString();
+            gasEstimates[chain] = (
+              parseFloat(gasEstimates[chain]) + parseFloat(gasEstimate)
+            ).toString();
           } else {
             gasEstimates[chain] = gasEstimate;
           }
@@ -209,11 +222,11 @@ export class ExecutionEngine {
 
   private getChainForStep(step: StrategyStep): string {
     const protocolChainMap: { [key: string]: string } = {
-      'aave': 'ethereum',
-      'lido': 'ethereum',
-      'uniswap': 'ethereum',
+      aave: 'ethereum',
+      lido: 'ethereum',
+      uniswap: 'ethereum',
       'ref finance': 'near',
-      'burrow': 'near'
+      burrow: 'near'
     };
 
     return protocolChainMap[step.protocol.toLowerCase()] || 'ethereum';
@@ -241,7 +254,7 @@ class EthereumExecutor implements ChainExecutor {
     // This would contain actual contract addresses and ABIs in production
     const aaveV3PoolAddress = '0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2';
     const lidoStETHAddress = '0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84';
-    
+
     // Mock contract interfaces - in production, load actual ABIs
     const mockABI = [
       'function deposit(address asset, uint256 amount, address onBehalfOf, uint16 referralCode)',
@@ -289,12 +302,12 @@ class EthereumExecutor implements ChainExecutor {
     try {
       // Mock gas estimation - in production, use actual contract calls
       const baseGas = {
-        'deposit': 150000,
-        'stake': 200000,
-        'yield_farm': 300000,
-        'provide_liquidity': 250000,
-        'leverage': 400000,
-        'bridge': 350000
+        deposit: 150000,
+        stake: 200000,
+        yield_farm: 300000,
+        provide_liquidity: 250000,
+        leverage: 400000,
+        bridge: 350000
       };
 
       const gasEstimate = baseGas[step.action as keyof typeof baseGas] || 150000;
@@ -376,11 +389,11 @@ class NearExecutor implements ChainExecutor {
   async estimateGas(step: StrategyStep, context: ExecutionContext): Promise<string> {
     // NEAR gas is more predictable
     const baseGas = {
-      'deposit': '30',
-      'stake': '50',
-      'yield_farm': '80',
-      'provide_liquidity': '60',
-      'bridge': '100'
+      deposit: '30',
+      stake: '50',
+      yield_farm: '80',
+      provide_liquidity: '60',
+      bridge: '100'
     };
 
     const gasEstimate = baseGas[step.action as keyof typeof baseGas] || '50';
