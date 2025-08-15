@@ -33,6 +33,7 @@ module.exports = {
   rules: {
     // TypeScript-specific rules
     '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+    'no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
 
     // General rules
     'no-console': 'warn',
