@@ -24,7 +24,11 @@ module.exports = {
     'src/graphql/resolvers/index.ts',
     'src/ai-engine/StrategyEngine.ts',
     'src/middleware/auth.ts',
-    'src/index.ts'
+    'src/index.ts',
+    'src/execution-layer/ExecutionEngine.ts',
+    'src/monitoring/MonitoringEngine.ts',
+    'src/services/MarketDataService.ts',
+    'src/services/ProtocolDataService.ts'
   ],
   rules: {
     // TypeScript-specific rules

@@ -1,7 +1,7 @@
 import winston from 'winston';
 import path from 'path';
 
-const { combine, timestamp, errors, json, simple, colorize, printf } = winston.format;
+const { combine, timestamp, errors, json, colorize, printf } = winston.format;
 
 // Custom format for console logging
 const consoleFormat = printf(({ level, message, timestamp, ...meta }) => {

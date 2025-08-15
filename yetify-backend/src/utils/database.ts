@@ -29,7 +29,7 @@ export class DatabaseConnection {
         socketTimeoutMS: 45000,
         bufferCommands: false,
         retryWrites: true,
-        retryReads: true,
+        retryReads: true
       };
 
       logger.info('Connecting to MongoDB...', { uri: this.maskUri(connectionUri) });
@@ -106,7 +106,9 @@ export class DatabaseConnection {
   }
 
   private setupEventHandlers(): void {
-    if (!this.connection) return;
+    if (!this.connection) {
+      return;
+    }
 
     this.connection.on('connected', () => {
       logger.info('MongoDB connected event');

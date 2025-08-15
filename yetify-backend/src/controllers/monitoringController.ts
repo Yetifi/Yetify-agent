@@ -1,4 +1,4 @@
-import { Router, Response } from 'express';
+import { Response, Router } from 'express';
 import Joi from 'joi';
 import { MonitoringEngine } from '../monitoring/MonitoringEngine';
 import { MarketDataService } from '../services/MarketDataService';
