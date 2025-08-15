@@ -65,8 +65,7 @@ RUN mkdir -p logs && \
     chown -R yetify:nodejs logs && \
     chmod 755 logs
 
-# Security: Remove unnecessary packages (if they exist)
-RUN apk del python3 make g++ || true
+# Security: Packages not needed in production stage (clean base image)
 
 # Switch to non-root user
 USER yetify
