@@ -62,7 +62,7 @@ router.get('/', async (req: AuthenticatedRequest, res: Response) => {
     logger.error('Failed to get strategies:', error);
     res.status(500).json({
       error: 'Failed to retrieve strategies',
-      message: error.message
+      message: error instanceof Error ? error.message : String(error)
     });
   }
 });
@@ -91,7 +91,7 @@ router.get('/:id', async (req: AuthenticatedRequest, res: Response) => {
     logger.error('Failed to get strategy:', error);
     res.status(500).json({
       error: 'Failed to retrieve strategy',
-      message: error.message
+      message: error instanceof Error ? error.message : String(error)
     });
   }
 });
@@ -142,7 +142,7 @@ router.post('/generate', async (req: AuthenticatedRequest, res: Response) => {
     logger.error('Strategy generation failed:', error);
     res.status(500).json({
       error: 'Strategy generation failed',
-      message: error.message
+      message: error instanceof Error ? error.message : String(error)
     });
   }
 });
@@ -189,7 +189,7 @@ router.put('/:id', async (req: AuthenticatedRequest, res: Response) => {
     logger.error('Strategy update failed:', error);
     res.status(500).json({
       error: 'Strategy update failed',
-      message: error.message
+      message: error instanceof Error ? error.message : String(error)
     });
   }
 });
@@ -225,7 +225,7 @@ router.post('/:id/activate', async (req: AuthenticatedRequest, res: Response) =>
     logger.error('Strategy activation failed:', error);
     res.status(500).json({
       error: 'Strategy activation failed',
-      message: error.message
+      message: error instanceof Error ? error.message : String(error)
     });
   }
 });
@@ -261,7 +261,7 @@ router.post('/:id/pause', async (req: AuthenticatedRequest, res: Response) => {
     logger.error('Strategy pause failed:', error);
     res.status(500).json({
       error: 'Strategy pause failed',
-      message: error.message
+      message: error instanceof Error ? error.message : String(error)
     });
   }
 });
@@ -295,7 +295,7 @@ router.delete('/:id', async (req: AuthenticatedRequest, res: Response) => {
     logger.error('Strategy deletion failed:', error);
     res.status(500).json({
       error: 'Strategy deletion failed',
-      message: error.message
+      message: error instanceof Error ? error.message : String(error)
     });
   }
 });
@@ -325,8 +325,32 @@ router.post('/:id/feedback', async (req: AuthenticatedRequest, res: Response) =>
       });
     }
 
-    // Store feedback for AI learning
-    await strategyEngine.storeStrategyKnowledge(strategy, feedback);
+    // Store feedback for AI learning - convert mongoose doc to plain object
+    const strategyData = {
+      id: strategy.id,
+      goal: strategy.goal,
+      chains: strategy.chains,
+      protocols: strategy.protocols,
+      steps: strategy.steps.map(step => ({
+        action: step.action,
+        protocol: step.protocol,
+        asset: step.asset,
+        amount: step.amount || undefined,
+        expectedApy: step.expectedApy,
+        riskScore: step.riskScore,
+        gasEstimate: step.gasEstimate,
+        dependencies: step.dependencies
+      })),
+      riskLevel: strategy.riskLevel,
+      estimatedApy: strategy.estimatedApy,
+      estimatedTvl: strategy.estimatedTvl,
+      executionTime: strategy.executionTime,
+      gasEstimate: strategy.gasEstimate,
+      confidence: strategy.confidence,
+      reasoning: strategy.reasoning,
+      warnings: strategy.warnings
+    } as any;
+    await strategyEngine.storeStrategyKnowledge(strategyData, feedback);
 
     logger.ai('Strategy feedback received', {
       strategyId: id,
@@ -342,7 +366,7 @@ router.post('/:id/feedback', async (req: AuthenticatedRequest, res: Response) =>
     logger.error('Feedback submission failed:', error);
     res.status(500).json({
       error: 'Feedback submission failed',
-      message: error.message
+      message: error instanceof Error ? error.message : String(error)
     });
   }
 });
@@ -378,7 +402,7 @@ router.get('/:id/performance', async (req: AuthenticatedRequest, res: Response) 
     logger.error('Failed to get strategy performance:', error);
     res.status(500).json({
       error: 'Failed to retrieve performance data',
-      message: error.message
+      message: error instanceof Error ? error.message : String(error)
     });
   }
 });
@@ -424,7 +448,7 @@ router.get('/analytics/summary', async (req: AuthenticatedRequest, res: Response
     logger.error('Failed to get strategy analytics:', error);
     res.status(500).json({
       error: 'Failed to retrieve analytics',
-      message: error.message
+      message: error instanceof Error ? error.message : String(error)
     });
   }
 });
