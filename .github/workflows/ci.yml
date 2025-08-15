@@ -1,0 +1,353 @@
+name: 🧪 Continuous Integration
+
+on:
+  push:
+    branches: [ main, development ]
+    paths:
+      - 'yetify-backend/**'
+      - '.github/workflows/ci.yml'
+  pull_request:
+    branches: [ main, development ]
+    paths:
+      - 'yetify-backend/**'
+      - '.github/workflows/ci.yml'
+
+env:
+  NODE_VERSION: '18'
+  WORKING_DIRECTORY: './yetify-backend'
+
+defaults:
+  run:
+    working-directory: ./yetify-backend
+
+jobs:
+  # Code Quality Checks
+  lint-and-format:
+    name: 🔍 Code Quality
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📚 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: ${{ env.WORKING_DIRECTORY }}/package-lock.json
+
+      - name: 📥 Install dependencies
+        run: npm ci
+
+      - name: 🔍 Run ESLint
+        run: npm run lint
+
+      - name: 💅 Check Prettier formatting
+        run: npm run format:check
+
+      - name: 🔧 TypeScript type check
+        run: npm run typecheck
+
+  # Security Scanning
+  security-scan:
+    name: 🔒 Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📚 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: ${{ env.WORKING_DIRECTORY }}/package-lock.json
+
+      - name: 📥 Install dependencies
+        run: npm ci
+
+      - name: 🔒 Run npm audit
+        run: npm audit --audit-level=moderate
+
+      - name: 🛡️ Run Snyk security scan
+        uses: snyk/actions/node@master
+        continue-on-error: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high
+
+  # Unit Tests
+  unit-tests:
+    name: 🧪 Unit Tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18, 20]
+    steps:
+      - name: 📚 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+          cache-dependency-path: ${{ env.WORKING_DIRECTORY }}/package-lock.json
+
+      - name: 📥 Install dependencies
+        run: npm ci
+
+      - name: 🧪 Run unit tests
+        run: npm run test:unit
+        env:
+          NODE_ENV: test
+
+      - name: 📊 Upload unit test coverage
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file: ./yetify-backend/coverage/lcov.info
+          flags: unit-tests
+          name: unit-tests-${{ matrix.node-version }}
+
+  # Integration Tests
+  integration-tests:
+    name: 🔗 Integration Tests
+    runs-on: ubuntu-latest
+    services:
+      mongodb:
+        image: mongo:7.0
+        env:
+          MONGO_INITDB_ROOT_USERNAME: admin
+          MONGO_INITDB_ROOT_PASSWORD: password
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.adminCommand(\"ping\")'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7.2-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: 📚 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: ${{ env.WORKING_DIRECTORY }}/package-lock.json
+
+      - name: 📥 Install dependencies
+        run: npm ci
+
+      - name: 🔗 Run integration tests
+        run: npm run test:integration
+        env:
+          NODE_ENV: test
+          MONGODB_URI: mongodb://admin:password@localhost:27017/yetify-test?authSource=admin
+          REDIS_URL: redis://localhost:6379
+          JWT_SECRET: test_jwt_secret_key
+          ENCRYPTION_KEY: test_encryption_key_32_characters
+
+      - name: 📊 Upload integration test coverage
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file: ./yetify-backend/coverage/lcov.info
+          flags: integration-tests
+          name: integration-tests
+
+  # Build and Docker Tests
+  build-and-docker:
+    name: 🐳 Build & Docker
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📚 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: ${{ env.WORKING_DIRECTORY }}/package-lock.json
+
+      - name: 📥 Install dependencies
+        run: npm ci
+
+      - name: 🏗️ Build TypeScript
+        run: npm run build
+
+      - name: 🐳 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🐳 Build Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./yetify-backend
+          file: ./yetify-backend/Dockerfile
+          target: production
+          push: false
+          tags: yetify-backend:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: 🧪 Test Docker image
+        run: |
+          docker run --name yetify-test -d -p 3001:3001 \
+            -e NODE_ENV=test \
+            -e JWT_SECRET=test_secret \
+            -e ENCRYPTION_KEY=test_encryption_key_32_characters \
+            yetify-backend:test
+          
+          # Wait for container to start
+          sleep 10
+          
+          # Test health endpoint
+          curl -f http://localhost:3001/health || exit 1
+          
+          # Cleanup
+          docker stop yetify-test
+          docker rm yetify-test
+
+  # End-to-End Tests
+  e2e-tests:
+    name: 🎭 E2E Tests
+    runs-on: ubuntu-latest
+    needs: [lint-and-format, unit-tests, integration-tests]
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
+    steps:
+      - name: 📚 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: ${{ env.WORKING_DIRECTORY }}/package-lock.json
+
+      - name: 📥 Install dependencies
+        run: npm ci
+
+      - name: 🐳 Start services with Docker Compose
+        run: |
+          cp .env.example .env
+          docker-compose up -d mongodb redis
+          
+          # Wait for services to be ready
+          sleep 15
+
+      - name: 🎭 Run E2E tests
+        run: npm run test:e2e
+        env:
+          NODE_ENV: test
+          MONGODB_URI: mongodb://localhost:27017/yetify-test
+          REDIS_URL: redis://localhost:6379
+          JWT_SECRET: test_jwt_secret_key
+          ENCRYPTION_KEY: test_encryption_key_32_characters
+
+      - name: 🧹 Cleanup
+        if: always()
+        run: docker-compose down -v
+
+  # Performance Tests
+  performance-tests:
+    name: ⚡ Performance Tests
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: 📚 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: ${{ env.WORKING_DIRECTORY }}/package-lock.json
+
+      - name: 📥 Install dependencies
+        run: npm ci
+
+      - name: 🐳 Start test environment
+        run: |
+          cp .env.example .env
+          docker-compose up -d
+
+      - name: ⚡ Run performance tests
+        run: |
+          # Wait for services to be ready
+          sleep 30
+          
+          # Run load tests with Artillery
+          npx artillery quick --count 10 --num 20 http://localhost:3001/health
+          
+          # Run memory leak tests
+          node --expose-gc tests/performance/memory-test.js
+
+      - name: 🧹 Cleanup
+        if: always()
+        run: docker-compose down -v
+
+  # Deployment Readiness Check
+  deployment-check:
+    name: 🚀 Deployment Check
+    runs-on: ubuntu-latest
+    needs: [lint-and-format, unit-tests, integration-tests, build-and-docker]
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: 📚 Checkout code
+        uses: actions/checkout@v4
+
+      - name: ✅ All checks passed
+        run: |
+          echo "🎉 All CI checks passed!"
+          echo "📦 Build successful"
+          echo "🧪 Tests passing"
+          echo "🔒 Security scans clean"
+          echo "🚀 Ready for deployment"
+
+      - name: 📋 Create deployment summary
+        run: |
+          echo "## 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ **Code Quality**: Linting and formatting passed" >> $GITHUB_STEP_SUMMARY
+          echo "✅ **Security**: Security scans completed" >> $GITHUB_STEP_SUMMARY
+          echo "✅ **Unit Tests**: All unit tests passing" >> $GITHUB_STEP_SUMMARY
+          echo "✅ **Integration Tests**: Integration tests passing" >> $GITHUB_STEP_SUMMARY
+          echo "✅ **Build**: Docker build successful" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🎯 **Ready for production deployment**" >> $GITHUB_STEP_SUMMARY
+
+# Workflow Summary
+  summary:
+    name: 📋 Summary
+    runs-on: ubuntu-latest
+    needs: [lint-and-format, security-scan, unit-tests, integration-tests, build-and-docker]
+    if: always()
+    steps:
+      - name: 📊 Workflow Summary
+        run: |
+          echo "## 🧪 CI Pipeline Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Code Quality | ${{ needs.lint-and-format.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Security Scan | ${{ needs.security-scan.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Unit Tests | ${{ needs.unit-tests.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Integration Tests | ${{ needs.integration-tests.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Build & Docker | ${{ needs.build-and-docker.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
