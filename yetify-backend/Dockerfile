@@ -58,7 +58,7 @@ COPY --from=builder --chown=yetify:nodejs /app/dist ./dist
 
 # Copy necessary runtime files
 COPY --chown=yetify:nodejs healthcheck.js ./
-COPY --chown=yetify:nodejs scripts/ ./scripts/
+# scripts/ folder removed - not needed for production
 
 # Create logs directory with proper permissions
 RUN mkdir -p logs && \
