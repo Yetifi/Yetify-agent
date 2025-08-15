@@ -188,7 +188,12 @@ const extractToken = (req: Request): string | null => {
 
 const verifyToken = (token: string): JWTPayload => {
   try {
-    return jwt.verify(token, process.env.JWT_SECRET!) as JWTPayload;
+    const jwtSecret = process.env.JWT_SECRET;
+    if (!jwtSecret) {
+      throw new Error('JWT_SECRET environment variable is not set');
+    }
+    
+    return jwt.verify(token, jwtSecret) as JWTPayload;
   } catch (error) {
     if ((error as any).name === 'TokenExpiredError') {
       throw new Error('Token expired');
