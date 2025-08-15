@@ -64,7 +64,7 @@ export class MarketDataService {
 
   async getTokenPrices(symbols: string[]): Promise<Map<string, TokenPrice>> {
     const prices = new Map<string, TokenPrice>();
-    
+
     for (const symbol of symbols) {
       const cached = this.priceCache.get(symbol);
       if (cached) {
@@ -88,7 +88,7 @@ export class MarketDataService {
 
   async getCurrentAPYs(): Promise<MarketSummary> {
     const cacheKey = 'current_apys';
-    
+
     if (this.apyCache.has(cacheKey)) {
       const cached = this.apyCache.get(cacheKey)!;
       return this.calculateMarketSummary(cached);
@@ -97,7 +97,7 @@ export class MarketDataService {
     try {
       const apyData = await this.fetchCurrentAPYs();
       this.apyCache.set(cacheKey, apyData);
-      
+
       logger.monitoring('APY data fetched', { protocolCount: apyData.length });
       return this.calculateMarketSummary(apyData);
     } catch (error) {
@@ -108,7 +108,7 @@ export class MarketDataService {
 
   async getTVLData(): Promise<TVLData[]> {
     const cacheKey = 'tvl_data';
-    
+
     if (this.tvlCache.has(cacheKey)) {
       return this.tvlCache.get(cacheKey)!;
     }
@@ -116,7 +116,7 @@ export class MarketDataService {
     try {
       const tvlData = await this.fetchTVLData();
       this.tvlCache.set(cacheKey, tvlData);
-      
+
       logger.monitoring('TVL data fetched', { protocolCount: tvlData.length });
       return tvlData;
     } catch (error) {
@@ -133,7 +133,7 @@ export class MarketDataService {
     try {
       const gasPrices = await this.fetchGasPrices();
       this.gasCache = gasPrices;
-      
+
       logger.monitoring('Gas prices fetched', gasPrices);
       return gasPrices;
     } catch (error) {
@@ -145,10 +145,11 @@ export class MarketDataService {
   async getProtocolAPY(protocol: string, asset: string): Promise<number | null> {
     const apyData = await this.getCurrentAPYs();
     const protocolData = apyData.topPerformingProtocols.find(
-      p => p.protocol.toLowerCase() === protocol.toLowerCase() && 
-           p.asset.toLowerCase() === asset.toLowerCase()
+      p =>
+        p.protocol.toLowerCase() === protocol.toLowerCase() &&
+        p.asset.toLowerCase() === asset.toLowerCase()
     );
-    
+
     return protocolData?.apy || null;
   }
 
@@ -174,7 +175,7 @@ export class MarketDataService {
       });
 
       const data = Object.values(response.data)[0] as any;
-      
+
       return {
         symbol,
         price: data.usd,
@@ -192,14 +193,13 @@ export class MarketDataService {
   private async fetchTokenPriceFallback(symbol: string): Promise<TokenPrice> {
     // Mock implementation - in production, use alternative APIs
     const mockPrices = {
-      'ETH': { price: 2400, change24h: 2.5 },
-      'NEAR': { price: 3.2, change24h: -1.2 },
-      'USDC': { price: 1.0, change24h: 0.01 },
-      'USDT': { price: 1.0, change24h: -0.01 }
+      ETH: { price: 2400, change24h: 2.5 },
+      NEAR: { price: 3.2, change24h: -1.2 },
+      USDC: { price: 1.0, change24h: 0.01 },
+      USDT: { price: 1.0, change24h: -0.01 }
     };
 
-    const mockData = mockPrices[symbol as keyof typeof mockPrices] || 
-                    { price: 100, change24h: 0 };
+    const mockData = mockPrices[symbol as keyof typeof mockPrices] || { price: 100, change24h: 0 };
 
     return {
       symbol,
@@ -394,10 +394,8 @@ export class MarketDataService {
   private calculateMarketSummary(apyData: APYData[]): MarketSummary {
     const totalTVL = apyData.reduce((sum, d) => sum + d.tvl, 0);
     const averageAPY = apyData.reduce((sum, d) => sum + d.apy, 0) / apyData.length;
-    
-    const topPerforming = apyData
-      .sort((a, b) => b.apy - a.apy)
-      .slice(0, 10);
+
+    const topPerforming = apyData.sort((a, b) => b.apy - a.apy).slice(0, 10);
 
     return {
       totalTVL,
@@ -414,25 +412,25 @@ export class MarketDataService {
 
   private getCoingeckoId(symbol: string): string {
     const symbolMap: { [key: string]: string } = {
-      'ETH': 'ethereum',
-      'NEAR': 'near',
-      'USDC': 'usd-coin',
-      'USDT': 'tether'
+      ETH: 'ethereum',
+      NEAR: 'near',
+      USDC: 'usd-coin',
+      USDT: 'tether'
     };
-    
+
     return symbolMap[symbol] || symbol.toLowerCase();
   }
 
   private getFallbackPrice(symbol: string): TokenPrice {
     const fallbackPrices: { [key: string]: Partial<TokenPrice> } = {
-      'ETH': { price: 2400, change24h: 2.5 },
-      'NEAR': { price: 3.2, change24h: -1.2 },
-      'USDC': { price: 1.0, change24h: 0.01 },
-      'USDT': { price: 1.0, change24h: -0.01 }
+      ETH: { price: 2400, change24h: 2.5 },
+      NEAR: { price: 3.2, change24h: -1.2 },
+      USDC: { price: 1.0, change24h: 0.01 },
+      USDT: { price: 1.0, change24h: -0.01 }
     };
 
     const fallback = fallbackPrices[symbol] || { price: 100, change24h: 0 };
-    
+
     return {
       symbol,
       price: fallback.price!,
@@ -499,7 +497,7 @@ export class MarketDataService {
   private async refreshAllCaches(): Promise<void> {
     try {
       logger.monitoring('Refreshing market data caches');
-      
+
       // Clear caches
       this.priceCache.clear();
       this.apyCache.clear();

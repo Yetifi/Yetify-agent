@@ -42,7 +42,7 @@ export class ProtocolDataService {
 
   async getTopProtocols(limit: number = 50): Promise<Protocol[]> {
     const cacheKey = `top_protocols_${limit}`;
-    
+
     if (this.protocolCache.has(cacheKey)) {
       const cached = this.protocolCache.get(cacheKey)!;
       logger.info('Returning cached protocol data');
@@ -51,13 +51,11 @@ export class ProtocolDataService {
 
     try {
       const protocols = await this.fetchProtocolsFromSources();
-      const topProtocols = protocols
-        .sort((a, b) => b.tvl - a.tvl)
-        .slice(0, limit);
+      const topProtocols = protocols.sort((a, b) => b.tvl - a.tvl).slice(0, limit);
 
       this.protocolCache.set(cacheKey, topProtocols);
       logger.info(`Fetched ${topProtocols.length} top protocols`);
-      
+
       return topProtocols;
     } catch (error) {
       logger.error('Failed to fetch top protocols:', error);
@@ -221,7 +219,7 @@ export class ProtocolDataService {
 
   private categorizeProtocol(category: string): Protocol['category'] {
     const lowerCategory = category?.toLowerCase() || '';
-    
+
     if (lowerCategory.includes('lending') || lowerCategory.includes('borrow')) {
       return 'lending';
     }
@@ -237,26 +235,26 @@ export class ProtocolDataService {
     if (lowerCategory.includes('derivative')) {
       return 'derivatives';
     }
-    
+
     return 'dex'; // Default category
   }
 
   private estimateAPY(category: string, tvl: number): number {
     // Simple APY estimation based on category and TVL
     const baseCategoryAPY = {
-      'lending': 4.5,
-      'dex': 8.2,
-      'yield_farming': 15.3,
-      'staking': 6.8,
-      'derivatives': 12.1
+      lending: 4.5,
+      dex: 8.2,
+      yield_farming: 15.3,
+      staking: 6.8,
+      derivatives: 12.1
     };
 
     const categoryAPY = baseCategoryAPY[this.categorizeProtocol(category)] || 8.0;
-    
+
     // Adjust based on TVL (higher TVL generally means lower risk and APY)
     const tvlFactor = Math.max(0.5, Math.min(2.0, 1 - (Math.log10(tvl) - 6) * 0.1));
-    
-    return Math.round((categoryAPY * tvlFactor) * 100) / 100;
+
+    return Math.round(categoryAPY * tvlFactor * 100) / 100;
   }
 
   private calculateBasicRiskScore(protocol: any): number {
@@ -268,9 +266,10 @@ export class ProtocolDataService {
     else if (protocol.tvl > 10000000) riskScore -= 0.5;
 
     // Age factor (older protocols generally safer)
-    const ageInDays = protocol.listedAt ? 
-      (Date.now() - new Date(protocol.listedAt).getTime()) / (1000 * 60 * 60 * 24) : 365;
-    
+    const ageInDays = protocol.listedAt
+      ? (Date.now() - new Date(protocol.listedAt).getTime()) / (1000 * 60 * 60 * 24)
+      : 365;
+
     if (ageInDays > 365) riskScore -= 1.0;
     else if (ageInDays > 180) riskScore -= 0.5;
 
@@ -299,7 +298,7 @@ export class ProtocolDataService {
 
   private async calculateRiskScores(): Promise<void> {
     const protocols = await this.getTopProtocols();
-    
+
     for (const protocol of protocols) {
       const riskAssessment: RiskAssessment = {
         protocolId: protocol.id,
@@ -312,8 +311,12 @@ export class ProtocolDataService {
           communityTrust: 7 // Would be calculated based on community metrics
         },
         warnings: this.generateRiskWarnings(protocol),
-        recommendation: protocol.riskScore <= 3 ? 'low_risk' : 
-                      protocol.riskScore <= 6 ? 'medium_risk' : 'high_risk'
+        recommendation:
+          protocol.riskScore <= 3
+            ? 'low_risk'
+            : protocol.riskScore <= 6
+              ? 'medium_risk'
+              : 'high_risk'
       };
 
       this.riskCache.set(protocol.id, riskAssessment);
@@ -324,15 +327,15 @@ export class ProtocolDataService {
 
   private generateRiskWarnings(protocol: Protocol): string[] {
     const warnings: string[] = [];
-    
+
     if (protocol.auditStatus === 'unaudited') {
       warnings.push('Protocol has not been audited');
     }
-    
+
     if (protocol.tvl < 10000000) {
       warnings.push('Low TVL may indicate higher risk');
     }
-    
+
     if (protocol.riskScore > 7) {
       warnings.push('High risk protocol - use with caution');
     }

@@ -13,10 +13,10 @@ const consoleFormat = printf(({ level, message, timestamp, ...meta }) => {
 const createLoggerConfig = () => {
   const logLevel = process.env.LOG_LEVEL || 'info';
   const logDir = process.env.LOG_FILE_PATH || './logs';
-  
+
   // Ensure logs directory exists
   const logPath = path.resolve(logDir);
-  
+
   const transports: winston.transport[] = [
     // Console transport with colors in development
     new winston.transports.Console({
@@ -24,9 +24,7 @@ const createLoggerConfig = () => {
       format: combine(
         errors({ stack: true }),
         timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
-        process.env.NODE_ENV === 'development' 
-          ? combine(colorize(), consoleFormat)
-          : json()
+        process.env.NODE_ENV === 'development' ? combine(colorize(), consoleFormat) : json()
       )
     })
   ];
@@ -38,22 +36,15 @@ const createLoggerConfig = () => {
       new winston.transports.File({
         filename: path.join(logPath, 'error.log'),
         level: 'error',
-        format: combine(
-          errors({ stack: true }),
-          timestamp(),
-          json()
-        ),
+        format: combine(errors({ stack: true }), timestamp(), json()),
         maxsize: 5242880, // 5MB
         maxFiles: 10
       }),
-      
+
       // Combined log file
       new winston.transports.File({
         filename: path.join(logPath, 'combined.log'),
-        format: combine(
-          timestamp(),
-          json()
-        ),
+        format: combine(timestamp(), json()),
         maxsize: 5242880, // 5MB
         maxFiles: 10
       })
@@ -62,11 +53,7 @@ const createLoggerConfig = () => {
 
   return {
     level: logLevel,
-    format: combine(
-      timestamp(),
-      errors({ stack: true }),
-      json()
-    ),
+    format: combine(timestamp(), errors({ stack: true }), json()),
     transports,
     exitOnError: false
   };
@@ -79,44 +66,44 @@ export const createLogger = () => {
   // Add custom methods for specific use cases
   return {
     ...logger,
-    
+
     // Strategy-specific logging
     strategy: (message: string, strategyData?: any) => {
-      logger.info(`[STRATEGY] ${message}`, { 
+      logger.info(`[STRATEGY] ${message}`, {
         module: 'strategy',
-        data: strategyData 
+        data: strategyData
       });
     },
 
     // AI Engine logging
     ai: (message: string, aiData?: any) => {
-      logger.info(`[AI-ENGINE] ${message}`, { 
+      logger.info(`[AI-ENGINE] ${message}`, {
         module: 'ai-engine',
-        data: aiData 
+        data: aiData
       });
     },
 
     // Execution layer logging
     execution: (message: string, executionData?: any) => {
-      logger.info(`[EXECUTION] ${message}`, { 
+      logger.info(`[EXECUTION] ${message}`, {
         module: 'execution',
-        data: executionData 
+        data: executionData
       });
     },
 
     // Monitoring logging
     monitoring: (message: string, monitoringData?: any) => {
-      logger.info(`[MONITORING] ${message}`, { 
+      logger.info(`[MONITORING] ${message}`, {
         module: 'monitoring',
-        data: monitoringData 
+        data: monitoringData
       });
     },
 
     // Blockchain interaction logging
     blockchain: (message: string, blockchainData?: any) => {
-      logger.info(`[BLOCKCHAIN] ${message}`, { 
+      logger.info(`[BLOCKCHAIN] ${message}`, {
         module: 'blockchain',
-        data: blockchainData 
+        data: blockchainData
       });
     },
 
@@ -141,7 +128,13 @@ export const createLogger = () => {
     },
 
     // API request logging
-    request: (method: string, url: string, statusCode: number, duration: number, userId?: string) => {
+    request: (
+      method: string,
+      url: string,
+      statusCode: number,
+      duration: number,
+      userId?: string
+    ) => {
       logger.info(`[REQUEST] ${method} ${url} - ${statusCode} (${duration}ms)`, {
         module: 'request',
         method,
@@ -159,7 +152,7 @@ export const logger = createLogger();
 
 // Error handler for uncaught exceptions
 export const setupErrorHandlers = () => {
-  process.on('uncaughtException', (error) => {
+  process.on('uncaughtException', error => {
     logger.error('Uncaught Exception:', error);
     process.exit(1);
   });
