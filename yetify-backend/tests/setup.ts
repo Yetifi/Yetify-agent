@@ -348,7 +348,46 @@ jest.mock('@google/generative-ai', () => ({
   }))
 }));
 
-// Mock OpenAI/LangChain
+// Removed duplicate mock - now handled above in consolidated @langchain/openai mock
+
+// Mock LangChain components
+jest.mock('@langchain/core/prompts', () => ({
+  ChatPromptTemplate: {
+    fromMessages: jest.fn().mockReturnValue({
+      pipe: jest.fn().mockReturnValue({
+        invoke: jest.fn().mockResolvedValue({
+          content: JSON.stringify({
+            goal: 'Test strategy',
+            chains: ['Ethereum'],
+            protocols: ['Aave'],
+            steps: [{ action: 'deposit', protocol: 'Aave', asset: 'ETH', expectedApy: 4.2 }],
+            riskLevel: 'Low',
+            estimatedApy: 4.2,
+            confidence: 85,
+            reasoning: 'Test strategy reasoning',
+            warnings: ['Test warning']
+          })
+        })
+      })
+    })
+  }
+}));
+
+// Mock Pinecone
+jest.mock('@pinecone-database/pinecone', () => ({
+  Pinecone: jest.fn().mockImplementation(() => ({}))
+}));
+
+jest.mock('@langchain/pinecone', () => ({
+  PineconeStore: {
+    fromExistingIndex: jest.fn().mockResolvedValue({
+      similaritySearch: jest.fn().mockResolvedValue([
+        { pageContent: 'Mock knowledge base content' }
+      ])
+    })
+  }
+}));
+
 jest.mock('@langchain/openai', () => ({
   OpenAI: jest.fn().mockImplementation(() => ({
     invoke: jest.fn().mockImplementation(() => {
@@ -381,48 +420,7 @@ jest.mock('@langchain/openai', () => ({
         warnings: ['Smart contract risks apply']
       })
     })
-  }))
-}));
-
-// Mock LangChain components
-jest.mock('langchain/prompts', () => ({
-  ChatPromptTemplate: {
-    fromMessages: jest.fn().mockReturnValue({
-      pipe: jest.fn().mockReturnValue({
-        invoke: jest.fn().mockResolvedValue({
-          content: JSON.stringify({
-            goal: 'Test strategy',
-            chains: ['Ethereum'],
-            protocols: ['Aave'],
-            steps: [{ action: 'deposit', protocol: 'Aave', asset: 'ETH', expectedApy: 4.2 }],
-            riskLevel: 'Low',
-            estimatedApy: 4.2,
-            confidence: 85,
-            reasoning: 'Test strategy reasoning',
-            warnings: ['Test warning']
-          })
-        })
-      })
-    })
-  }
-}));
-
-// Mock Pinecone
-jest.mock('@pinecone-database/pinecone', () => ({
-  Pinecone: jest.fn().mockImplementation(() => ({}))
-}));
-
-jest.mock('langchain/vectorstores/pinecone', () => ({
-  PineconeStore: {
-    fromExistingIndex: jest.fn().mockResolvedValue({
-      similaritySearch: jest.fn().mockResolvedValue([
-        { pageContent: 'Mock knowledge base content' }
-      ])
-    })
-  }
-}));
-
-jest.mock('langchain/embeddings/openai', () => ({
+  })),
   OpenAIEmbeddings: jest.fn().mockImplementation(() => ({}))
 }));
 

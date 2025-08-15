@@ -1,8 +1,8 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { OpenAI } from '@langchain/openai';
-import { ChatPromptTemplate } from 'langchain/prompts';
-import { PineconeStore } from 'langchain/vectorstores/pinecone';
-import { OpenAIEmbeddings } from 'langchain/embeddings/openai';
+import { ChatPromptTemplate } from '@langchain/core/prompts';
+import { PineconeStore } from '@langchain/pinecone';
+import { OpenAIEmbeddings } from '@langchain/openai';
 import { Pinecone } from '@pinecone-database/pinecone';
 import { createLogger } from '../utils/logger';
 
