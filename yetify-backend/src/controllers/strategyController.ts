@@ -1,0 +1,432 @@
+import { Router, Request, Response } from 'express';
+import Joi from 'joi';
+import { StrategyEngine } from '../ai-engine/StrategyEngine';
+import { Strategy, User } from '../utils/database';
+import { logger } from '../utils/logger';
+import { AuthenticatedRequest } from '../middleware/auth';
+
+const router = Router();
+const strategyEngine = new StrategyEngine();
+
+// Validation schemas
+const createStrategySchema = Joi.object({
+  prompt: Joi.string().min(10).max(500).required(),
+  riskTolerance: Joi.string().valid('low', 'medium', 'high').default('medium'),
+  investmentAmount: Joi.number().min(100).max(1000000).optional(),
+  preferredChains: Joi.array().items(Joi.string()).optional(),
+  timeHorizon: Joi.string().valid('short', 'medium', 'long').default('medium')
+});
+
+const updateStrategySchema = Joi.object({
+  goal: Joi.string().min(5).max(200).optional(),
+  status: Joi.string().valid('draft', 'active', 'paused', 'completed', 'failed').optional(),
+  steps: Joi.array().items(Joi.object({
+    action: Joi.string().required(),
+    protocol: Joi.string().required(),
+    asset: Joi.string().required(),
+    amount: Joi.string().optional(),
+    expectedApy: Joi.number().optional()
+  })).optional()
+});
+
+// GET /api/v1/strategies - Get user's strategies
+router.get('/', async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { status, limit = 20, offset = 0 } = req.query;
+    
+    const filter: any = { userId: req.user!.id };
+    if (status) {
+      filter.status = status;
+    }
+
+    const strategies = await Strategy.find(filter)
+      .sort({ createdAt: -1 })
+      .limit(Number(limit))
+      .skip(Number(offset))
+      .populate('userId', 'walletAddress');
+
+    const total = await Strategy.countDocuments(filter);
+
+    logger.info(`Retrieved ${strategies.length} strategies for user ${req.user!.id}`);
+
+    res.json({
+      strategies,
+      pagination: {
+        total,
+        limit: Number(limit),
+        offset: Number(offset),
+        hasMore: total > Number(offset) + Number(limit)
+      }
+    });
+  } catch (error) {
+    logger.error('Failed to get strategies:', error);
+    res.status(500).json({
+      error: 'Failed to retrieve strategies',
+      message: error.message
+    });
+  }
+});
+
+// GET /api/v1/strategies/:id - Get specific strategy
+router.get('/:id', async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    
+    const strategy = await Strategy.findOne({ 
+      id, 
+      userId: req.user!.id 
+    }).populate('userId', 'walletAddress');
+
+    if (!strategy) {
+      return res.status(404).json({
+        error: 'Strategy not found',
+        message: 'Strategy does not exist or access denied'
+      });
+    }
+
+    logger.info(`Retrieved strategy ${id} for user ${req.user!.id}`);
+
+    res.json({ strategy });
+  } catch (error) {
+    logger.error('Failed to get strategy:', error);
+    res.status(500).json({
+      error: 'Failed to retrieve strategy',
+      message: error.message
+    });
+  }
+});
+
+// POST /api/v1/strategies/generate - Generate new strategy
+router.post('/generate', async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    // Validate input
+    const { error, value } = createStrategySchema.validate(req.body);
+    if (error) {
+      return res.status(400).json({
+        error: 'Validation error',
+        details: error.details.map(d => d.message)
+      });
+    }
+
+    const strategyInput = {
+      ...value,
+      userAddress: req.user!.walletAddress
+    };
+
+    logger.ai('Generating strategy via REST API', {
+      userId: req.user!.id,
+      prompt: value.prompt
+    });
+
+    // Generate strategy using AI engine
+    const generatedStrategy = await strategyEngine.generateStrategy(strategyInput);
+
+    // Save to database
+    const savedStrategy = await Strategy.create({
+      ...generatedStrategy,
+      userId: req.user!.id,
+      prompt: value.prompt,
+      status: 'draft'
+    });
+
+    logger.strategy('Strategy generated and saved', {
+      strategyId: savedStrategy.id,
+      userId: req.user!.id
+    });
+
+    res.status(201).json({
+      strategy: savedStrategy,
+      message: 'Strategy generated successfully'
+    });
+  } catch (error) {
+    logger.error('Strategy generation failed:', error);
+    res.status(500).json({
+      error: 'Strategy generation failed',
+      message: error.message
+    });
+  }
+});
+
+// PUT /api/v1/strategies/:id - Update strategy
+router.put('/:id', async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    
+    // Validate input
+    const { error, value } = updateStrategySchema.validate(req.body);
+    if (error) {
+      return res.status(400).json({
+        error: 'Validation error',
+        details: error.details.map(d => d.message)
+      });
+    }
+
+    // Find and update strategy
+    const strategy = await Strategy.findOneAndUpdate(
+      { id, userId: req.user!.id },
+      { ...value, updatedAt: new Date() },
+      { new: true }
+    );
+
+    if (!strategy) {
+      return res.status(404).json({
+        error: 'Strategy not found',
+        message: 'Strategy does not exist or access denied'
+      });
+    }
+
+    logger.strategy('Strategy updated', {
+      strategyId: id,
+      userId: req.user!.id,
+      changes: Object.keys(value)
+    });
+
+    res.json({
+      strategy,
+      message: 'Strategy updated successfully'
+    });
+  } catch (error) {
+    logger.error('Strategy update failed:', error);
+    res.status(500).json({
+      error: 'Strategy update failed',
+      message: error.message
+    });
+  }
+});
+
+// POST /api/v1/strategies/:id/activate - Activate strategy
+router.post('/:id/activate', async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    
+    const strategy = await Strategy.findOneAndUpdate(
+      { id, userId: req.user!.id },
+      { status: 'active', updatedAt: new Date() },
+      { new: true }
+    );
+
+    if (!strategy) {
+      return res.status(404).json({
+        error: 'Strategy not found',
+        message: 'Strategy does not exist or access denied'
+      });
+    }
+
+    logger.strategy('Strategy activated', {
+      strategyId: id,
+      userId: req.user!.id
+    });
+
+    res.json({
+      strategy,
+      message: 'Strategy activated successfully'
+    });
+  } catch (error) {
+    logger.error('Strategy activation failed:', error);
+    res.status(500).json({
+      error: 'Strategy activation failed',
+      message: error.message
+    });
+  }
+});
+
+// POST /api/v1/strategies/:id/pause - Pause strategy
+router.post('/:id/pause', async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    
+    const strategy = await Strategy.findOneAndUpdate(
+      { id, userId: req.user!.id },
+      { status: 'paused', updatedAt: new Date() },
+      { new: true }
+    );
+
+    if (!strategy) {
+      return res.status(404).json({
+        error: 'Strategy not found',
+        message: 'Strategy does not exist or access denied'
+      });
+    }
+
+    logger.strategy('Strategy paused', {
+      strategyId: id,
+      userId: req.user!.id
+    });
+
+    res.json({
+      strategy,
+      message: 'Strategy paused successfully'
+    });
+  } catch (error) {
+    logger.error('Strategy pause failed:', error);
+    res.status(500).json({
+      error: 'Strategy pause failed',
+      message: error.message
+    });
+  }
+});
+
+// DELETE /api/v1/strategies/:id - Delete strategy
+router.delete('/:id', async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    
+    const strategy = await Strategy.findOneAndDelete({
+      id,
+      userId: req.user!.id
+    });
+
+    if (!strategy) {
+      return res.status(404).json({
+        error: 'Strategy not found',
+        message: 'Strategy does not exist or access denied'
+      });
+    }
+
+    logger.strategy('Strategy deleted', {
+      strategyId: id,
+      userId: req.user!.id
+    });
+
+    res.json({
+      message: 'Strategy deleted successfully'
+    });
+  } catch (error) {
+    logger.error('Strategy deletion failed:', error);
+    res.status(500).json({
+      error: 'Strategy deletion failed',
+      message: error.message
+    });
+  }
+});
+
+// POST /api/v1/strategies/:id/feedback - Provide feedback for strategy learning
+router.post('/:id/feedback', async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { feedback, rating, comments } = req.body;
+
+    if (!['positive', 'negative'].includes(feedback)) {
+      return res.status(400).json({
+        error: 'Invalid feedback',
+        message: 'Feedback must be positive or negative'
+      });
+    }
+
+    const strategy = await Strategy.findOne({
+      id,
+      userId: req.user!.id
+    });
+
+    if (!strategy) {
+      return res.status(404).json({
+        error: 'Strategy not found',
+        message: 'Strategy does not exist or access denied'
+      });
+    }
+
+    // Store feedback for AI learning
+    await strategyEngine.storeStrategyKnowledge(strategy, feedback);
+
+    logger.ai('Strategy feedback received', {
+      strategyId: id,
+      userId: req.user!.id,
+      feedback,
+      rating
+    });
+
+    res.json({
+      message: 'Feedback recorded successfully'
+    });
+  } catch (error) {
+    logger.error('Feedback submission failed:', error);
+    res.status(500).json({
+      error: 'Feedback submission failed',
+      message: error.message
+    });
+  }
+});
+
+// GET /api/v1/strategies/:id/performance - Get strategy performance
+router.get('/:id/performance', async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    
+    const strategy = await Strategy.findOne({
+      id,
+      userId: req.user!.id
+    });
+
+    if (!strategy) {
+      return res.status(404).json({
+        error: 'Strategy not found',
+        message: 'Strategy does not exist or access denied'
+      });
+    }
+
+    // Return current performance data
+    const performance = strategy.performance || {
+      totalInvested: 0,
+      currentValue: 0,
+      totalReturns: 0,
+      roi: 0,
+      lastUpdated: null
+    };
+
+    res.json({ performance });
+  } catch (error) {
+    logger.error('Failed to get strategy performance:', error);
+    res.status(500).json({
+      error: 'Failed to retrieve performance data',
+      message: error.message
+    });
+  }
+});
+
+// GET /api/v1/strategies/analytics/summary - Get user's strategy analytics
+router.get('/analytics/summary', async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user!.id;
+    
+    const strategies = await Strategy.find({ userId });
+    
+    const summary = {
+      totalStrategies: strategies.length,
+      activeStrategies: strategies.filter(s => s.status === 'active').length,
+      pausedStrategies: strategies.filter(s => s.status === 'paused').length,
+      completedStrategies: strategies.filter(s => s.status === 'completed').length,
+      totalInvested: strategies.reduce((sum, s) => sum + (s.performance?.totalInvested || 0), 0),
+      totalReturns: strategies.reduce((sum, s) => sum + (s.performance?.totalReturns || 0), 0),
+      averageROI: 0,
+      bestPerformingStrategy: null as any,
+      riskDistribution: {
+        low: strategies.filter(s => s.riskLevel === 'Low').length,
+        medium: strategies.filter(s => s.riskLevel === 'Medium').length,
+        high: strategies.filter(s => s.riskLevel === 'High').length
+      }
+    };
+
+    // Calculate average ROI
+    const strategiesWithROI = strategies.filter(s => s.performance?.roi);
+    if (strategiesWithROI.length > 0) {
+      summary.averageROI = strategiesWithROI.reduce((sum, s) => sum + (s.performance?.roi || 0), 0) / strategiesWithROI.length;
+    }
+
+    // Find best performing strategy
+    if (strategiesWithROI.length > 0) {
+      summary.bestPerformingStrategy = strategiesWithROI.reduce((best, current) => 
+        (current.performance?.roi || 0) > (best.performance?.roi || 0) ? current : best
+      );
+    }
+
+    res.json({ summary });
+  } catch (error) {
+    logger.error('Failed to get strategy analytics:', error);
+    res.status(500).json({
+      error: 'Failed to retrieve analytics',
+      message: error.message
+    });
+  }
+});
+
+export default router;
