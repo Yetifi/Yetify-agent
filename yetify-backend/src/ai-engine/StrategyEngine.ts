@@ -153,7 +153,7 @@ export class StrategyEngine {
 
     try {
       const results = await this.vectorStore.similaritySearch(query, 5);
-      const knowledge = results.map(doc => doc.pageContent);
+      const knowledge = results.map((doc: any) => doc.pageContent);
       
       logger.ai('Retrieved relevant knowledge', { 
         query,
