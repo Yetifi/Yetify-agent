@@ -129,25 +129,32 @@ export const testUtils = {
     protocols: ['Aave', 'Lido'],
     steps: [
       {
-        action: 'deposit',
+        action: 'deposit' as const,
         protocol: 'Lido',
         asset: 'ETH',
         amount: '1000',
         expectedApy: 4.2
       },
       {
-        action: 'stake',
+        action: 'stake' as const,
         protocol: 'Aave',
         asset: 'stETH',
         expectedApy: 8.5
       }
     ],
-    riskLevel: 'Low',
-    status: 'draft',
+    riskLevel: 'Low' as const,
+    status: 'draft' as const,
     estimatedApy: 6.35,
     estimatedTvl: '1000',
     confidence: 85,
-    reasoning: 'Test strategy reasoning'
+    reasoning: 'Test strategy reasoning',
+    executionTime: '2-3 minutes',
+    gasEstimate: {
+      ethereum: '0.02 ETH',
+      near: '0.001 NEAR',
+      arbitrum: '0.005 ETH'
+    },
+    warnings: ['High gas fees on Ethereum', 'Market volatility risk']
   }),
 
   // Generate test JWT token

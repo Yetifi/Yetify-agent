@@ -42,9 +42,9 @@ describe('ExecutionEngine', () => {
       const multiStepStrategy = {
         ...testUtils.createTestStrategy(),
         steps: [
-          { action: 'deposit', protocol: 'Lido', asset: 'ETH', expectedApy: 4.2 },
-          { action: 'stake', protocol: 'Aave', asset: 'stETH', expectedApy: 8.5 },
-          { action: 'yield_farm', protocol: 'Curve', asset: 'USDC', expectedApy: 12.1 }
+          { action: 'deposit' as const, protocol: 'Lido', asset: 'ETH', expectedApy: 4.2 },
+          { action: 'stake' as const, protocol: 'Aave', asset: 'stETH', expectedApy: 8.5 },
+          { action: 'yield_farm' as const, protocol: 'Curve', asset: 'USDC', expectedApy: 12.1 }
         ]
       };
 
@@ -66,9 +66,9 @@ describe('ExecutionEngine', () => {
       const failingStrategy = {
         ...testUtils.createTestStrategy(),
         steps: [
-          { action: 'deposit', protocol: 'ValidProtocol', asset: 'ETH', expectedApy: 4.2 },
-          { action: 'invalid_action', protocol: 'InvalidProtocol', asset: 'INVALID', expectedApy: 0 },
-          { action: 'stake', protocol: 'Aave', asset: 'stETH', expectedApy: 8.5 }
+          { action: 'deposit' as const, protocol: 'ValidProtocol', asset: 'ETH', expectedApy: 4.2 },
+          { action: 'stake' as const, protocol: 'InvalidProtocol', asset: 'INVALID', expectedApy: 0 },
+          { action: 'stake' as const, protocol: 'Aave', asset: 'stETH', expectedApy: 8.5 }
         ]
       };
 
@@ -175,9 +175,9 @@ describe('ExecutionEngine', () => {
         ...testUtils.createTestStrategy(),
         chains: ['Ethereum'],
         steps: [
-          { action: 'deposit', protocol: 'Aave', asset: 'ETH', expectedApy: 4.2 },
-          { action: 'stake', protocol: 'Lido', asset: 'ETH', expectedApy: 5.1 },
-          { action: 'yield_farm', protocol: 'Curve', asset: 'stETH', expectedApy: 8.5 }
+          { action: 'deposit' as const, protocol: 'Aave', asset: 'ETH', expectedApy: 4.2 },
+          { action: 'stake' as const, protocol: 'Lido', asset: 'ETH', expectedApy: 5.1 },
+          { action: 'yield_farm' as const, protocol: 'Curve', asset: 'stETH', expectedApy: 8.5 }
         ]
       };
 
@@ -214,7 +214,7 @@ describe('ExecutionEngine', () => {
       const unknownProtocolStrategy = {
         ...testUtils.createTestStrategy(),
         steps: [
-          { action: 'deposit', protocol: 'UnknownProtocol', asset: 'ETH', expectedApy: 4.2 }
+          { action: 'deposit' as const, protocol: 'UnknownProtocol', asset: 'ETH', expectedApy: 4.2 }
         ]
       };
 
@@ -242,8 +242,8 @@ describe('ExecutionEngine', () => {
         chains: ['Ethereum'],
         protocols: ['Aave', 'Lido'],
         steps: [
-          { action: 'deposit', protocol: 'Aave', asset: 'ETH', expectedApy: 4.2 },
-          { action: 'stake', protocol: 'Lido', asset: 'ETH', expectedApy: 5.1 }
+          { action: 'deposit' as const, protocol: 'Aave', asset: 'ETH', expectedApy: 4.2 },
+          { action: 'stake' as const, protocol: 'Lido', asset: 'ETH', expectedApy: 5.1 }
         ]
       };
 
@@ -268,8 +268,8 @@ describe('ExecutionEngine', () => {
         chains: ['NEAR'],
         protocols: ['Ref Finance', 'Burrow'],
         steps: [
-          { action: 'deposit', protocol: 'Ref Finance', asset: 'NEAR', expectedApy: 12.5 },
-          { action: 'yield_farm', protocol: 'Burrow', asset: 'USDC', expectedApy: 8.7 }
+          { action: 'deposit' as const, protocol: 'Ref Finance', asset: 'NEAR', expectedApy: 12.5 },
+          { action: 'yield_farm' as const, protocol: 'Burrow', asset: 'USDC', expectedApy: 8.7 }
         ]
       };
 
@@ -296,7 +296,7 @@ describe('ExecutionEngine', () => {
         chains: ['Arbitrum'],
         protocols: ['Aave'],
         steps: [
-          { action: 'deposit', protocol: 'Aave', asset: 'ETH', expectedApy: 4.8 }
+          { action: 'deposit' as const, protocol: 'Aave', asset: 'ETH', expectedApy: 4.8 }
         ]
       };
 
@@ -352,7 +352,7 @@ describe('ExecutionEngine', () => {
       const invalidStrategy = {
         ...testUtils.createTestStrategy(),
         steps: [
-          { action: 'invalid', protocol: 'invalid', asset: 'invalid', expectedApy: 0 }
+          { action: 'deposit' as const, protocol: 'invalid', asset: 'invalid', expectedApy: 0 }
         ]
       };
 
