@@ -73,8 +73,12 @@ router.post('/estimate', async (req: AuthenticatedRequest, res: Response) => {
         riskLevel: strategy.riskLevel,
         estimatedApy: strategy.estimatedApy,
         estimatedTvl: strategy.estimatedTvl,
-        executionTime: strategy.executionTime,
-        gasEstimate: strategy.gasEstimate,
+        executionTime: strategy.executionTime || '~5 minutes',
+        gasEstimate: {
+          ethereum: strategy.gasEstimate?.ethereum || '0.02 ETH',
+          near: strategy.gasEstimate?.near || '0.1 NEAR', 
+          arbitrum: strategy.gasEstimate?.arbitrum || '0.005 ETH'
+        },
         confidence: strategy.confidence,
         reasoning: strategy.reasoning,
         warnings: strategy.warnings
@@ -215,8 +219,12 @@ router.post('/execute', executionRateLimit, async (req: AuthenticatedRequest, re
         riskLevel: strategy.riskLevel,
         estimatedApy: strategy.estimatedApy,
         estimatedTvl: strategy.estimatedTvl,
-        executionTime: strategy.executionTime,
-        gasEstimate: strategy.gasEstimate,
+        executionTime: strategy.executionTime || '~5 minutes',
+        gasEstimate: {
+          ethereum: strategy.gasEstimate?.ethereum || '0.02 ETH',
+          near: strategy.gasEstimate?.near || '0.1 NEAR', 
+          arbitrum: strategy.gasEstimate?.arbitrum || '0.005 ETH'
+        },
         confidence: strategy.confidence,
         reasoning: strategy.reasoning,
         warnings: strategy.warnings

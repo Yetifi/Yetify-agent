@@ -259,7 +259,11 @@ export const resolvers = {
             estimatedApy: strategy.estimatedApy,
             estimatedTvl: strategy.estimatedTvl,
             executionTime: strategy.executionTime || '~5 minutes',
-            gasEstimate: strategy.gasEstimate,
+            gasEstimate: {
+              ethereum: strategy.gasEstimate?.ethereum || '0.02 ETH',
+              near: strategy.gasEstimate?.near || '0.1 NEAR',
+              arbitrum: strategy.gasEstimate?.arbitrum || '0.005 ETH'
+            },
             confidence: strategy.confidence,
             reasoning: strategy.reasoning,
             warnings: strategy.warnings
