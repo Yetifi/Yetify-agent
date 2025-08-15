@@ -4,7 +4,9 @@ import { ChatPromptTemplate } from 'langchain/prompts';
 import { PineconeStore } from 'langchain/vectorstores/pinecone';
 import { OpenAIEmbeddings } from 'langchain/embeddings/openai';
 import { Pinecone } from '@pinecone-database/pinecone';
-import { logger } from '../utils/logger';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger();
 import { ProtocolDataService } from '../services/ProtocolDataService';
 import { MarketDataService } from '../services/MarketDataService';
 

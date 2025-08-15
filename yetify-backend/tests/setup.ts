@@ -13,7 +13,6 @@ beforeAll(async () => {
   // Start in-memory MongoDB
   mongoServer = await MongoMemoryServer.create({
     instance: {
-      port: 27017,
       dbName: 'yetify-test'
     }
   });
@@ -28,11 +27,7 @@ beforeAll(async () => {
   });
 
   // Start in-memory Redis
-  redisServer = new RedisMemoryServer({
-    instance: {
-      port: 6379
-    }
-  });
+  redisServer = new RedisMemoryServer();
   
   await redisServer.start();
   const redisHost = await redisServer.getHost();

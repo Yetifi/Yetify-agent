@@ -1,6 +1,8 @@
 import { ethers } from 'ethers';
 import { providers, keyStores, Near, Account, Contract } from 'near-api-js';
-import { logger } from '../utils/logger';
+import { createLogger } from '../utils/logger';
+
+const logger = createLogger();
 import { GeneratedStrategy, StrategyStep } from '../ai-engine/StrategyEngine';
 
 export interface ExecutionContext {
