@@ -18,17 +18,7 @@ module.exports = {
     '.eslintrc.js', 
     'dist/', 
     'coverage/', 
-    'node_modules/',
-    'src/controllers/executionController.ts',
-    'src/controllers/strategyController.ts', 
-    'src/graphql/resolvers/index.ts',
-    'src/ai-engine/StrategyEngine.ts',
-    'src/middleware/auth.ts',
-    'src/index.ts',
-    'src/execution-layer/ExecutionEngine.ts',
-    'src/monitoring/MonitoringEngine.ts',
-    'src/services/MarketDataService.ts',
-    'src/services/ProtocolDataService.ts'
+    'node_modules/'
   ],
   rules: {
     // TypeScript-specific rules

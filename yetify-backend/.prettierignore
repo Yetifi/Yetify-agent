@@ -3,9 +3,4 @@ dist/
 coverage/
 *.log
 .env*
-src/controllers/executionController.ts
-src/controllers/strategyController.ts
-src/graphql/resolvers/index.ts
-src/ai-engine/StrategyEngine.ts
-src/middleware/auth.ts
-src/index.ts
+src/**/*.ts
