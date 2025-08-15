@@ -89,7 +89,7 @@ export class ExecutionEngine {
           results.push({
             stepId: `step_${i}`,
             status: 'failed',
-            error: error.message,
+            error: error instanceof Error ? error.message : String(error),
             timestamp: new Date().toISOString()
           });
           break;
@@ -105,7 +105,7 @@ export class ExecutionEngine {
       return results;
     } catch (error) {
       logger.error('Strategy execution failed:', error);
-      throw new Error(`Execution failed: ${error.message}`);
+      throw new Error(`Execution failed: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -128,7 +128,7 @@ export class ExecutionEngine {
       return {
         stepId,
         status: 'failed',
-        error: error.message,
+        error: error instanceof Error ? error.message : String(error),
         timestamp: new Date().toISOString()
       };
     }
