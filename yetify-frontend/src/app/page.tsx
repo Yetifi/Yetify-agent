@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import StrategyBuilder from '@/components/StrategyBuilder';
 import StrategyDashboard from '@/components/StrategyDashboard';
+import WalletConnection from '@/components/WalletConnection';
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<'builder' | 'dashboard'>('builder');
@@ -28,9 +29,7 @@ export default function Home() {
               <div className="text-sm text-gray-600">
                 Total Portfolio: <span className="font-semibold text-gray-900">$66,480</span>
               </div>
-              <button className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 transition-all">
-                Connect Wallet
-              </button>
+              <WalletConnection />
             </div>
           </div>
         </div>

@@ -24,24 +24,32 @@ export default function StrategyBuilder() {
     
     setIsGenerating(true);
     
-    // Simulate AI strategy generation
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    // Mock strategy plan - In production, this would come from your LLM API
-    const mockPlan: StrategyPlan = {
-      goal: prompt,
-      chains: ["Ethereum", "NEAR"],
-      protocols: ["Aave", "Lido", "Ref Finance"],
-      steps: [
-        { action: "deposit", protocol: "Lido", asset: "ETH" },
-        { action: "stake", protocol: "Aave", asset: "stETH" },
-        { action: "yield_farm", protocol: "Ref Finance", asset: "USDC" }
-      ],
-      riskLevel: "Medium"
-    };
-    
-    setStrategyPlan(mockPlan);
-    setIsGenerating(false);
+    try {
+      const response = await fetch('/api/generate-strategy', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ prompt }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate strategy');
+      }
+
+      const data = await response.json();
+      
+      if (data.success) {
+        setStrategyPlan(data.strategy);
+      } else {
+        alert('Failed to generate strategy. Please try again.');
+      }
+    } catch (error) {
+      console.error('Strategy generation error:', error);
+      alert('Error generating strategy. Please check your connection and try again.');
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   const executeStrategy = () => {
