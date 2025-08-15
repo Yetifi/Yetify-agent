@@ -21,7 +21,7 @@ CMD ["npm", "run", "dev"]
 
 # Build stage
 FROM base AS builder
-ENV NODE_ENV=production
+ENV NODE_ENV=development
 
 # Install all dependencies (including devDependencies for build)
 RUN npm ci
