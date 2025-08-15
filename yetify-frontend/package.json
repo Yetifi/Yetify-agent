@@ -1,6 +1,15 @@
 {
   "name": "yetify-frontend",
   "version": "0.1.0",
+  "description": "AI-powered DeFi yield strategy frontend interface for Yetify platform",
+  "keywords": ["defi", "ai", "yield", "blockchain", "ethereum", "near", "strategy", "deFi"],
+  "author": "Yetify Team",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Yetifi/Yetify-agent.git",
+    "directory": "yetify-frontend"
+  },
+  "homepage": "https://github.com/Yetifi/Yetify-agent",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
