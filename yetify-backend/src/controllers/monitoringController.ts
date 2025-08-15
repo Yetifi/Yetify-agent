@@ -352,7 +352,7 @@ router.get('/health-check', async (req: AuthenticatedRequest, res: Response) => 
 });
 
 // Helper functions
-async function getPerformanceHistory(strategyId: string): Promise<any[]> {
+async function getPerformanceHistory(_strategyId: string): Promise<any[]> {
   // Mock performance history - in production, would query time-series data
   const history = [];
   const now = Date.now();
@@ -388,7 +388,7 @@ async function getRiskMetrics(strategy: any): Promise<any> {
   };
 }
 
-async function getMarketContext(recommendation: any): Promise<any> {
+async function getMarketContext(_recommendation: any): Promise<any> {
   return {
     marketTrend: 'bullish',
     protocolGrowth: '+15% TVL this week',
@@ -416,17 +416,17 @@ function calculateProtocolDistribution(strategies: any[]): Record<string, number
   return distribution;
 }
 
-async function calculate24hPerformance(strategies: any[]): Promise<number> {
+async function calculate24hPerformance(_strategies: any[]): Promise<number> {
   // Mock 24h performance calculation
   return Math.random() * 10 - 2; // -2% to +8%
 }
 
-async function calculate7dPerformance(strategies: any[]): Promise<number> {
+async function calculate7dPerformance(_strategies: any[]): Promise<number> {
   // Mock 7d performance calculation
   return Math.random() * 20 - 5; // -5% to +15%
 }
 
-async function calculate30dPerformance(strategies: any[]): Promise<number> {
+async function calculate30dPerformance(_strategies: any[]): Promise<number> {
   // Mock 30d performance calculation
   return Math.random() * 50 - 10; // -10% to +40%
 }
