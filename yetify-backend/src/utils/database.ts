@@ -332,8 +332,7 @@ export const ProtocolSchema = new mongoose.Schema(
   }
 );
 
-// Create indexes for better performance
-UserSchema.index({ walletAddress: 1 });
+// Create indexes for better performance (walletAddress already has unique index)
 UserSchema.index({ lastActive: -1 });
 StrategySchema.index({ userId: 1, status: 1 });
 StrategySchema.index({ createdAt: -1 });

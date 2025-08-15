@@ -129,17 +129,17 @@ export class StrategyEngine {
 
   private async gatherMarketData(prompt: StrategyPrompt) {
     const marketData = {
-      protocols: await this.protocolService.getTopProtocols(),
-      apyData: await this.marketService.getCurrentAPYs(),
-      tvlData: await this.marketService.getTVLData(),
-      riskScores: await this.protocolService.getRiskScores(),
-      gasPrice: await this.marketService.getGasPrices(),
-      tokenPrices: await this.marketService.getTokenPrices(['ETH', 'NEAR', 'USDC', 'USDT'])
+      protocols: await this.protocolService.getTopProtocols() || [],
+      apyData: await this.marketService.getCurrentAPYs() || { averageAPY: 0 },
+      tvlData: await this.marketService.getTVLData() || {},
+      riskScores: await this.protocolService.getRiskScores() || new Map(),
+      gasPrice: await this.marketService.getGasPrices() || { ethereum: '20', near: '10' },
+      tokenPrices: await this.marketService.getTokenPrices(['ETH', 'NEAR', 'USDC', 'USDT']) || new Map()
     };
 
     logger.ai('Market data gathered', { 
-      protocolCount: marketData.protocols.length,
-      avgAPY: marketData.apyData.averageAPY 
+      protocolCount: marketData.protocols?.length || 0,
+      avgAPY: marketData.apyData?.averageAPY || 0
     });
 
     return marketData;
@@ -157,7 +157,7 @@ export class StrategyEngine {
       
       logger.ai('Retrieved relevant knowledge', { 
         query,
-        resultCount: knowledge.length 
+        resultCount: knowledge?.length || 0
       });
       
       return knowledge;
@@ -221,13 +221,13 @@ export class StrategyEngine {
 You are an expert DeFi yield strategist AI for Yetify. Your role is to create executable, multi-chain yield strategies based on user prompts.
 
 Current Market Data:
-- Top Protocols: ${marketData.protocols.slice(0, 10).map((p: any) => `${p.name} (${p.chain}, APY: ${p.apy}%)`).join(', ')}
-- Average Market APY: ${marketData.apyData.averageAPY}%
-- ETH Gas Price: ${marketData.gasPrice.ethereum} gwei
-- NEAR Gas: ${marketData.gasPrice.near} TGas
+- Top Protocols: ${(marketData.protocols || []).slice(0, 10).map((p: any) => `${p?.name || 'Unknown'} (${p?.chain || 'Unknown'}, APY: ${p?.apy || 0}%)`).join(', ')}
+- Average Market APY: ${marketData.apyData?.averageAPY || 0}%
+- ETH Gas Price: ${marketData.gasPrice?.ethereum || 'Unknown'} gwei
+- NEAR Gas: ${marketData.gasPrice?.near || 'Unknown'} TGas
 
 Relevant Knowledge:
-${knowledge.join('\n')}
+${(knowledge || []).join('\n')}
 
 Generate strategies following these rules:
 1. Always output valid JSON with the specified schema

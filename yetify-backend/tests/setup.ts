@@ -246,6 +246,79 @@ global.console = {
   error: jest.fn(),
 };
 
+// Mock external services for testing
+jest.mock('../src/services/MarketDataService', () => ({
+  MarketDataService: jest.fn().mockImplementation(() => ({
+    getTopProtocols: jest.fn().mockResolvedValue([
+      { name: 'Aave', chain: 'Ethereum', apy: 4.2 },
+      { name: 'Lido', chain: 'Ethereum', apy: 5.1 }
+    ]),
+    getCurrentAPYs: jest.fn().mockResolvedValue({ averageAPY: 5.5 }),
+    getTVLData: jest.fn().mockResolvedValue({ total: 1000000000 }),
+    getGasPrices: jest.fn().mockResolvedValue({ ethereum: '20', near: '10' }),
+    getTokenPrices: jest.fn().mockResolvedValue(new Map([
+      ['ETH', { price: 2000 }],
+      ['NEAR', { price: 5 }]
+    ])),
+    getProtocolAPY: jest.fn().mockResolvedValue(5.0)
+  }))
+}));
+
+jest.mock('../src/services/ProtocolDataService', () => ({
+  ProtocolDataService: jest.fn().mockImplementation(() => ({
+    getTopProtocols: jest.fn().mockResolvedValue([
+      { name: 'Aave', chain: 'Ethereum', apy: 4.2 },
+      { name: 'Lido', chain: 'Ethereum', apy: 5.1 }
+    ]),
+    getRiskScores: jest.fn().mockResolvedValue(new Map([
+      ['Aave', { score: 3, warnings: [] }],
+      ['Lido', { score: 2, warnings: [] }]
+    ]))
+  }))
+}));
+
+// Mock Gemini AI
+jest.mock('@google/generative-ai', () => ({
+  GoogleGenerativeAI: jest.fn().mockImplementation(() => ({
+    getGenerativeModel: jest.fn().mockReturnValue({
+      generateContent: jest.fn().mockResolvedValue({
+        response: {
+          text: () => JSON.stringify({
+            goal: 'Test strategy',
+            chains: ['Ethereum'],
+            protocols: ['Aave'],
+            steps: [{ action: 'deposit', protocol: 'Aave', asset: 'ETH', expectedApy: 4.2 }],
+            riskLevel: 'Low',
+            estimatedApy: 4.2,
+            confidence: 85,
+            reasoning: 'Test strategy reasoning',
+            warnings: ['Test warning']
+          })
+        }
+      })
+    })
+  }))
+}));
+
+// Mock OpenAI/LangChain
+jest.mock('@langchain/openai', () => ({
+  ChatOpenAI: jest.fn().mockImplementation(() => ({
+    invoke: jest.fn().mockResolvedValue({
+      content: JSON.stringify({
+        goal: 'Test strategy',
+        chains: ['Ethereum'],
+        protocols: ['Aave'],
+        steps: [{ action: 'deposit', protocol: 'Aave', asset: 'ETH', expectedApy: 4.2 }],
+        riskLevel: 'Low',
+        estimatedApy: 4.2,
+        confidence: 85,
+        reasoning: 'Test strategy reasoning',
+        warnings: ['Test warning']
+      })
+    })
+  }))
+}));
+
 // Mock logger for testing
 jest.mock('../src/utils/logger', () => ({
   createLogger: () => ({
