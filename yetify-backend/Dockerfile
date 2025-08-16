@@ -21,7 +21,7 @@ CMD ["npm", "run", "dev"]
 
 # Build stage
 FROM base AS builder
-ENV NODE_ENV=production
+ENV NODE_ENV=development
 
 # Install all dependencies (including devDependencies for build)
 RUN npm ci
@@ -50,7 +50,7 @@ RUN addgroup -g 1001 -S nodejs && \
 
 # Install production dependencies only
 COPY package*.json ./
-RUN npm ci --only=production --ignore-scripts && \
+RUN npm ci --omit=dev --ignore-scripts && \
     npm cache clean --force
 
 # Copy built application from builder stage
@@ -58,15 +58,14 @@ COPY --from=builder --chown=yetify:nodejs /app/dist ./dist
 
 # Copy necessary runtime files
 COPY --chown=yetify:nodejs healthcheck.js ./
-COPY --chown=yetify:nodejs scripts/ ./scripts/
+# scripts/ folder removed - not needed for production
 
 # Create logs directory with proper permissions
 RUN mkdir -p logs && \
     chown -R yetify:nodejs logs && \
     chmod 755 logs
 
-# Security: Remove unnecessary packages
-RUN apk del python3 make g++
+# Security: Packages not needed in production stage (clean base image)
 
 # Switch to non-root user
 USER yetify

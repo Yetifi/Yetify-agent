@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import { ApolloServer } from 'apollo-server-express';
@@ -12,6 +12,10 @@ import { authMiddleware } from './middleware/auth';
 import strategyRoutes from './controllers/strategyController';
 import executionRoutes from './controllers/executionController';
 import monitoringRoutes from './controllers/monitoringController';
+
+interface AuthenticatedRequest extends Request {
+  user?: { id: string; walletAddress: string; walletType: string };
+}
 
 // Load environment variables
 dotenv.config();
@@ -63,18 +67,17 @@ async function startApolloServer() {
   const server = new ApolloServer({
     typeDefs,
     resolvers,
-    context: ({ req }) => {
+    context: ({ req }: { req: AuthenticatedRequest }) => {
       // Add authentication context
       const token = req.headers.authorization?.replace('Bearer ', '');
       return { token, user: req.user };
     },
     introspection: process.env.NODE_ENV !== 'production',
-    playground: process.env.NODE_ENV !== 'production',
   });
 
   await server.start();
   server.applyMiddleware({ 
-    app, 
+    app: app as any, 
     path: '/graphql',
     cors: false // Already handled by app-level CORS
   });
@@ -83,7 +86,7 @@ async function startApolloServer() {
 }
 
 // Error handling middleware
-app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   logger.error('Unhandled error:', err);
   
   if (err.name === 'ValidationError') {

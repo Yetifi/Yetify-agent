@@ -52,10 +52,37 @@ router.post('/estimate', async (req: AuthenticatedRequest, res: Response) => {
       });
     }
 
-    // Create execution context for estimation
+    // Create execution context for estimation - convert mongoose doc to plain object
     const executionContext = {
       userAddress: req.user!.walletAddress,
-      strategy,
+      strategy: {
+        id: strategy.id,
+        goal: strategy.goal,
+        chains: strategy.chains,
+        protocols: strategy.protocols,
+        steps: strategy.steps.map(step => ({
+          action: step.action,
+          protocol: step.protocol,
+          asset: step.asset,
+          amount: step.amount || undefined,
+          expectedApy: step.expectedApy || undefined,
+          riskScore: step.riskScore || undefined,
+          gasEstimate: step.gasEstimate || undefined,
+          dependencies: step.dependencies || []
+        })),
+        riskLevel: strategy.riskLevel,
+        estimatedApy: strategy.estimatedApy,
+        estimatedTvl: strategy.estimatedTvl,
+        executionTime: strategy.executionTime || '~5 minutes',
+        gasEstimate: {
+          ethereum: strategy.gasEstimate?.ethereum || '0.02 ETH',
+          near: strategy.gasEstimate?.near || '0.1 NEAR', 
+          arbitrum: strategy.gasEstimate?.arbitrum || '0.005 ETH'
+        },
+        confidence: strategy.confidence || 85,
+        reasoning: strategy.reasoning || 'Strategy generated based on market conditions',
+        warnings: strategy.warnings || []
+      },
       walletType: req.user!.walletType as 'metamask' | 'near' | 'walletconnect',
       investmentAmount,
       slippageTolerance: 2,
@@ -117,7 +144,7 @@ router.post('/estimate', async (req: AuthenticatedRequest, res: Response) => {
     logger.error('Gas estimation failed:', error);
     res.status(500).json({
       error: 'Gas estimation failed',
-      message: error.message
+      message: error instanceof Error ? error.message : String(error)
     });
   }
 });
@@ -171,10 +198,37 @@ router.post('/execute', executionRateLimit, async (req: AuthenticatedRequest, re
       });
     }
 
-    // Create execution context
+    // Create execution context - convert mongoose doc to plain object
     const executionContext = {
       userAddress: req.user!.walletAddress,
-      strategy,
+      strategy: {
+        id: strategy.id,
+        goal: strategy.goal,
+        chains: strategy.chains,
+        protocols: strategy.protocols,
+        steps: strategy.steps.map(step => ({
+          action: step.action,
+          protocol: step.protocol,
+          asset: step.asset,
+          amount: step.amount || undefined,
+          expectedApy: step.expectedApy || undefined,
+          riskScore: step.riskScore || undefined,
+          gasEstimate: step.gasEstimate || undefined,
+          dependencies: step.dependencies || []
+        })),
+        riskLevel: strategy.riskLevel,
+        estimatedApy: strategy.estimatedApy,
+        estimatedTvl: strategy.estimatedTvl,
+        executionTime: strategy.executionTime || '~5 minutes',
+        gasEstimate: {
+          ethereum: strategy.gasEstimate?.ethereum || '0.02 ETH',
+          near: strategy.gasEstimate?.near || '0.1 NEAR', 
+          arbitrum: strategy.gasEstimate?.arbitrum || '0.005 ETH'
+        },
+        confidence: strategy.confidence || 85,
+        reasoning: strategy.reasoning || 'Strategy generated based on market conditions',
+        warnings: strategy.warnings || []
+      },
       walletType: req.user!.walletType as 'metamask' | 'near' | 'walletconnect',
       investmentAmount,
       slippageTolerance,
@@ -240,7 +294,7 @@ router.post('/execute', executionRateLimit, async (req: AuthenticatedRequest, re
     logger.error('Strategy execution failed:', error);
     res.status(500).json({
       error: 'Strategy execution failed',
-      message: error.message
+      message: error instanceof Error ? error.message : String(error)
     });
   }
 });
@@ -302,7 +356,7 @@ router.get('/status/:strategyId', async (req: AuthenticatedRequest, res: Respons
     logger.error('Failed to get execution status:', error);
     res.status(500).json({
       error: 'Failed to retrieve execution status',
-      message: error.message
+      message: error instanceof Error ? error.message : String(error)
     });
   }
 });
@@ -351,7 +405,7 @@ router.post('/cancel/:strategyId', async (req: AuthenticatedRequest, res: Respon
     logger.error('Strategy cancellation failed:', error);
     res.status(500).json({
       error: 'Strategy cancellation failed',
-      message: error.message
+      message: error instanceof Error ? error.message : String(error)
     });
   }
 });
@@ -395,7 +449,7 @@ router.get('/history', async (req: AuthenticatedRequest, res: Response) => {
     logger.error('Failed to get execution history:', error);
     res.status(500).json({
       error: 'Failed to retrieve execution history',
-      message: error.message
+      message: error instanceof Error ? error.message : String(error)
     });
   }
 });
@@ -462,7 +516,7 @@ router.post('/dry-run', async (req: AuthenticatedRequest, res: Response) => {
     logger.error('Dry run simulation failed:', error);
     res.status(500).json({
       error: 'Dry run simulation failed',
-      message: error.message
+      message: error instanceof Error ? error.message : String(error)
     });
   }
 });

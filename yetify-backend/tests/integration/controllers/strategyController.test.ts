@@ -8,7 +8,33 @@ import { testUtils } from '../../setup';
 // Mock the AI strategy engine
 jest.mock('../../../src/ai-engine/StrategyEngine', () => ({
   StrategyEngine: jest.fn().mockImplementation(() => ({
-    generateStrategy: jest.fn().mockResolvedValue(testUtils.createTestStrategy()),
+    generateStrategy: jest.fn().mockResolvedValue({
+      id: 'test_strategy_123',
+      goal: 'Test strategy for maximum ETH yield',
+      chains: ['Ethereum'],
+      protocols: ['Aave', 'Lido'],
+      steps: [
+        {
+          action: 'deposit',
+          protocol: 'Lido',
+          asset: 'ETH',
+          amount: '1000',
+          expectedApy: 4.2
+        }
+      ],
+      riskLevel: 'Low',
+      estimatedApy: 6.35,
+      estimatedTvl: '1000',
+      confidence: 85,
+      reasoning: 'Test strategy reasoning',
+      executionTime: '2-3 minutes',
+      gasEstimate: {
+        ethereum: '0.02 ETH',
+        near: '0.001 NEAR',
+        arbitrum: '0.005 ETH'
+      },
+      warnings: ['High gas fees on Ethereum', 'Market volatility risk']
+    }),
     storeStrategyKnowledge: jest.fn().mockResolvedValue(undefined)
   }))
 }));

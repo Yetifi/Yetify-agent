@@ -1,4 +1,4 @@
-import { Router, Response } from 'express';
+import { Response, Router } from 'express';
 import Joi from 'joi';
 import { MonitoringEngine } from '../monitoring/MonitoringEngine';
 import { MarketDataService } from '../services/MarketDataService';
@@ -55,9 +55,9 @@ router.get('/performance/:strategyId', async (req: AuthenticatedRequest, res: Re
         riskLevel: strategy.riskLevel
       },
       charts: {
-        performanceHistory: await this.getPerformanceHistory(strategyId),
-        apyTrend: await this.getAPYTrend(strategy),
-        riskMetrics: await this.getRiskMetrics(strategy)
+        performanceHistory: await getPerformanceHistory(strategyId),
+        apyTrend: await getAPYTrend(strategy),
+        riskMetrics: await getRiskMetrics(strategy)
       }
     };
 
@@ -72,7 +72,7 @@ router.get('/performance/:strategyId', async (req: AuthenticatedRequest, res: Re
     logger.error('Failed to get strategy performance:', error);
     res.status(500).json({
       error: 'Failed to retrieve performance data',
-      message: error.message
+      message: (error as Error).message
     });
   }
 });
@@ -136,7 +136,7 @@ router.get('/alerts', async (req: AuthenticatedRequest, res: Response) => {
     logger.error('Failed to get alerts:', error);
     res.status(500).json({
       error: 'Failed to retrieve alerts',
-      message: error.message
+      message: (error as Error).message
     });
   }
 });
@@ -170,7 +170,7 @@ router.post('/alerts/acknowledge', async (req: AuthenticatedRequest, res: Respon
     logger.error('Failed to acknowledge alerts:', error);
     res.status(500).json({
       error: 'Failed to acknowledge alerts',
-      message: error.message
+      message: (error as Error).message
     });
   }
 });
@@ -182,16 +182,18 @@ router.get('/rebalance-recommendations', async (req: AuthenticatedRequest, res: 
 
     // Enhance recommendations with market context
     const enhancedRecommendations = await Promise.all(
-      recommendations.map(async (rec) => {
+      recommendations.map(async rec => {
         const strategy = await Strategy.findOne({ id: rec.strategyId });
         return {
           ...rec,
-          strategy: strategy ? {
-            goal: strategy.goal,
-            currentAPY: strategy.actualApy || strategy.estimatedApy,
-            riskLevel: strategy.riskLevel
-          } : null,
-          marketContext: await this.getMarketContext(rec)
+          strategy: strategy
+            ? {
+                goal: strategy.goal,
+                currentAPY: strategy.actualApy || strategy.estimatedApy,
+                riskLevel: strategy.riskLevel
+              }
+            : null,
+          marketContext: await getMarketContext(rec)
         };
       })
     );
@@ -213,7 +215,7 @@ router.get('/rebalance-recommendations', async (req: AuthenticatedRequest, res: 
     logger.error('Failed to get rebalance recommendations:', error);
     res.status(500).json({
       error: 'Failed to retrieve rebalance recommendations',
-      message: error.message
+      message: (error as Error).message
     });
   }
 });
@@ -267,7 +269,7 @@ router.get('/market-overview', async (req: AuthenticatedRequest, res: Response) 
     logger.error('Failed to get market overview:', error);
     res.status(500).json({
       error: 'Failed to retrieve market overview',
-      message: error.message
+      message: (error as Error).message
     });
   }
 });
@@ -289,20 +291,21 @@ router.get('/portfolio-summary', async (req: AuthenticatedRequest, res: Response
         medium: strategies.filter(s => s.riskLevel === 'Medium').length,
         high: strategies.filter(s => s.riskLevel === 'High').length
       },
-      chainDistribution: this.calculateChainDistribution(strategies),
-      protocolDistribution: this.calculateProtocolDistribution(strategies),
+      chainDistribution: calculateChainDistribution(strategies),
+      protocolDistribution: calculateProtocolDistribution(strategies),
       performance: {
-        last24h: await this.calculate24hPerformance(strategies),
-        last7d: await this.calculate7dPerformance(strategies),
-        last30d: await this.calculate30dPerformance(strategies)
+        last24h: await calculate24hPerformance(strategies),
+        last7d: await calculate7dPerformance(strategies),
+        last30d: await calculate30dPerformance(strategies)
       }
     };
 
     // Calculate average ROI
     const strategiesWithROI = strategies.filter(s => s.performance?.roi);
     if (strategiesWithROI.length > 0) {
-      portfolioSummary.averageROI = strategiesWithROI.reduce((sum, s) => 
-        sum + (s.performance?.roi || 0), 0) / strategiesWithROI.length;
+      portfolioSummary.averageROI =
+        strategiesWithROI.reduce((sum, s) => sum + (s.performance?.roi || 0), 0) /
+        strategiesWithROI.length;
     }
 
     logger.monitoring('Portfolio summary generated', {
@@ -316,7 +319,7 @@ router.get('/portfolio-summary', async (req: AuthenticatedRequest, res: Response
     logger.error('Failed to get portfolio summary:', error);
     res.status(500).json({
       error: 'Failed to retrieve portfolio summary',
-      message: error.message
+      message: (error as Error).message
     });
   }
 });
@@ -335,9 +338,9 @@ router.get('/health-check', async (req: AuthenticatedRequest, res: Response) => 
         rebalanceRecommendations: 0 // Would come from recommendations collection
       },
       serviceStatus: {
-        priceFeeds: await this.checkPriceFeedsHealth(),
-        chainConnections: await this.checkChainConnectionsHealth(),
-        externalAPIs: await this.checkExternalAPIsHealth()
+        priceFeeds: await checkPriceFeedsHealth(),
+        chainConnections: await checkChainConnectionsHealth(),
+        externalAPIs: await checkExternalAPIsHealth()
       }
     };
 
@@ -346,13 +349,13 @@ router.get('/health-check', async (req: AuthenticatedRequest, res: Response) => 
     logger.error('Health check failed:', error);
     res.status(500).json({
       error: 'Health check failed',
-      message: error.message
+      message: (error as Error).message
     });
   }
 });
 
-// Helper methods
-private async getPerformanceHistory(strategyId: string): Promise<any[]> {
+// Helper functions
+async function getPerformanceHistory(_strategyId: string): Promise<any[]> {
   // Mock performance history - in production, would query time-series data
   const history = [];
   const now = Date.now();
@@ -360,35 +363,36 @@ private async getPerformanceHistory(strategyId: string): Promise<any[]> {
     history.push({
       timestamp: new Date(now - i * 24 * 60 * 60 * 1000).toISOString(),
       value: 1000 + Math.random() * 200 - 100,
-      roi: (Math.random() * 20) - 5
+      roi: Math.random() * 20 - 5
     });
   }
   return history;
 }
 
-private async getAPYTrend(strategy: any): Promise<any[]> {
+async function getAPYTrend(strategy: any): Promise<any[]> {
   // Mock APY trend data
   const trend = [];
   const now = Date.now();
   for (let i = 7; i >= 0; i--) {
     trend.push({
       date: new Date(now - i * 24 * 60 * 60 * 1000).toISOString(),
-      apy: strategy.estimatedApy + (Math.random() * 4) - 2
+      apy: strategy.estimatedApy + Math.random() * 4 - 2
     });
   }
   return trend;
 }
 
-private async getRiskMetrics(strategy: any): Promise<any> {
+async function getRiskMetrics(strategy: any): Promise<any> {
   return {
-    currentRiskScore: strategy.riskLevel === 'Low' ? 2.5 : strategy.riskLevel === 'Medium' ? 5.0 : 7.5,
+    currentRiskScore:
+      strategy.riskLevel === 'Low' ? 2.5 : strategy.riskLevel === 'Medium' ? 5.0 : 7.5,
     volatility: Math.random() * 20 + 5,
     sharpeRatio: Math.random() * 2 + 0.5,
     maxDrawdown: Math.random() * 15 + 2
   };
 }
 
-private async getMarketContext(recommendation: any): Promise<any> {
+async function getMarketContext(_recommendation: any): Promise<any> {
   return {
     marketTrend: 'bullish',
     protocolGrowth: '+15% TVL this week',
@@ -396,8 +400,8 @@ private async getMarketContext(recommendation: any): Promise<any> {
   };
 }
 
-private calculateChainDistribution(strategies: any[]): any {
-  const distribution = {};
+function calculateChainDistribution(strategies: any[]): Record<string, number> {
+  const distribution: Record<string, number> = {};
   strategies.forEach(strategy => {
     strategy.chains.forEach((chain: string) => {
       distribution[chain] = (distribution[chain] || 0) + 1;
@@ -406,8 +410,8 @@ private calculateChainDistribution(strategies: any[]): any {
   return distribution;
 }
 
-private calculateProtocolDistribution(strategies: any[]): any {
-  const distribution = {};
+function calculateProtocolDistribution(strategies: any[]): Record<string, number> {
+  const distribution: Record<string, number> = {};
   strategies.forEach(strategy => {
     strategy.protocols.forEach((protocol: string) => {
       distribution[protocol] = (distribution[protocol] || 0) + 1;
@@ -416,22 +420,22 @@ private calculateProtocolDistribution(strategies: any[]): any {
   return distribution;
 }
 
-private async calculate24hPerformance(strategies: any[]): Promise<number> {
+async function calculate24hPerformance(_strategies: any[]): Promise<number> {
   // Mock 24h performance calculation
   return Math.random() * 10 - 2; // -2% to +8%
 }
 
-private async calculate7dPerformance(strategies: any[]): Promise<number> {
+async function calculate7dPerformance(_strategies: any[]): Promise<number> {
   // Mock 7d performance calculation
   return Math.random() * 20 - 5; // -5% to +15%
 }
 
-private async calculate30dPerformance(strategies: any[]): Promise<number> {
+async function calculate30dPerformance(_strategies: any[]): Promise<number> {
   // Mock 30d performance calculation
   return Math.random() * 50 - 10; // -10% to +40%
 }
 
-private async checkPriceFeedsHealth(): Promise<string> {
+async function checkPriceFeedsHealth(): Promise<string> {
   try {
     await marketDataService.getTokenPrices(['ETH']);
     return 'healthy';
@@ -440,7 +444,7 @@ private async checkPriceFeedsHealth(): Promise<string> {
   }
 }
 
-private async checkChainConnectionsHealth(): Promise<any> {
+async function checkChainConnectionsHealth(): Promise<any> {
   return {
     ethereum: 'healthy',
     near: 'healthy',
@@ -448,7 +452,7 @@ private async checkChainConnectionsHealth(): Promise<any> {
   };
 }
 
-private async checkExternalAPIsHealth(): Promise<any> {
+async function checkExternalAPIsHealth(): Promise<any> {
   return {
     coinGecko: 'healthy',
     defillama: 'healthy',

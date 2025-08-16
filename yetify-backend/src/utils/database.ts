@@ -22,15 +22,14 @@ export class DatabaseConnection {
   async connect(uri?: string): Promise<void> {
     try {
       const connectionUri = uri || process.env.MONGODB_URI || 'mongodb://localhost:27017/yetify';
-      
+
       const options: mongoose.ConnectOptions = {
         maxPoolSize: 10,
         serverSelectionTimeoutMS: 5000,
         socketTimeoutMS: 45000,
         bufferCommands: false,
-        bufferMaxEntries: 0,
         retryWrites: true,
-        retryReads: true,
+        retryReads: true
       };
 
       logger.info('Connecting to MongoDB...', { uri: this.maskUri(connectionUri) });
@@ -39,11 +38,11 @@ export class DatabaseConnection {
       this.connection = mongoose.connection;
 
       this.setupEventHandlers();
-      
+
       logger.info('Successfully connected to MongoDB');
     } catch (error) {
       logger.error('Failed to connect to MongoDB:', error);
-      throw new Error(`Database connection failed: ${error.message}`);
+      throw new Error(`Database connection failed: ${(error as Error).message}`);
     }
   }
 
@@ -70,7 +69,7 @@ export class DatabaseConnection {
 
   async healthCheck(): Promise<{ status: string; latency: number; details: any }> {
     const startTime = Date.now();
-    
+
     try {
       if (!this.isConnected()) {
         return {
@@ -81,10 +80,10 @@ export class DatabaseConnection {
       }
 
       // Perform a simple ping operation
-      await mongoose.connection.db.admin().ping();
-      
+      await mongoose.connection.db?.admin().ping();
+
       const latency = Date.now() - startTime;
-      
+
       return {
         status: 'healthy',
         latency,
@@ -97,17 +96,19 @@ export class DatabaseConnection {
       };
     } catch (error) {
       const latency = Date.now() - startTime;
-      
+
       return {
         status: 'error',
         latency,
-        details: { error: error.message }
+        details: { error: (error as Error).message }
       };
     }
   }
 
   private setupEventHandlers(): void {
-    if (!this.connection) return;
+    if (!this.connection) {
+      return;
+    }
 
     this.connection.on('connected', () => {
       logger.info('MongoDB connected event');
@@ -117,7 +118,7 @@ export class DatabaseConnection {
       logger.warn('MongoDB disconnected event');
     });
 
-    this.connection.on('error', (error) => {
+    this.connection.on('error', error => {
       logger.error('MongoDB error event:', error);
     });
 
@@ -137,7 +138,7 @@ export class DatabaseConnection {
 
   private async gracefulShutdown(signal: string): Promise<void> {
     logger.info(`${signal} received, closing MongoDB connection...`);
-    
+
     try {
       await this.disconnect();
       logger.info('MongoDB connection closed gracefully');
@@ -179,140 +180,159 @@ export const checkDatabaseHealth = async () => {
 };
 
 // Schema definitions for Yetify collections
-export const UserSchema = new mongoose.Schema({
-  walletAddress: { 
-    type: String, 
-    required: true, 
-    unique: true, 
-    index: true 
-  },
-  walletType: { 
-    type: String, 
-    enum: ['metamask', 'near', 'walletconnect'], 
-    required: true 
-  },
-  preferences: {
-    riskTolerance: { 
-      type: String, 
-      enum: ['low', 'medium', 'high'], 
-      default: 'medium' 
+export const UserSchema = new mongoose.Schema(
+  {
+    walletAddress: {
+      type: String,
+      required: true,
+      unique: true
     },
-    preferredChains: [{ 
-      type: String, 
-      enum: ['ethereum', 'near', 'arbitrum', 'polygon', 'optimism'] 
-    }],
-    notificationsEnabled: { type: Boolean, default: true },
-    autoRebalancing: { type: Boolean, default: false }
-  },
-  strategies: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Strategy'
-  }],
-  createdAt: { type: Date, default: Date.now },
-  lastActive: { type: Date, default: Date.now },
-  totalInvested: { type: Number, default: 0 },
-  totalReturns: { type: Number, default: 0 }
-}, {
-  timestamps: true,
-  collection: 'users'
-});
-
-export const StrategySchema = new mongoose.Schema({
-  id: { type: String, required: true, unique: true },
-  userId: { 
-    type: mongoose.Schema.Types.ObjectId, 
-    ref: 'User', 
-    required: true,
-    index: true 
-  },
-  goal: { type: String, required: true },
-  prompt: { type: String, required: true },
-  chains: [{ type: String, required: true }],
-  protocols: [{ type: String, required: true }],
-  steps: [{
-    action: { type: String, required: true },
-    protocol: { type: String, required: true },
-    asset: { type: String, required: true },
-    amount: String,
-    expectedApy: Number,
-    riskScore: Number,
-    gasEstimate: String,
-    dependencies: [String]
-  }],
-  riskLevel: { 
-    type: String, 
-    enum: ['Low', 'Medium', 'High'], 
-    required: true 
-  },
-  status: {
-    type: String,
-    enum: ['draft', 'active', 'paused', 'completed', 'failed'],
-    default: 'draft'
-  },
-  estimatedApy: { type: Number, required: true },
-  estimatedTvl: { type: String, required: true },
-  actualApy: Number,
-  actualTvl: Number,
-  executionTime: String,
-  gasEstimate: {
-    ethereum: String,
-    near: String,
-    arbitrum: String
-  },
-  confidence: { type: Number, min: 0, max: 100 },
-  reasoning: String,
-  warnings: [String],
-  executionHistory: [{
-    timestamp: { type: Date, default: Date.now },
-    action: String,
-    status: { type: String, enum: ['pending', 'success', 'failed'] },
-    transactionHash: String,
-    gasUsed: String,
-    error: String
-  }],
-  performance: {
+    walletType: {
+      type: String,
+      enum: ['metamask', 'near', 'walletconnect'],
+      required: true
+    },
+    preferences: {
+      riskTolerance: {
+        type: String,
+        enum: ['low', 'medium', 'high'],
+        default: 'medium'
+      },
+      preferredChains: [
+        {
+          type: String,
+          enum: ['ethereum', 'near', 'arbitrum', 'polygon', 'optimism']
+        }
+      ],
+      notificationsEnabled: { type: Boolean, default: true },
+      autoRebalancing: { type: Boolean, default: false }
+    },
+    strategies: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Strategy'
+      }
+    ],
+    createdAt: { type: Date, default: Date.now },
+    lastActive: { type: Date, default: Date.now },
     totalInvested: { type: Number, default: 0 },
-    currentValue: { type: Number, default: 0 },
-    totalReturns: { type: Number, default: 0 },
-    roi: { type: Number, default: 0 },
-    lastUpdated: Date
+    totalReturns: { type: Number, default: 0 }
   },
-  createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now }
-}, {
-  timestamps: true,
-  collection: 'strategies'
-});
+  {
+    timestamps: true,
+    collection: 'users'
+  }
+);
 
-export const ProtocolSchema = new mongoose.Schema({
-  id: { type: String, required: true, unique: true },
-  name: { type: String, required: true },
-  chain: { type: String, required: true },
-  category: { 
-    type: String, 
-    enum: ['lending', 'dex', 'yield_farming', 'staking', 'derivatives'],
-    required: true 
+export const StrategySchema = new mongoose.Schema(
+  {
+    id: { type: String, required: true, unique: true },
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+      index: true
+    },
+    goal: { type: String, required: true },
+    prompt: { type: String, required: true },
+    chains: [{ type: String, required: true }],
+    protocols: [{ type: String, required: true }],
+    steps: [
+      {
+        action: { 
+          type: String, 
+          required: true,
+          enum: ['deposit', 'stake', 'yield_farm', 'provide_liquidity', 'leverage', 'bridge']
+        },
+        protocol: { type: String, required: true },
+        asset: { type: String, required: true },
+        amount: String,
+        expectedApy: Number,
+        riskScore: Number,
+        gasEstimate: String,
+        dependencies: [String]
+      }
+    ],
+    riskLevel: {
+      type: String,
+      enum: ['Low', 'Medium', 'High'],
+      required: true
+    },
+    status: {
+      type: String,
+      enum: ['draft', 'active', 'paused', 'completed', 'failed'],
+      default: 'draft'
+    },
+    estimatedApy: { type: Number, required: true },
+    estimatedTvl: { type: String, required: true },
+    actualApy: Number,
+    actualTvl: Number,
+    executionTime: String,
+    gasEstimate: {
+      ethereum: String,
+      near: String,
+      arbitrum: String
+    },
+    confidence: { type: Number, min: 0, max: 100 },
+    reasoning: String,
+    warnings: [String],
+    executionHistory: [
+      {
+        timestamp: { type: Date, default: Date.now },
+        action: String,
+        status: { type: String, enum: ['pending', 'success', 'failed'] },
+        transactionHash: String,
+        gasUsed: String,
+        error: String
+      }
+    ],
+    performance: {
+      totalInvested: { type: Number, default: 0 },
+      currentValue: { type: Number, default: 0 },
+      totalReturns: { type: Number, default: 0 },
+      roi: { type: Number, default: 0 },
+      lastUpdated: Date
+    },
+    createdAt: { type: Date, default: Date.now },
+    updatedAt: { type: Date, default: Date.now }
   },
-  tvl: { type: Number, required: true },
-  apy: { type: Number, required: true },
-  riskScore: { type: Number, min: 1, max: 10, required: true },
-  url: String,
-  description: String,
-  tokens: [String],
-  auditStatus: { 
-    type: String, 
-    enum: ['audited', 'unaudited', 'partially_audited'],
-    required: true 
-  },
-  isActive: { type: Boolean, default: true },
-  lastUpdated: { type: Date, default: Date.now }
-}, {
-  timestamps: true,
-  collection: 'protocols'
-});
+  {
+    timestamps: true,
+    collection: 'strategies'
+  }
+);
 
-// Create indexes for better performance
-UserSchema.index({ walletAddress: 1 });
+export const ProtocolSchema = new mongoose.Schema(
+  {
+    id: { type: String, required: true, unique: true },
+    name: { type: String, required: true },
+    chain: { type: String, required: true },
+    category: {
+      type: String,
+      enum: ['lending', 'dex', 'yield_farming', 'staking', 'derivatives'],
+      required: true
+    },
+    tvl: { type: Number, required: true },
+    apy: { type: Number, required: true },
+    riskScore: { type: Number, min: 1, max: 10, required: true },
+    url: String,
+    description: String,
+    tokens: [String],
+    auditStatus: {
+      type: String,
+      enum: ['audited', 'unaudited', 'partially_audited'],
+      required: true
+    },
+    isActive: { type: Boolean, default: true },
+    lastUpdated: { type: Date, default: Date.now }
+  },
+  {
+    timestamps: true,
+    collection: 'protocols'
+  }
+);
+
+// Create indexes for better performance (walletAddress already has unique index)
 UserSchema.index({ lastActive: -1 });
 StrategySchema.index({ userId: 1, status: 1 });
 StrategySchema.index({ createdAt: -1 });

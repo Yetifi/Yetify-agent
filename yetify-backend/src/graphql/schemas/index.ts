@@ -9,18 +9,18 @@ export const typeDefs = gql`
     getStrategy(id: ID!): Strategy
     getUserStrategies(userId: ID!): [Strategy!]!
     getActiveStrategies: [Strategy!]!
-    
+
     # Market data queries
     getMarketSummary: MarketSummary!
     getTokenPrices(symbols: [String!]!): [TokenPrice!]!
     getProtocols(chain: String, category: String): [Protocol!]!
     getGasPrices: GasPrices!
-    
+
     # Monitoring queries
     getStrategyPerformance(strategyId: ID!): PerformanceMetrics
     getActiveAlerts(userId: ID!): [RiskAlert!]!
     getRebalanceRecommendations(userId: ID!): [RebalanceRecommendation!]!
-    
+
     # User queries
     getUser(walletAddress: String!): User
     getUserProfile(id: ID!): User
@@ -34,11 +34,11 @@ export const typeDefs = gql`
     pauseStrategy(id: ID!): Strategy!
     resumeStrategy(id: ID!): Strategy!
     deleteStrategy(id: ID!): Boolean!
-    
+
     # User mutations
     createUser(input: UserInput!): User!
     updateUserPreferences(userId: ID!, preferences: UserPreferencesInput!): User!
-    
+
     # Alert mutations
     acknowledgeAlert(alertId: ID!): RiskAlert!
     executeRebalance(recommendationId: ID!): ExecutionResult!

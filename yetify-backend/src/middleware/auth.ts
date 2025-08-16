@@ -67,14 +67,14 @@ export const authMiddleware = async (
     next();
   } catch (error) {
     logger.security('Authentication failed', {
-      error: error.message,
+      error: (error as Error).message,
       endpoint: req.path,
       ip: req.ip
     });
 
     res.status(401).json({
       error: 'Authentication failed',
-      message: error.message
+      message: (error as Error).message
     });
   }
 };
@@ -104,7 +104,7 @@ export const optionalAuth = async (
     next();
   } catch (error) {
     // For optional auth, continue without user if token is invalid
-    logger.warn('Optional auth failed, continuing without user', error.message);
+    logger.warn('Optional auth failed, continuing without user', (error as Error).message);
     next();
   }
 };
@@ -137,7 +137,12 @@ export const generateToken = (user: any): string => {
     walletType: user.walletType
   };
 
-  return jwt.sign(payload, process.env.JWT_SECRET!, {
+  const jwtSecret = process.env.JWT_SECRET;
+  if (!jwtSecret) {
+    throw new Error('JWT_SECRET environment variable is not set');
+  }
+  
+  return jwt.sign(payload, jwtSecret, {
     expiresIn: '7d',
     issuer: 'yetify-backend',
     audience: 'yetify-frontend'
@@ -155,7 +160,7 @@ export const refreshToken = async (token: string): Promise<string> => {
 
     return generateToken(user);
   } catch (error) {
-    throw new Error('Token refresh failed: ' + error.message);
+    throw new Error('Token refresh failed: ' + (error as Error).message);
   }
 };
 
@@ -183,11 +188,16 @@ const extractToken = (req: Request): string | null => {
 
 const verifyToken = (token: string): JWTPayload => {
   try {
-    return jwt.verify(token, process.env.JWT_SECRET!) as JWTPayload;
+    const jwtSecret = process.env.JWT_SECRET;
+    if (!jwtSecret) {
+      throw new Error('JWT_SECRET environment variable is not set');
+    }
+    
+    return jwt.verify(token, jwtSecret) as JWTPayload;
   } catch (error) {
-    if (error.name === 'TokenExpiredError') {
+    if ((error as any).name === 'TokenExpiredError') {
       throw new Error('Token expired');
-    } else if (error.name === 'JsonWebTokenError') {
+    } else if ((error as any).name === 'JsonWebTokenError') {
       throw new Error('Invalid token');
     } else {
       throw new Error('Token verification failed');
@@ -256,7 +266,7 @@ export const createUserRateLimit = (maxRequests: number, windowMs: number) => {
   const requests = new Map<string, { count: number; resetTime: number }>();
 
   return (req: AuthenticatedRequest, res: Response, next: NextFunction): void => {
-    const userId = req.user?.id || req.ip;
+    const userId = req.user?.id || req.ip || 'anonymous';
     const now = Date.now();
     
     const userRequests = requests.get(userId);

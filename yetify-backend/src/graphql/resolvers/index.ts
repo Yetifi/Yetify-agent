@@ -17,7 +17,7 @@ const protocolDataService = new ProtocolDataService();
 export const resolvers = {
   Query: {
     // Strategy queries
-    async getStrategy(_, { id }, context) {
+    async getStrategy(_: unknown, { id }: { id: string }, context: { user?: { id: string } }) {
       try {
         const strategy = await Strategy.findOne({ id }).populate('userId');
         if (!strategy) {
@@ -36,7 +36,7 @@ export const resolvers = {
       }
     },
 
-    async getUserStrategies(_, { userId }, context) {
+    async getUserStrategies(_: unknown, { userId }: { userId: string }, context: { user?: { id: string } }) {
       try {
         // Verify user access
         if (!context.user || context.user.id !== userId) {
@@ -51,7 +51,7 @@ export const resolvers = {
       }
     },
 
-    async getActiveStrategies(_, __, context) {
+    async getActiveStrategies(_: unknown, __: unknown, context: { user?: { id: string; isAdmin?: boolean } }) {
       try {
         if (!context.user?.isAdmin) {
           throw new AuthenticationError('Admin access required');
@@ -78,7 +78,7 @@ export const resolvers = {
       }
     },
 
-    async getTokenPrices(_, { symbols }) {
+    async getTokenPrices(_: unknown, { symbols }: { symbols: string[] }) {
       try {
         const pricesMap = await marketDataService.getTokenPrices(symbols);
         return Array.from(pricesMap.values());
@@ -88,7 +88,7 @@ export const resolvers = {
       }
     },
 
-    async getProtocols(_, { chain, category }) {
+    async getProtocols(_: unknown, { chain, category }: { chain?: string; category?: string }) {
       try {
         let protocols = await protocolDataService.getTopProtocols();
         
@@ -117,7 +117,7 @@ export const resolvers = {
     },
 
     // Monitoring queries
-    async getStrategyPerformance(_, { strategyId }, context) {
+    async getStrategyPerformance(_: unknown, { strategyId }: { strategyId: string }, context: { user?: { id: string } }) {
       try {
         const strategy = await Strategy.findOne({ id: strategyId });
         if (!strategy) {
@@ -136,7 +136,7 @@ export const resolvers = {
       }
     },
 
-    async getActiveAlerts(_, { userId }, context) {
+    async getActiveAlerts(_: unknown, { userId }: { userId: string }, context: { user?: { id: string } }) {
       try {
         if (!context.user || context.user.id !== userId) {
           throw new AuthenticationError('Access denied');
@@ -149,7 +149,7 @@ export const resolvers = {
       }
     },
 
-    async getRebalanceRecommendations(_, { userId }, context) {
+    async getRebalanceRecommendations(_: unknown, { userId }: { userId: string }, context: { user?: { id: string } }) {
       try {
         if (!context.user || context.user.id !== userId) {
           throw new AuthenticationError('Access denied');
@@ -163,7 +163,7 @@ export const resolvers = {
     },
 
     // User queries
-    async getUser(_, { walletAddress }) {
+    async getUser(_: unknown, { walletAddress }: { walletAddress: string }) {
       try {
         const user = await User.findOne({ walletAddress }).populate('strategies');
         return user;
@@ -173,7 +173,7 @@ export const resolvers = {
       }
     },
 
-    async getUserProfile(_, { id }, context) {
+    async getUserProfile(_: unknown, { id }: { id: string }, context: { user?: { id: string } }) {
       try {
         if (!context.user || context.user.id !== id) {
           throw new AuthenticationError('Access denied');
@@ -190,7 +190,7 @@ export const resolvers = {
 
   Mutation: {
     // Strategy mutations
-    async generateStrategy(_, { input }, context) {
+    async generateStrategy(_: unknown, { input }: { input: any }, context: { user?: { id: string } }) {
       try {
         logger.ai('Generating strategy via GraphQL', { prompt: input.prompt });
         
@@ -222,11 +222,11 @@ export const resolvers = {
         };
       } catch (error) {
         logger.error('Strategy generation failed:', error);
-        throw new Error(`Strategy generation failed: ${error.message}`);
+        throw new Error(`Strategy generation failed: ${error instanceof Error ? error.message : String(error)}`);
       }
     },
 
-    async executeStrategy(_, { input }, context) {
+    async executeStrategy(_: unknown, { input }: { input: any }, context: { user?: { id: string } }) {
       try {
         const strategy = await Strategy.findOne({ id: input.strategyId });
         if (!strategy) {
@@ -240,7 +240,34 @@ export const resolvers = {
 
         const executionContext = {
           userAddress: input.userAddress,
-          strategy,
+          strategy: {
+            id: strategy.id,
+            goal: strategy.goal,
+            chains: strategy.chains,
+            protocols: strategy.protocols,
+            steps: strategy.steps.map((step: any) => ({
+              action: step.action,
+              protocol: step.protocol,
+              asset: step.asset,
+              amount: step.amount || undefined,
+              expectedApy: step.expectedApy || undefined,
+              riskScore: step.riskScore || undefined,
+              gasEstimate: step.gasEstimate || undefined,
+              dependencies: step.dependencies || []
+            })),
+            riskLevel: strategy.riskLevel,
+            estimatedApy: strategy.estimatedApy,
+            estimatedTvl: strategy.estimatedTvl,
+            executionTime: strategy.executionTime || '~5 minutes',
+            gasEstimate: {
+              ethereum: strategy.gasEstimate?.ethereum || '0.02 ETH',
+              near: strategy.gasEstimate?.near || '0.1 NEAR',
+              arbitrum: strategy.gasEstimate?.arbitrum || '0.005 ETH'
+            },
+            confidence: strategy.confidence || 85,
+            reasoning: strategy.reasoning || 'Strategy generated based on market conditions',
+            warnings: strategy.warnings || []
+          },
           walletType: input.walletType || 'metamask',
           investmentAmount: input.investmentAmount,
           slippageTolerance: input.slippageTolerance,
@@ -270,11 +297,11 @@ export const resolvers = {
         };
       } catch (error) {
         logger.error('Strategy execution failed:', error);
-        throw new Error(`Execution failed: ${error.message}`);
+        throw new Error(`Execution failed: ${error instanceof Error ? error.message : String(error)}`);
       }
     },
 
-    async updateStrategy(_, { id, input }, context) {
+    async updateStrategy(_: unknown, { id, input }: { id: string; input: any }, context: { user?: { id: string } }) {
       try {
         const strategy = await Strategy.findOne({ id });
         if (!strategy) {
@@ -299,7 +326,7 @@ export const resolvers = {
       }
     },
 
-    async pauseStrategy(_, { id }, context) {
+    async pauseStrategy(_: unknown, { id }: { id: string }, context: { user?: { id: string } }) {
       try {
         const strategy = await Strategy.findOne({ id });
         if (!strategy) {
@@ -324,7 +351,7 @@ export const resolvers = {
       }
     },
 
-    async resumeStrategy(_, { id }, context) {
+    async resumeStrategy(_: unknown, { id }: { id: string }, context: { user?: { id: string } }) {
       try {
         const strategy = await Strategy.findOne({ id });
         if (!strategy) {
@@ -349,7 +376,7 @@ export const resolvers = {
       }
     },
 
-    async deleteStrategy(_, { id }, context) {
+    async deleteStrategy(_: unknown, { id }: { id: string }, context: { user?: { id: string } }) {
       try {
         const strategy = await Strategy.findOne({ id });
         if (!strategy) {
@@ -370,7 +397,7 @@ export const resolvers = {
     },
 
     // User mutations
-    async createUser(_, { input }) {
+    async createUser(_: unknown, { input }: { input: any }) {
       try {
         // Check if user already exists
         const existingUser = await User.findOne({ walletAddress: input.walletAddress });
@@ -395,7 +422,7 @@ export const resolvers = {
       }
     },
 
-    async updateUserPreferences(_, { userId, preferences }, context) {
+    async updateUserPreferences(_: unknown, { userId, preferences }: { userId: string; preferences: any }, context: { user?: { id: string } }) {
       try {
         if (!context.user || context.user.id !== userId) {
           throw new AuthenticationError('Access denied');
@@ -415,7 +442,7 @@ export const resolvers = {
     },
 
     // Alert mutations
-    async acknowledgeAlert(_, { alertId }, context) {
+    async acknowledgeAlert(_: unknown, { alertId }: { alertId: string }, context: { user?: { id: string } }) {
       try {
         // In production, find and update alert in database
         // For now, return mock acknowledged alert
@@ -435,7 +462,7 @@ export const resolvers = {
       }
     },
 
-    async executeRebalance(_, { recommendationId }, context) {
+    async executeRebalance(_: unknown, { recommendationId }: { recommendationId: string }, context: { user?: { id: string } }) {
       try {
         // Mock rebalance execution
         logger.execution('Rebalance executed', { recommendationId });
