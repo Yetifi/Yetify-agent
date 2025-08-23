@@ -107,6 +107,9 @@ export class OpenRouterService {
 
       const data: OpenRouterResponse = await response.json();
       
+      // Debug: Log the full response to see what we're getting
+      console.log('OpenRouter Response:', JSON.stringify(data, null, 2));
+      
       const duration = Date.now() - startTime;
       this.logger.performance('OpenRouter API call', duration, {
         model: data.model,
@@ -115,8 +118,21 @@ export class OpenRouterService {
         completionTokens: data.usage?.completion_tokens || 0
       });
 
-      const completion = data.choices?.[0]?.message?.content;
+      // DeepSeek R1 uses reasoning field when content is empty
+      let completion = data.choices?.[0]?.message?.content;
+      
+      // If content is empty, try reasoning field (DeepSeek R1 behavior)
       if (!completion) {
+        completion = (data.choices?.[0]?.message as any)?.reasoning;
+      }
+      
+      if (!completion) {
+        console.log('No completion found in response:', {
+          choices: data.choices,
+          firstChoice: data.choices?.[0],
+          message: data.choices?.[0]?.message,
+          rawResponse: data
+        });
         throw new Error('No completion received from OpenRouter API');
       }
 
