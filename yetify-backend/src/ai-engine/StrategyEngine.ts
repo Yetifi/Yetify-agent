@@ -1,10 +1,6 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { OpenAI } from '@langchain/openai';
-import { ChatPromptTemplate } from 'langchain/prompts';
-import { PineconeStore } from 'langchain/vectorstores/pinecone';
-import { OpenAIEmbeddings } from 'langchain/embeddings/openai';
-import { Pinecone } from '@pinecone-database/pinecone';
 import { createLogger } from '../utils/logger';
+import { OpenRouterService } from '../services/OpenRouterService';
 
 const logger = createLogger();
 import { ProtocolDataService } from '../services/ProtocolDataService';
@@ -52,51 +48,25 @@ export interface StrategyStep {
 
 export class StrategyEngine {
   private geminiAI: GoogleGenerativeAI;
-  private openAI: OpenAI;
-  private pinecone: Pinecone;
-  private vectorStore: PineconeStore | null = null;
+  private openRouter: OpenRouterService;
   private protocolService: ProtocolDataService;
   private marketService: MarketDataService;
 
   constructor() {
     // Initialize AI models
-    this.geminiAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-    this.openAI = new OpenAI({
-      openAIApiKey: process.env.OPENAI_API_KEY,
-      temperature: 0.7,
-      modelName: 'gpt-4-turbo-preview'
-    });
-
-    // Initialize Pinecone for RAG
-    this.pinecone = new Pinecone({
-      apiKey: process.env.PINECONE_API_KEY!,
-      environment: process.env.PINECONE_ENVIRONMENT!
-    });
+    this.geminiAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || 'dummy-key');
+    
+    // Initialize OpenRouter service (primary AI provider)
+    this.openRouter = new OpenRouterService();
 
     // Initialize services
     this.protocolService = new ProtocolDataService();
     this.marketService = new MarketDataService();
-
-    this.initializeVectorStore();
   }
 
+  // Vector store temporarily disabled - will implement with alternative embedding
   private async initializeVectorStore() {
-    try {
-      const index = this.pinecone.Index(process.env.PINECONE_INDEX || 'yetify-strategies');
-      const embeddings = new OpenAIEmbeddings({
-        openAIApiKey: process.env.OPENAI_API_KEY
-      });
-
-      this.vectorStore = new PineconeStore(embeddings, {
-        pineconeIndex: index,
-        textKey: 'text',
-        namespace: 'strategy-knowledge'
-      });
-
-      logger.ai('Vector store initialized successfully');
-    } catch (error) {
-      logger.error('Failed to initialize vector store:', error);
-    }
+    logger.info('Vector store initialization skipped for MVP');
   }
 
   async generateStrategy(prompt: StrategyPrompt): Promise<GeneratedStrategy> {
@@ -146,25 +116,9 @@ export class StrategyEngine {
   }
 
   private async retrieveRelevantKnowledge(query: string): Promise<string[]> {
-    if (!this.vectorStore) {
-      logger.warn('Vector store not available, using fallback knowledge');
-      return this.getFallbackKnowledge();
-    }
-
-    try {
-      const results = await this.vectorStore.similaritySearch(query, 5);
-      const knowledge = results.map((doc: any) => doc.pageContent);
-      
-      logger.ai('Retrieved relevant knowledge', { 
-        query,
-        resultCount: knowledge?.length || 0
-      });
-      
-      return knowledge;
-    } catch (error) {
-      logger.error('Knowledge retrieval failed:', error);
-      return this.getFallbackKnowledge();
-    }
+    // Use fallback knowledge for MVP
+    logger.info('Using fallback knowledge for MVP');
+    return this.getFallbackKnowledge();
   }
 
   private getFallbackKnowledge(): string[] {
@@ -187,26 +141,24 @@ export class StrategyEngine {
     const userPrompt = this.buildUserPrompt(prompt);
 
     try {
-      // Try Gemini first, fallback to OpenAI
+      // Try OpenRouter (DeepSeek R1) first, then fallback to Gemini, then OpenAI
       let response: string;
       
       try {
-        const model = this.geminiAI.getGenerativeModel({ model: 'gemini-pro' });
-        const result = await model.generateContent(`${systemPrompt}\n\n${userPrompt}`);
-        response = result.response.text();
-        logger.ai('Strategy generated using Gemini');
-      } catch (geminiError) {
-        logger.warn('Gemini failed, falling back to OpenAI:', geminiError);
+        response = await this.openRouter.generateStrategy(systemPrompt, userPrompt);
+        logger.ai('Strategy generated using OpenRouter (DeepSeek R1)');
+      } catch (openRouterError) {
+        logger.warn('OpenRouter failed, falling back to Gemini:', openRouterError);
         
-        const chatPrompt = ChatPromptTemplate.fromMessages([
-          ['system', systemPrompt],
-          ['human', userPrompt]
-        ]);
-        
-        const chain = chatPrompt.pipe(this.openAI);
-        const result: any = await chain.invoke({});
-        response = typeof result.content === 'string' ? result.content : String(result.content);
-        logger.ai('Strategy generated using OpenAI');
+        try {
+          const model = this.geminiAI.getGenerativeModel({ model: 'gemini-pro' });
+          const result = await model.generateContent(`${systemPrompt}\n\n${userPrompt}`);
+          response = result.response.text();
+          logger.ai('Strategy generated using Gemini');
+        } catch (geminiError) {
+          logger.error('Both OpenRouter and Gemini failed:', geminiError);
+          throw new Error('All AI services unavailable');
+        }
       }
 
       return this.parseStrategyResponse(response, prompt);
@@ -319,22 +271,10 @@ Please generate an optimal DeFi yield strategy that addresses this request.`;
   }
 
   async storeStrategyKnowledge(strategy: GeneratedStrategy, userFeedback: 'positive' | 'negative') {
-    if (!this.vectorStore) return;
-
-    try {
-      const document = {
-        pageContent: `Strategy: ${strategy.goal}. Chains: ${strategy.chains.join(', ')}. Protocols: ${strategy.protocols.join(', ')}. APY: ${strategy.estimatedApy}%. Risk: ${strategy.riskLevel}. Feedback: ${userFeedback}`,
-        metadata: {
-          strategyId: strategy.id,
-          feedback: userFeedback,
-          timestamp: new Date().toISOString()
-        }
-      };
-
-      await this.vectorStore.addDocuments([document]);
-      logger.ai('Strategy knowledge stored', { strategyId: strategy.id, feedback: userFeedback });
-    } catch (error) {
-      logger.error('Failed to store strategy knowledge:', error);
-    }
+    // Knowledge storage disabled for MVP
+    logger.info('Strategy knowledge storage skipped for MVP', { 
+      strategyId: strategy.id, 
+      feedback: userFeedback 
+    });
   }
 }

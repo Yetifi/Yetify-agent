@@ -1,5 +1,9 @@
 import { ethers } from 'ethers';
-import { providers, keyStores, Near, Account, Contract } from 'near-api-js';
+import { JsonRpcProvider } from '@near-js/providers';
+import { Account } from '@near-js/accounts';
+import { KeyPairSigner } from '@near-js/signers';
+import { KeyPair } from '@near-js/crypto';
+import { InMemoryKeyStore } from '@near-js/keystores';
 import { createLogger } from '../utils/logger';
 
 const logger = createLogger();
@@ -349,19 +353,17 @@ class EthereumExecutor implements ChainExecutor {
 
 // NEAR Executor Implementation
 class NearExecutor implements ChainExecutor {
-  private near: Near;
-  private account: Account | null = null;
-
+  private provider: JsonRpcProvider;
+  private keyStore: InMemoryKeyStore;
+  
   constructor() {
-    const config = {
-      networkId: process.env.NEAR_NETWORK_ID || 'testnet',
-      nodeUrl: process.env.NEAR_NODE_URL || 'https://rpc.testnet.near.org',
-      walletUrl: process.env.NEAR_WALLET_URL || 'https://wallet.testnet.near.org',
-      helperUrl: process.env.NEAR_HELPER_URL || 'https://helper.testnet.near.org',
-      keyStore: new keyStores.InMemoryKeyStore()
-    };
-
-    this.near = new Near(config);
+    // Modern NEAR API JS approach
+    this.keyStore = new InMemoryKeyStore();
+    this.provider = new JsonRpcProvider({ 
+      url: process.env.NEAR_NODE_URL || 'https://rpc.testnet.near.org'
+    });
+    
+    console.log('NEAR provider initialized for testnet');
   }
 
   async executeStep(step: StrategyStep, context: ExecutionContext): Promise<ExecutionResult> {

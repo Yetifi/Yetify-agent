@@ -12,13 +12,15 @@ import { authMiddleware } from './middleware/auth';
 import strategyRoutes from './controllers/strategyController';
 import executionRoutes from './controllers/executionController';
 import monitoringRoutes from './controllers/monitoringController';
+import testRoutes from './controllers/testController';
 
 interface AuthenticatedRequest extends Request {
   user?: { id: string; walletAddress: string; walletType: string };
 }
 
-// Load environment variables
-dotenv.config();
+// Load environment variables with explicit path
+dotenv.config({ path: '.env' });
+console.log('Environment loaded. OPENROUTER_API_KEY exists:', !!process.env.OPENROUTER_API_KEY);
 
 const logger = createLogger();
 const app = express();
@@ -61,6 +63,9 @@ app.get('/health', (req, res) => {
 app.use('/api/v1/strategies', authMiddleware, strategyRoutes);
 app.use('/api/v1/execution', authMiddleware, executionRoutes);
 app.use('/api/v1/monitoring', authMiddleware, monitoringRoutes);
+
+// Test Routes (no auth required for testing)
+app.use('/api/v1/test', testRoutes);
 
 // GraphQL endpoint
 async function startApolloServer() {
@@ -160,7 +165,7 @@ process.on('SIGINT', () => {
 
 // Start the server
 startServer().catch(error => {
-  logger.error('Server startup failed:', error);
+  console.error('Server startup failed:', error);
   process.exit(1);
 });
 
