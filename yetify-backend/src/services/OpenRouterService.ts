@@ -1,6 +1,8 @@
 import { createLogger } from '../utils/logger';
+import dotenv from 'dotenv';
 
-const logger = createLogger();
+// Ensure environment variables are loaded
+dotenv.config();
 
 export interface OpenRouterMessage {
   role: 'system' | 'user' | 'assistant';
@@ -43,14 +45,17 @@ export class OpenRouterService {
   private readonly httpReferer: string;
   private readonly siteName: string;
   private readonly defaultModel: string = 'deepseek/deepseek-r1:free';
+  private readonly logger;
 
   constructor() {
+    this.logger = createLogger();
+    
     this.apiKey = process.env.OPENROUTER_API_KEY || '';
     this.httpReferer = process.env.OPENROUTER_HTTP_REFERER || 'https://yetify.ai';
     this.siteName = process.env.OPENROUTER_SITE_NAME || 'Yetify';
 
     if (!this.apiKey) {
-      logger.error('OPENROUTER_API_KEY not found in environment variables');
+      console.error('OPENROUTER_API_KEY not found in environment variables');
       throw new Error('OpenRouter API key is required');
     }
   }
@@ -73,7 +78,7 @@ export class OpenRouterService {
         max_tokens: options?.maxTokens || 4000,
       };
 
-      logger.ai('Making OpenRouter API request', {
+      this.logger.ai('Making OpenRouter API request', {
         model: requestBody.model,
         messageCount: messages.length,
         temperature: requestBody.temperature
@@ -92,7 +97,7 @@ export class OpenRouterService {
 
       if (!response.ok) {
         const errorText = await response.text();
-        logger.error('OpenRouter API error:', {
+        this.logger.error('OpenRouter API error:', {
           status: response.status,
           statusText: response.statusText,
           error: errorText
@@ -103,7 +108,7 @@ export class OpenRouterService {
       const data: OpenRouterResponse = await response.json();
       
       const duration = Date.now() - startTime;
-      logger.performance('OpenRouter API call', duration, {
+      this.logger.performance('OpenRouter API call', duration, {
         model: data.model,
         tokensUsed: data.usage?.total_tokens || 0,
         promptTokens: data.usage?.prompt_tokens || 0,
@@ -115,7 +120,7 @@ export class OpenRouterService {
         throw new Error('No completion received from OpenRouter API');
       }
 
-      logger.ai('OpenRouter completion received', {
+      this.logger.ai('OpenRouter completion received', {
         model: data.model,
         completionLength: completion.length,
         finishReason: data.choices?.[0]?.finish_reason
@@ -125,7 +130,7 @@ export class OpenRouterService {
 
     } catch (error) {
       const duration = Date.now() - startTime;
-      logger.error('OpenRouter API request failed', {
+      this.logger.error('OpenRouter API request failed', {
         duration,
         error: error instanceof Error ? error.message : String(error)
       });
@@ -154,7 +159,7 @@ export class OpenRouterService {
 
   async testConnection(): Promise<boolean> {
     try {
-      logger.info('Testing OpenRouter connection...');
+      this.logger.info('Testing OpenRouter connection...');
       
       const testResponse = await this.generateCompletion([
         {
@@ -169,14 +174,14 @@ export class OpenRouterService {
                           testResponse.toLowerCase().includes('openrouter');
       
       if (isSuccessful) {
-        logger.info('OpenRouter connection test passed');
+        this.logger.info('OpenRouter connection test passed');
       } else {
-        logger.warn('OpenRouter connection test failed - unexpected response:', testResponse);
+        this.logger.warn('OpenRouter connection test failed - unexpected response:', testResponse);
       }
       
       return isSuccessful;
     } catch (error) {
-      logger.error('OpenRouter connection test failed:', error);
+      this.logger.error('OpenRouter connection test failed:', error);
       return false;
     }
   }
