@@ -5,6 +5,7 @@ import { PineconeStore } from 'langchain/vectorstores/pinecone';
 import { OpenAIEmbeddings } from 'langchain/embeddings/openai';
 import { Pinecone } from '@pinecone-database/pinecone';
 import { createLogger } from '../utils/logger';
+import { OpenRouterService } from '../services/OpenRouterService';
 
 const logger = createLogger();
 import { ProtocolDataService } from '../services/ProtocolDataService';
@@ -53,6 +54,7 @@ export interface StrategyStep {
 export class StrategyEngine {
   private geminiAI: GoogleGenerativeAI;
   private openAI: OpenAI;
+  private openRouter: OpenRouterService;
   private pinecone: Pinecone;
   private vectorStore: PineconeStore | null = null;
   private protocolService: ProtocolDataService;
@@ -66,6 +68,9 @@ export class StrategyEngine {
       temperature: 0.7,
       modelName: 'gpt-4-turbo-preview'
     });
+    
+    // Initialize OpenRouter service (primary AI provider)
+    this.openRouter = new OpenRouterService();
 
     // Initialize Pinecone for RAG
     this.pinecone = new Pinecone({
@@ -187,26 +192,33 @@ export class StrategyEngine {
     const userPrompt = this.buildUserPrompt(prompt);
 
     try {
-      // Try Gemini first, fallback to OpenAI
+      // Try OpenRouter (DeepSeek R1) first, then fallback to Gemini, then OpenAI
       let response: string;
       
       try {
-        const model = this.geminiAI.getGenerativeModel({ model: 'gemini-pro' });
-        const result = await model.generateContent(`${systemPrompt}\n\n${userPrompt}`);
-        response = result.response.text();
-        logger.ai('Strategy generated using Gemini');
-      } catch (geminiError) {
-        logger.warn('Gemini failed, falling back to OpenAI:', geminiError);
+        response = await this.openRouter.generateStrategy(systemPrompt, userPrompt);
+        logger.ai('Strategy generated using OpenRouter (DeepSeek R1)');
+      } catch (openRouterError) {
+        logger.warn('OpenRouter failed, falling back to Gemini:', openRouterError);
         
-        const chatPrompt = ChatPromptTemplate.fromMessages([
-          ['system', systemPrompt],
-          ['human', userPrompt]
-        ]);
-        
-        const chain = chatPrompt.pipe(this.openAI);
-        const result: any = await chain.invoke({});
-        response = typeof result.content === 'string' ? result.content : String(result.content);
-        logger.ai('Strategy generated using OpenAI');
+        try {
+          const model = this.geminiAI.getGenerativeModel({ model: 'gemini-pro' });
+          const result = await model.generateContent(`${systemPrompt}\n\n${userPrompt}`);
+          response = result.response.text();
+          logger.ai('Strategy generated using Gemini');
+        } catch (geminiError) {
+          logger.warn('Gemini failed, falling back to OpenAI:', geminiError);
+          
+          const chatPrompt = ChatPromptTemplate.fromMessages([
+            ['system', systemPrompt],
+            ['human', userPrompt]
+          ]);
+          
+          const chain = chatPrompt.pipe(this.openAI);
+          const result: any = await chain.invoke({});
+          response = typeof result.content === 'string' ? result.content : String(result.content);
+          logger.ai('Strategy generated using OpenAI');
+        }
       }
 
       return this.parseStrategyResponse(response, prompt);

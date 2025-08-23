@@ -12,6 +12,7 @@ import { authMiddleware } from './middleware/auth';
 import strategyRoutes from './controllers/strategyController';
 import executionRoutes from './controllers/executionController';
 import monitoringRoutes from './controllers/monitoringController';
+import testRoutes from './controllers/testController';
 
 interface AuthenticatedRequest extends Request {
   user?: { id: string; walletAddress: string; walletType: string };
@@ -61,6 +62,9 @@ app.get('/health', (req, res) => {
 app.use('/api/v1/strategies', authMiddleware, strategyRoutes);
 app.use('/api/v1/execution', authMiddleware, executionRoutes);
 app.use('/api/v1/monitoring', authMiddleware, monitoringRoutes);
+
+// Test Routes (no auth required for testing)
+app.use('/api/v1/test', testRoutes);
 
 // GraphQL endpoint
 async function startApolloServer() {
