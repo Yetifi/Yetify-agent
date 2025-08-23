@@ -18,8 +18,9 @@ interface AuthenticatedRequest extends Request {
   user?: { id: string; walletAddress: string; walletType: string };
 }
 
-// Load environment variables
-dotenv.config();
+// Load environment variables with explicit path
+dotenv.config({ path: '.env' });
+console.log('Environment loaded. OPENROUTER_API_KEY exists:', !!process.env.OPENROUTER_API_KEY);
 
 const logger = createLogger();
 const app = express();
@@ -164,7 +165,7 @@ process.on('SIGINT', () => {
 
 // Start the server
 startServer().catch(error => {
-  logger.error('Server startup failed:', error);
+  console.error('Server startup failed:', error);
   process.exit(1);
 });
 
