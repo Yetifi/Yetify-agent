@@ -64,8 +64,12 @@ export const createLogger = () => {
   const logger = winston.createLogger(createLoggerConfig());
 
   // Add custom methods for specific use cases
-  return {
-    ...logger,
+  const customLogger = {
+    // Core winston methods
+    error: logger.error.bind(logger),
+    warn: logger.warn.bind(logger),
+    info: logger.info.bind(logger),
+    debug: logger.debug.bind(logger),
 
     // Strategy-specific logging
     strategy: (message: string, strategyData?: any) => {
@@ -145,10 +149,15 @@ export const createLogger = () => {
       });
     }
   };
+  
+  return customLogger;
 };
 
-// Export a default logger instance
+// Export a default logger instance for backward compatibility
 export const logger = createLogger();
+
+// Also export as default for simpler imports
+export default logger;
 
 // Error handler for uncaught exceptions
 export const setupErrorHandlers = () => {
@@ -162,5 +171,3 @@ export const setupErrorHandlers = () => {
     process.exit(1);
   });
 };
-
-export default logger;

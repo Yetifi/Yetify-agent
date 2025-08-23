@@ -4,7 +4,7 @@ import helmet from 'helmet';
 import { ApolloServer } from 'apollo-server-express';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
-import { createLogger } from './utils/logger';
+import logger from './utils/logger';
 import { connectDatabase } from './utils/database';
 import { typeDefs } from './graphql/schemas';
 import { resolvers } from './graphql/resolvers';
@@ -22,7 +22,7 @@ interface AuthenticatedRequest extends Request {
 dotenv.config({ path: '.env' });
 console.log('Environment loaded. OPENROUTER_API_KEY exists:', !!process.env.OPENROUTER_API_KEY);
 
-const logger = createLogger();
+// Logger is now imported directly
 const app = express();
 const PORT = process.env.PORT || 3001;
 
