@@ -2,7 +2,16 @@
   "name": "yetify-frontend",
   "version": "0.1.0",
   "description": "AI-powered DeFi yield strategy frontend interface for Yetify platform",
-  "keywords": ["defi", "ai", "yield", "blockchain", "ethereum", "near", "strategy", "deFi"],
+  "keywords": [
+    "defi",
+    "ai",
+    "yield",
+    "blockchain",
+    "ethereum",
+    "near",
+    "strategy",
+    "deFi"
+  ],
   "author": "Yetify Team",
   "repository": {
     "type": "git",
@@ -18,19 +27,24 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@near-js/accounts": "^2.2.5",
+    "@near-js/client": "^2.2.5",
+    "@near-js/crypto": "^2.2.5",
+    "@near-js/keystores-browser": "^2.2.5",
+    "@near-js/providers": "^2.2.5",
+    "next": "15.4.6",
     "react": "19.1.0",
-    "react-dom": "19.1.0",
-    "next": "15.4.6"
+    "react-dom": "19.1.0"
   },
   "devDependencies": {
-    "typescript": "^5",
+    "@eslint/eslintrc": "^3",
+    "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@tailwindcss/postcss": "^4",
-    "tailwindcss": "^4",
     "eslint": "^9",
     "eslint-config-next": "15.4.6",
-    "@eslint/eslintrc": "^3"
+    "tailwindcss": "^4",
+    "typescript": "^5"
   }
 }

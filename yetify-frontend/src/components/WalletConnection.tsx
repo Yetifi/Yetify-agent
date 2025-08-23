@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface WalletState {
   isConnected: boolean;
@@ -19,6 +19,42 @@ export default function WalletConnection() {
 
   const [isConnecting, setIsConnecting] = useState(false);
   const [showModal, setShowModal] = useState(false);
+
+  // Check for existing NEAR wallet connection on component mount
+  useEffect(() => {
+    const checkExistingConnection = async () => {
+      try {
+        // Check for NEAR wallet callback first
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('account_id')) {
+          await connectNear();
+          return;
+        }
+
+        // Check for existing NEAR connection
+        const { NEARWalletService } = await import('../services/NEARWalletService');
+        const nearWallet = new NEARWalletService('testnet');
+        const isConnected = await nearWallet.isWalletConnected();
+        
+        if (isConnected) {
+          const accountId = await nearWallet.getConnectedAccountId();
+          if (accountId) {
+            const walletState = await nearWallet.connectWallet(accountId);
+            setWalletState({
+              isConnected: walletState.isConnected,
+              address: walletState.accountId,
+              balance: walletState.balance,
+              walletType: 'near'
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Failed to check existing wallet connection:', error);
+      }
+    };
+
+    checkExistingConnection();
+  }, []);
 
   const connectMetaMask = async () => {
     if (typeof window !== 'undefined' && window.ethereum) {
@@ -56,18 +92,49 @@ export default function WalletConnection() {
   const connectNear = async () => {
     try {
       setIsConnecting(true);
-      // Simulate NEAR connection - In production, use @near-wallet-selector/core
-      await new Promise(resolve => setTimeout(resolve, 1500));
       
-      setWalletState({
-        isConnected: true,
-        address: 'user.near',
-        balance: '125.43 NEAR',
-        walletType: 'near'
-      });
-      setShowModal(false);
+      // Import NEAR wallet service dynamically to avoid SSR issues
+      const { NEARWalletService } = await import('../services/NEARWalletService');
+      const nearWallet = new NEARWalletService('testnet');
+
+      // Check if wallet is already connected
+      const isConnected = await nearWallet.isWalletConnected();
+      
+      if (isConnected) {
+        // Get existing connection
+        const accountId = await nearWallet.getConnectedAccountId();
+        if (accountId) {
+          const walletState = await nearWallet.connectWallet(accountId);
+          setWalletState({
+            isConnected: walletState.isConnected,
+            address: walletState.accountId,
+            balance: walletState.balance,
+            walletType: 'near'
+          });
+          setShowModal(false);
+          return;
+        }
+      }
+
+      // Check for wallet redirect callback
+      const callbackState = await nearWallet.handleWalletCallback();
+      if (callbackState) {
+        setWalletState({
+          isConnected: callbackState.isConnected,
+          address: callbackState.accountId,
+          balance: callbackState.balance,
+          walletType: 'near'
+        });
+        setShowModal(false);
+        return;
+      }
+
+      // Redirect to NEAR wallet for new connection
+      await nearWallet.connectWithWalletRedirect();
+      
     } catch (error) {
       console.error('NEAR connection failed:', error);
+      alert(`NEAR connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setIsConnecting(false);
     }
@@ -93,13 +160,31 @@ export default function WalletConnection() {
     }
   };
 
-  const disconnect = () => {
-    setWalletState({
-      isConnected: false,
-      address: null,
-      balance: null,
-      walletType: null
-    });
+  const disconnect = async () => {
+    try {
+      if (walletState.walletType === 'near') {
+        // Disconnect NEAR wallet
+        const { NEARWalletService } = await import('../services/NEARWalletService');
+        const nearWallet = new NEARWalletService('testnet');
+        await nearWallet.disconnectWallet();
+      }
+      
+      setWalletState({
+        isConnected: false,
+        address: null,
+        balance: null,
+        walletType: null
+      });
+    } catch (error) {
+      console.error('Disconnect failed:', error);
+      // Still update UI state even if disconnect fails
+      setWalletState({
+        isConnected: false,
+        address: null,
+        balance: null,
+        walletType: null
+      });
+    }
   };
 
   const formatAddress = (address: string) => {
