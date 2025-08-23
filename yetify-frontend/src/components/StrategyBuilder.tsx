@@ -3,6 +3,7 @@
 import { useState } from 'react';
 
 interface StrategyPlan {
+  id?: string;
   goal: string;
   chains: string[];
   protocols: string[];
@@ -10,8 +11,15 @@ interface StrategyPlan {
     action: string;
     protocol: string;
     asset: string;
+    expectedApy?: number;
+    amount?: string;
   }>;
   riskLevel: string;
+  estimatedApy?: number;
+  estimatedTvl?: string;
+  confidence?: number;
+  reasoning?: string;
+  warnings?: string[];
 }
 
 export default function StrategyBuilder() {
@@ -25,7 +33,8 @@ export default function StrategyBuilder() {
     setIsGenerating(true);
     
     try {
-      const response = await fetch('/api/generate-strategy', {
+      // Call backend API instead of local mock
+      const response = await fetch('http://localhost:3001/api/v1/test/strategy', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -104,12 +113,27 @@ export default function StrategyBuilder() {
 
         {strategyPlan && (
           <div className="mt-8 p-6 bg-gradient-to-r from-green-50 to-blue-50 rounded-xl border border-green-200">
-            <h3 className="text-xl font-semibold text-gray-900 mb-4">📋 Generated Strategy Plan</h3>
+            <div className="flex justify-between items-start mb-4">
+              <h3 className="text-xl font-semibold text-gray-900">🧠 AI Generated Strategy</h3>
+              {strategyPlan.confidence && (
+                <div className="text-right">
+                  <div className="text-sm text-gray-500">Confidence</div>
+                  <div className="text-lg font-semibold text-green-600">{strategyPlan.confidence}%</div>
+                </div>
+              )}
+            </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-              <div>
+              <div className="md:col-span-2">
                 <h4 className="font-medium text-gray-700 mb-2">Goal</h4>
                 <p className="text-gray-600">{strategyPlan.goal}</p>
+              </div>
+              
+              <div>
+                <h4 className="font-medium text-gray-700 mb-2">Expected APY</h4>
+                <div className="text-2xl font-bold text-green-600">
+                  {strategyPlan.estimatedApy ? `${strategyPlan.estimatedApy.toFixed(2)}%` : 'N/A'}
+                </div>
               </div>
               
               <div>
@@ -146,21 +170,57 @@ export default function StrategyBuilder() {
               </div>
             </div>
 
+            {strategyPlan.reasoning && (
+              <div className="mb-6">
+                <h4 className="font-medium text-gray-700 mb-2">AI Reasoning</h4>
+                <p className="text-gray-600 text-sm bg-gray-50 p-3 rounded-lg">{strategyPlan.reasoning}</p>
+              </div>
+            )}
+
             <div className="mb-6">
               <h4 className="font-medium text-gray-700 mb-3">Execution Steps</h4>
               <div className="space-y-3">
                 {strategyPlan.steps.map((step, index) => (
-                  <div key={index} className="flex items-center p-3 bg-white rounded-lg border">
-                    <div className="flex-shrink-0 w-8 h-8 bg-blue-100 text-blue-800 rounded-full flex items-center justify-center text-sm font-medium mr-3">
-                      {index + 1}
-                    </div>
-                    <div>
-                      <span className="font-medium capitalize">{step.action}</span> {step.asset} on {step.protocol}
+                  <div key={index} className="p-4 bg-white rounded-lg border border-gray-200">
+                    <div className="flex items-start">
+                      <div className="flex-shrink-0 w-8 h-8 bg-blue-100 text-blue-800 rounded-full flex items-center justify-center text-sm font-medium mr-3 mt-0.5">
+                        {index + 1}
+                      </div>
+                      <div className="flex-1">
+                        <div className="font-medium text-gray-900 mb-1">{step.action}</div>
+                        <div className="text-sm text-gray-600 mb-2">
+                          <span className="font-medium">Protocol:</span> {step.protocol} | 
+                          <span className="font-medium"> Asset:</span> {step.asset}
+                        </div>
+                        {step.expectedApy && (
+                          <div className="text-sm">
+                            <span className="px-2 py-1 bg-green-100 text-green-800 rounded">
+                              {step.expectedApy.toFixed(2)}% APY
+                            </span>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
+
+            {strategyPlan.warnings && strategyPlan.warnings.length > 0 && (
+              <div className="mb-6">
+                <h4 className="font-medium text-gray-700 mb-2">⚠️ Risk Warnings</h4>
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                  <ul className="text-sm text-yellow-800 space-y-1">
+                    {strategyPlan.warnings.map((warning, index) => (
+                      <li key={index} className="flex items-start">
+                        <span className="text-yellow-600 mr-2">•</span>
+                        {warning}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            )}
 
             <div className="flex gap-4">
               <button
