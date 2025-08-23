@@ -116,15 +116,6 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   });
 });
 
-// 404 handler
-app.use('*', (req, res) => {
-  res.status(404).json({
-    error: 'Not Found',
-    message: `Route ${req.originalUrl} not found`,
-    timestamp: new Date().toISOString()
-  });
-});
-
 // Start server
 async function startServer() {
   try {
@@ -135,6 +126,15 @@ async function startServer() {
     // Start Apollo GraphQL server
     const apolloServer = await startApolloServer();
     logger.info(`GraphQL server ready at http://localhost:${PORT}${apolloServer.graphqlPath}`);
+
+    // Add 404 handler AFTER all routes are defined
+    app.use('*', (req, res) => {
+      res.status(404).json({
+        error: 'Not Found',
+        message: `Route ${req.originalUrl} not found`,
+        timestamp: new Date().toISOString()
+      });
+    });
 
     // Start Express server
     app.listen(PORT, () => {
