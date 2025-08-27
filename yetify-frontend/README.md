@@ -1,5 +1,10 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+### Blurb --
+> Yetify Frontend is the user interface for the AI-powered, multi-chain yield agent that turns your natural language prompts into executable DeFi strategies. Built with Next.js, it provides a seamless experience for strategy building, wallet connection, and strategy management.
+
+[![Frontend.jpg](https://i.postimg.cc/ZKG5SsgD/Frontend.jpg)](https://postimg.cc/gnKWysGv)
+
 ## Getting Started
 
 First, run the development server:
