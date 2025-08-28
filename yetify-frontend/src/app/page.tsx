@@ -17,7 +17,7 @@ export default function Home() {
             <div className="flex items-center space-x-4">
               <div className="text-3xl font-bold">
                 <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                  🔥 Yetify
+                  Yetify
                 </span>
               </div>
               <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">
@@ -46,7 +46,7 @@ export default function Home() {
                 : 'text-gray-600 hover:text-gray-900'
             }`}
           >
-            🧠 Strategy Builder
+            Strategy Builder
           </button>
           <button
             onClick={() => setActiveTab('dashboard')}
@@ -56,7 +56,7 @@ export default function Home() {
                 : 'text-gray-600 hover:text-gray-900'
             }`}
           >
-            📊 Dashboard
+            Dashboard
           </button>
         </div>
       </div>

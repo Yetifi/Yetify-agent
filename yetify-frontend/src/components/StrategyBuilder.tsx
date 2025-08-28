@@ -70,7 +70,7 @@ export default function StrategyBuilder() {
       <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
         <div className="mb-8">
           <h2 className="text-3xl font-bold text-gray-900 mb-4">
-            🧠 AI Strategy Builder
+            AI Strategy Builder
           </h2>
           <p className="text-gray-600 text-lg">
             Describe your yield goals in natural language, and our AI will create an executable DeFi strategy.
@@ -106,7 +106,7 @@ export default function StrategyBuilder() {
                 Generating Strategy...
               </span>
             ) : (
-              '✨ Generate AI Strategy'
+              'Generate AI Strategy'
             )}
           </button>
         </div>
@@ -114,7 +114,7 @@ export default function StrategyBuilder() {
         {strategyPlan && (
           <div className="mt-8 p-6 bg-gradient-to-r from-green-50 to-blue-50 rounded-xl border border-green-200">
             <div className="flex justify-between items-start mb-4">
-              <h3 className="text-xl font-semibold text-gray-900">🧠 AI Generated Strategy</h3>
+              <h3 className="text-xl font-semibold text-gray-900">AI Generated Strategy</h3>
               {strategyPlan.confidence && (
                 <div className="text-right">
                   <div className="text-sm text-gray-500">Confidence</div>
@@ -208,7 +208,7 @@ export default function StrategyBuilder() {
 
             {strategyPlan.warnings && strategyPlan.warnings.length > 0 && (
               <div className="mb-6">
-                <h4 className="font-medium text-gray-700 mb-2">⚠️ Risk Warnings</h4>
+                <h4 className="font-medium text-gray-700 mb-2">Risk Warnings</h4>
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
                   <ul className="text-sm text-yellow-800 space-y-1">
                     {strategyPlan.warnings.map((warning, index) => (
@@ -227,7 +227,7 @@ export default function StrategyBuilder() {
                 onClick={executeStrategy}
                 className="flex-1 bg-green-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-green-700 transition-colors"
               >
-                🚀 Execute Strategy
+                Execute Strategy
               </button>
               <button
                 onClick={() => setStrategyPlan(null)}

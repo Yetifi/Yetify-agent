@@ -195,13 +195,13 @@ export default function WalletConnection() {
   const getWalletIcon = (type: string) => {
     switch (type) {
       case 'metamask':
-        return '🦊';
+        return 'MM';
       case 'near':
-        return '🌕';
+        return 'N';
       case 'walletconnect':
-        return '🔗';
+        return 'WC';
       default:
-        return '💳';
+        return 'W';
     }
   };
 
@@ -259,7 +259,7 @@ export default function WalletConnection() {
                 disabled={isConnecting}
                 className="w-full flex items-center space-x-4 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
               >
-                <span className="text-2xl">🦊</span>
+                <span className="text-lg font-bold text-gray-700 bg-gray-100 px-2 py-1 rounded">MM</span>
                 <div className="flex-1 text-left">
                   <div className="font-medium text-gray-900">MetaMask</div>
                   <div className="text-sm text-gray-500">Connect using browser extension</div>
@@ -272,7 +272,7 @@ export default function WalletConnection() {
                 disabled={isConnecting}
                 className="w-full flex items-center space-x-4 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
               >
-                <span className="text-2xl">🌕</span>
+                <span className="text-lg font-bold text-gray-700 bg-gray-100 px-2 py-1 rounded">N</span>
                 <div className="flex-1 text-left">
                   <div className="font-medium text-gray-900">NEAR Wallet</div>
                   <div className="text-sm text-gray-500">Connect to NEAR Protocol</div>
@@ -285,7 +285,7 @@ export default function WalletConnection() {
                 disabled={isConnecting}
                 className="w-full flex items-center space-x-4 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
               >
-                <span className="text-2xl">🔗</span>
+                <span className="text-lg font-bold text-gray-700 bg-gray-100 px-2 py-1 rounded">WC</span>
                 <div className="flex-1 text-left">
                   <div className="font-medium text-gray-900">WalletConnect</div>
                   <div className="text-sm text-gray-500">Connect via QR code</div>
