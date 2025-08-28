@@ -85,7 +85,7 @@ export default function StrategyBuilder() {
             <textarea
               id="strategy-prompt"
               rows={4}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none placeholder-gray-800"
               placeholder="Example: 'Maximize my ETH yield with low risk across multiple chains' or 'Get the best stablecoin returns while maintaining liquidity'"
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
