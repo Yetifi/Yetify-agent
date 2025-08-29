@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { saveStrategy, SavedStrategy } from '@/utils/strategyStorage';
 
 interface StrategyPlan {
   id?: string;
@@ -22,10 +23,43 @@ interface StrategyPlan {
   warnings?: string[];
 }
 
+interface ExecutionRecord {
+  id: string;
+  timestamp: Date;
+  status: 'started' | 'in_progress' | 'completed' | 'failed';
+  transactionHash?: string;
+  errorMessage?: string;
+  gasUsed?: string;
+  actualReturn?: number;
+}
+
+interface SavedStrategy extends StrategyPlan {
+  id: string;
+  name: string;
+  createdAt: Date;
+  updatedAt?: Date;
+  status: 'saved' | 'executing' | 'completed' | 'failed';
+  executionHistory?: ExecutionRecord[];
+  performance?: {
+    actualApy?: number;
+    totalReturn?: number;
+    executionTime?: number;
+    lastUpdated?: Date;
+  };
+  tags?: string[];
+}
+
 export default function StrategyBuilder() {
   const [prompt, setPrompt] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [strategyPlan, setStrategyPlan] = useState<StrategyPlan | null>(null);
+  
+  // Save strategy state
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [strategyName, setStrategyName] = useState('');
+  const [strategyTags, setStrategyTags] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
   const handleGenerateStrategy = async () => {
     if (!prompt.trim()) return;
@@ -65,6 +99,59 @@ export default function StrategyBuilder() {
     alert('Strategy execution would be implemented here - connecting to wallet and smart contracts');
   };
 
+  const handleSaveStrategy = async () => {
+    if (!strategyPlan || !strategyName.trim()) return;
+    
+    setIsSaving(true);
+    
+    try {
+      const tags = strategyTags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
+      const savedStrategy = saveStrategy(strategyPlan, strategyName, tags);
+      
+      console.log('Strategy saved successfully:', savedStrategy);
+      
+      // Show success feedback
+      setSaveSuccess(true);
+      
+      // Close modal and reset form
+      setShowSaveModal(false);
+      setStrategyName('');
+      setStrategyTags('');
+      
+      // Hide success message after 3 seconds
+      setTimeout(() => setSaveSuccess(false), 3000);
+      
+    } catch (error) {
+      console.error('Error saving strategy:', error);
+      alert('Failed to save strategy. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleSaveForLater = () => {
+    if (!strategyPlan) return;
+    
+    try {
+      // Auto-generate name based on goal
+      const autoName = strategyPlan.goal.length > 50 ? 
+        strategyPlan.goal.substring(0, 50) + '...' : 
+        strategyPlan.goal;
+      
+      const savedStrategy = saveStrategy(strategyPlan, autoName, ['auto-saved']);
+      
+      console.log('Strategy saved for later:', savedStrategy);
+      
+      // Show success feedback
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
+      
+    } catch (error) {
+      console.error('Error saving strategy for later:', error);
+      alert('Failed to save strategy. Please try again.');
+    }
+  };
+
   return (
     <div className="max-w-4xl mx-auto p-6">
       <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
@@ -85,7 +172,7 @@ export default function StrategyBuilder() {
             <textarea
               id="strategy-prompt"
               rows={4}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none placeholder-gray-800"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none placeholder-gray-800 text-gray-900"
               placeholder="Example: 'Maximize my ETH yield with low risk across multiple chains' or 'Get the best stablecoin returns while maintaining liquidity'"
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
@@ -222,12 +309,24 @@ export default function StrategyBuilder() {
               </div>
             )}
 
-            <div className="flex gap-4">
+            <div className="flex gap-3">
               <button
                 onClick={executeStrategy}
                 className="flex-1 bg-green-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-green-700 transition-colors"
               >
-                Execute Strategy
+                Execute Now
+              </button>
+              <button
+                onClick={handleSaveForLater}
+                className="flex-1 bg-purple-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-purple-700 transition-colors"
+              >
+                Save for Later
+              </button>
+              <button
+                onClick={() => setShowSaveModal(true)}
+                className="bg-blue-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+              >
+                Save As...
               </button>
               <button
                 onClick={() => setStrategyPlan(null)}
@@ -239,6 +338,76 @@ export default function StrategyBuilder() {
           </div>
         )}
       </div>
+
+      {/* Success Notification */}
+      {saveSuccess && (
+        <div className="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50">
+          Strategy saved successfully!
+        </div>
+      )}
+
+      {/* Save Strategy Modal */}
+      {showSaveModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40">
+          <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              Save Strategy
+            </h3>
+            
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="strategy-name" className="block text-sm font-medium text-gray-700 mb-2">
+                  Strategy Name *
+                </label>
+                <input
+                  id="strategy-name"
+                  type="text"
+                  value={strategyName}
+                  onChange={(e) => setStrategyName(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="e.g., High Yield ETH Strategy"
+                  maxLength={100}
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="strategy-tags" className="block text-sm font-medium text-gray-700 mb-2">
+                  Tags (optional)
+                </label>
+                <input
+                  id="strategy-tags"
+                  type="text"
+                  value={strategyTags}
+                  onChange={(e) => setStrategyTags(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="e.g., DeFi, ETH, High Risk (comma separated)"
+                />
+                <p className="text-xs text-gray-500 mt-1">Separate tags with commas</p>
+              </div>
+            </div>
+            
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={handleSaveStrategy}
+                disabled={!strategyName.trim() || isSaving}
+                className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {isSaving ? 'Saving...' : 'Save Strategy'}
+              </button>
+              <button
+                onClick={() => {
+                  setShowSaveModal(false);
+                  setStrategyName('');
+                  setStrategyTags('');
+                }}
+                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
