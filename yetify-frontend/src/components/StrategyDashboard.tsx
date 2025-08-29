@@ -1,82 +1,77 @@
 'use client';
 
-import { useState } from 'react';
-
-interface Strategy {
-  id: string;
-  name: string;
-  apy: number;
-  tvl: string;
-  riskScore: number;
-  status: 'active' | 'paused' | 'completed';
-  chains: string[];
-  protocols: string[];
-  createdAt: string;
-  lastUpdated: string;
-}
+import { useState, useEffect } from 'react';
+import { getSavedStrategies, SavedStrategy, deleteStrategy, updateStrategy } from '@/utils/strategyStorage';
 
 export default function StrategyDashboard() {
-  // Mock data - In production, this would come from your API
-  const [strategies] = useState<Strategy[]>([
-    {
-      id: '1',
-      name: 'Maximize ETH Yield Low Risk',
-      apy: 12.5,
-      tvl: '$45,230',
-      riskScore: 3.2,
-      status: 'active',
-      chains: ['Ethereum', 'NEAR'],
-      protocols: ['Lido', 'Aave'],
-      createdAt: '2024-01-15',
-      lastUpdated: '2024-01-20'
-    },
-    {
-      id: '2',
-      name: 'Stablecoin Yield Farm',
-      apy: 8.7,
-      tvl: '$12,500',
-      riskScore: 2.1,
-      status: 'active',
-      chains: ['NEAR', 'Arbitrum'],
-      protocols: ['Ref Finance', 'Curve'],
-      createdAt: '2024-01-10',
-      lastUpdated: '2024-01-19'
-    },
-    {
-      id: '3',
-      name: 'Multi-Chain DeFi Strategy',
-      apy: 15.3,
-      tvl: '$8,750',
-      riskScore: 6.8,
-      status: 'paused',
-      chains: ['Ethereum', 'Polygon', 'NEAR'],
-      protocols: ['Uniswap', 'SushiSwap', 'Ref Finance'],
-      createdAt: '2024-01-05',
-      lastUpdated: '2024-01-18'
-    }
-  ]);
+  const [savedStrategies, setSavedStrategies] = useState<SavedStrategy[]>([]);
+  const [selectedFilter, setSelectedFilter] = useState<'all' | 'saved' | 'executing' | 'completed' | 'failed'>('all');
 
-  const getRiskColor = (score: number) => {
-    if (score <= 3) return 'text-green-600 bg-green-100';
-    if (score <= 6) return 'text-yellow-600 bg-yellow-100';
-    return 'text-red-600 bg-red-100';
+  // Load saved strategies on component mount
+  useEffect(() => {
+    const strategies = getSavedStrategies();
+    setSavedStrategies(strategies);
+  }, []);
+
+  // Filter strategies based on selected filter
+  const filteredStrategies = savedStrategies.filter(strategy => {
+    if (selectedFilter === 'all') return true;
+    return strategy.status === selectedFilter;
+  });
+
+  const handleDeleteStrategy = (id: string) => {
+    if (confirm('Are you sure you want to delete this strategy?')) {
+      deleteStrategy(id);
+      setSavedStrategies(prev => prev.filter(s => s.id !== id));
+    }
   };
 
-  const getStatusColor = (status: string) => {
+  const handleExecuteStrategy = (strategy: SavedStrategy) => {
+    // Update status to executing
+    updateStrategy(strategy.id, { status: 'executing' });
+    setSavedStrategies(prev => 
+      prev.map(s => s.id === strategy.id ? { ...s, status: 'executing' } : s)
+    );
+    
+    // Simulate execution (in real app, this would call smart contracts)
+    alert(`Executing strategy: ${strategy.name}\n\nThis would connect to your wallet and execute the DeFi strategy.`);
+  };
+
+  const getStatusColor = (status: SavedStrategy['status']) => {
     switch (status) {
-      case 'active': return 'text-green-600 bg-green-100';
-      case 'paused': return 'text-yellow-600 bg-yellow-100';
-      case 'completed': return 'text-gray-600 bg-gray-100';
-      default: return 'text-gray-600 bg-gray-100';
+      case 'saved':
+        return 'bg-gray-100 text-gray-800';
+      case 'executing':
+        return 'bg-blue-100 text-blue-800';
+      case 'completed':
+        return 'bg-green-100 text-green-800';
+      case 'failed':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const totalTVL = strategies.reduce((sum, strategy) => {
-    const tvlNumber = parseFloat(strategy.tvl.replace(/[$,]/g, ''));
-    return sum + tvlNumber;
-  }, 0);
+  const getRiskColor = (riskLevel: string) => {
+    switch (riskLevel.toLowerCase()) {
+      case 'low':
+        return 'text-green-600';
+      case 'medium':
+        return 'text-yellow-600';
+      case 'high':
+        return 'text-red-600';
+      default:
+        return 'text-gray-600';
+    }
+  };
 
-  const averageAPY = strategies.reduce((sum, strategy) => sum + strategy.apy, 0) / strategies.length;
+  const formatDate = (date: Date) => {
+    return new Intl.DateTimeFormat('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    }).format(new Date(date));
+  };
 
   return (
     <div className="max-w-7xl mx-auto p-6">
@@ -85,133 +80,187 @@ export default function StrategyDashboard() {
           Strategy Dashboard
         </h2>
         <p className="text-gray-600 text-lg">
-          Monitor and manage your active DeFi strategies in real-time.
+          Monitor and manage your saved DeFi strategies.
         </p>
       </div>
 
-      {/* Summary Cards */}
+      {/* Summary Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Total TVL</p>
-              <p className="text-2xl font-bold text-gray-900">${totalTVL.toLocaleString()}</p>
-            </div>
-            <div className="p-3 bg-blue-100 rounded-lg">
-              <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-              </svg>
-            </div>
-          </div>
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="text-2xl font-bold text-gray-900">{savedStrategies.length}</div>
+          <div className="text-sm text-gray-600">Total Strategies</div>
         </div>
-
-        <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Average APY</p>
-              <p className="text-2xl font-bold text-green-600">{averageAPY.toFixed(1)}%</p>
-            </div>
-            <div className="p-3 bg-green-100 rounded-lg">
-              <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-              </svg>
-            </div>
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="text-2xl font-bold text-green-600">
+            {savedStrategies.filter(s => s.status === 'saved').length}
           </div>
+          <div className="text-sm text-gray-600">Ready to Execute</div>
         </div>
-
-        <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Active Strategies</p>
-              <p className="text-2xl font-bold text-gray-900">{strategies.filter(s => s.status === 'active').length}</p>
-            </div>
-            <div className="p-3 bg-purple-100 rounded-lg">
-              <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-              </svg>
-            </div>
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="text-2xl font-bold text-blue-600">
+            {savedStrategies.filter(s => s.status === 'executing').length}
           </div>
+          <div className="text-sm text-gray-600">Currently Executing</div>
         </div>
-
-        <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Supported Chains</p>
-              <p className="text-2xl font-bold text-gray-900">3</p>
-            </div>
-            <div className="p-3 bg-orange-100 rounded-lg">
-              <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-              </svg>
-            </div>
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="text-2xl font-bold text-green-600">
+            {savedStrategies.filter(s => s.status === 'completed').length}
           </div>
+          <div className="text-sm text-gray-600">Completed</div>
         </div>
       </div>
 
-      {/* Strategies Table */}
-      <div className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">Your Strategies</h3>
+      {/* Filter Tabs */}
+      <div className="mb-6">
+        <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg w-fit">
+          {(['all', 'saved', 'executing', 'completed', 'failed'] as const).map((filter) => (
+            <button
+              key={filter}
+              onClick={() => setSelectedFilter(filter)}
+              className={`px-6 py-2 rounded-md font-medium transition-all capitalize ${
+                selectedFilter === filter
+                  ? 'bg-white text-blue-600 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              {filter}
+            </button>
+          ))}
         </div>
-        
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Strategy</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">APY</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">TVL</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Risk Score</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Chains</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {strategies.map((strategy) => (
-                <tr key={strategy.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div>
-                      <div className="text-sm font-medium text-gray-900">{strategy.name}</div>
-                      <div className="text-sm text-gray-500">Created {strategy.createdAt}</div>
+      </div>
+
+      {/* Strategies List */}
+      {filteredStrategies.length === 0 ? (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
+          <div className="text-gray-400 text-6xl mb-4">📊</div>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">No Strategies Found</h3>
+          <p className="text-gray-600 mb-4">
+            {selectedFilter === 'all' 
+              ? 'Create your first strategy using the Strategy Builder.'
+              : `No strategies with status "${selectedFilter}" found.`
+            }
+          </p>
+          <button
+            onClick={() => window.location.reload()} // In real app, navigate to builder
+            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Create Strategy
+          </button>
+        </div>
+      ) : (
+        <div className="grid gap-6">
+          {filteredStrategies.map((strategy) => (
+            <div key={strategy.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex-1">
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">{strategy.name}</h3>
+                  <p className="text-gray-600 mb-3">{strategy.goal}</p>
+                  
+                  <div className="flex flex-wrap gap-4 text-sm">
+                    <div className="flex items-center">
+                      <span className="text-gray-500">Status:</span>
+                      <span className={`ml-2 px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(strategy.status)}`}>
+                        {strategy.status}
+                      </span>
                     </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-green-600">{strategy.apy}%</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{strategy.tvl}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getRiskColor(strategy.riskScore)}`}>
-                      {strategy.riskScore}/10
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full capitalize ${getStatusColor(strategy.status)}`}>
-                      {strategy.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                    
+                    <div className="flex items-center">
+                      <span className="text-gray-500">Risk:</span>
+                      <span className={`ml-2 font-medium ${getRiskColor(strategy.riskLevel)}`}>
+                        {strategy.riskLevel}
+                      </span>
+                    </div>
+                    
+                    {strategy.estimatedApy && (
+                      <div className="flex items-center">
+                        <span className="text-gray-500">Est. APY:</span>
+                        <span className="ml-2 font-medium text-green-600">
+                          {strategy.estimatedApy.toFixed(2)}%
+                        </span>
+                      </div>
+                    )}
+                    
+                    <div className="flex items-center">
+                      <span className="text-gray-500">Created:</span>
+                      <span className="ml-2 text-gray-700">
+                        {formatDate(strategy.createdAt)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex items-center space-x-3">
+                  {strategy.status === 'saved' && (
+                    <button
+                      onClick={() => handleExecuteStrategy(strategy)}
+                      className="bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700 transition-colors"
+                    >
+                      Execute Now
+                    </button>
+                  )}
+                  
+                  <button
+                    onClick={() => handleDeleteStrategy(strategy.id)}
+                    className="text-red-600 hover:text-red-800 p-2"
+                    title="Delete strategy"
+                  >
+                    🗑️
+                  </button>
+                </div>
+              </div>
+              
+              {/* Strategy Details */}
+              <div className="border-t border-gray-100 pt-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-700 mb-2">Chains</h4>
                     <div className="flex flex-wrap gap-1">
                       {strategy.chains.map((chain, index) => (
-                        <span key={index} className="inline-flex px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded">
+                        <span key={index} className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">
                           {chain}
                         </span>
                       ))}
                     </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                    <button className="text-blue-600 hover:text-blue-900">View</button>
-                    <button className="text-green-600 hover:text-green-900">Edit</button>
-                    <button className="text-red-600 hover:text-red-900">Pause</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                  </div>
+                  
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-700 mb-2">Protocols</h4>
+                    <div className="flex flex-wrap gap-1">
+                      {strategy.protocols.map((protocol, index) => (
+                        <span key={index} className="px-2 py-1 bg-purple-100 text-purple-800 rounded text-xs">
+                          {protocol}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  {strategy.tags && strategy.tags.length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-700 mb-2">Tags</h4>
+                      <div className="flex flex-wrap gap-1">
+                        {strategy.tags.map((tag, index) => (
+                          <span key={index} className="px-2 py-1 bg-gray-100 text-gray-800 rounded text-xs">
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                {strategy.steps && strategy.steps.length > 0 && (
+                  <div className="mt-4">
+                    <h4 className="text-sm font-medium text-gray-700 mb-2">Execution Steps</h4>
+                    <div className="text-sm text-gray-600">
+                      {strategy.steps.length} step{strategy.steps.length !== 1 ? 's' : ''} configured
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
         </div>
-      </div>
+      )}
     </div>
   );
 }
