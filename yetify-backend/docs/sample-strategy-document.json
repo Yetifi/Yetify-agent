@@ -1,0 +1,147 @@
+{
+  "_id": "ObjectId('507f1f77bcf86cd799439011')",
+  "id": "strategy_1704067200000_abc123def",
+  "userId": "ObjectId('507f1f77bcf86cd799439012')",
+  "version": 1,
+  "goal": "Maximize yield on $10,000 USDC with moderate risk",
+  "prompt": "I have $10,000 in USDC and want to earn around 12-15% APY. I'm comfortable with moderate risk and prefer established protocols. I want to diversify across multiple strategies.",
+  "metadata": {
+    "investmentAmount": 10000,
+    "currency": "USDC",
+    "timeHorizon": "medium",
+    "riskTolerance": "medium",
+    "userExperience": "intermediate"
+  },
+  "chains": ["Ethereum", "NEAR"],
+  "protocols": ["Aave", "Lido", "Ref Finance"],
+  "steps": [
+    {
+      "stepId": "step_1",
+      "order": 1,
+      "action": "deposit",
+      "protocol": "Aave",
+      "asset": "USDC",
+      "amount": "5000",
+      "expectedApy": 8.5,
+      "riskScore": 3,
+      "gasEstimate": "0.02 ETH",
+      "dependencies": [],
+      "conditions": {
+        "minAmount": 1000,
+        "maxSlippage": 0.5,
+        "maxGasPrice": "30 gwei"
+      }
+    },
+    {
+      "stepId": "step_2",
+      "order": 2,
+      "action": "stake",
+      "protocol": "Lido",
+      "asset": "ETH",
+      "amount": "2.5",
+      "expectedApy": 4.2,
+      "riskScore": 2,
+      "gasEstimate": "0.03 ETH",
+      "dependencies": ["step_1"],
+      "conditions": {
+        "minAmount": 0.1,
+        "maxSlippage": 1.0,
+        "maxGasPrice": "50 gwei"
+      }
+    },
+    {
+      "stepId": "step_3",
+      "order": 3,
+      "action": "yield_farm",
+      "protocol": "Ref Finance",
+      "asset": "USDC-NEAR",
+      "amount": "2500",
+      "expectedApy": 15.8,
+      "riskScore": 6,
+      "gasEstimate": "0.1 NEAR",
+      "dependencies": ["step_1"],
+      "conditions": {
+        "minAmount": 100,
+        "maxSlippage": 2.0,
+        "maxGasPrice": "100 TGas"
+      }
+    }
+  ],
+  "riskLevel": "Medium",
+  "status": "active",
+  "estimatedApy": 12.3,
+  "estimatedTvl": "$10,000",
+  "actualApy": 11.8,
+  "actualTvl": 10000,
+  "executionTime": "~8 minutes",
+  "gasEstimate": {
+    "ethereum": "0.05 ETH",
+    "near": "0.1 NEAR",
+    "arbitrum": "0.01 ETH",
+    "polygon": "0.02 MATIC",
+    "optimism": "0.01 ETH"
+  },
+  "confidence": 87,
+  "reasoning": "This strategy diversifies risk across three different protocols and chains. Aave provides stable lending returns, Lido offers liquid staking with low risk, and Ref Finance provides higher yield through liquidity provision. The combination balances safety with growth potential.",
+  "warnings": [
+    "High gas costs on Ethereum may impact smaller investments",
+    "Ref Finance has higher impermanent loss risk",
+    "Lido staking has a 7-day unbonding period"
+  ],
+  "executionHistory": [
+    {
+      "timestamp": "2024-01-15T10:30:00Z",
+      "action": "deposit",
+      "status": "success",
+      "transactionHash": "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+      "gasUsed": "150000",
+      "error": null,
+      "blockNumber": 18500000,
+      "stepId": "step_1"
+    },
+    {
+      "timestamp": "2024-01-15T10:35:00Z",
+      "action": "stake",
+      "status": "success",
+      "transactionHash": "0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
+      "gasUsed": "200000",
+      "error": null,
+      "blockNumber": 18500015,
+      "stepId": "step_2"
+    },
+    {
+      "timestamp": "2024-01-15T10:40:00Z",
+      "action": "yield_farm",
+      "status": "success",
+      "transactionHash": "0x9876543210fedcba9876543210fedcba9876543210fedcba9876543210fedcba",
+      "gasUsed": "50000000",
+      "error": null,
+      "blockNumber": 18500030,
+      "stepId": "step_3"
+    }
+  ],
+  "performance": {
+    "totalInvested": 10000,
+    "currentValue": 10150,
+    "totalReturns": 150,
+    "roi": 1.5,
+    "lastUpdated": "2024-01-16T10:00:00Z",
+    "dailyReturns": [
+      {
+        "date": "2024-01-15",
+        "value": 10000,
+        "returns": 0
+      },
+      {
+        "date": "2024-01-16",
+        "value": 10150,
+        "returns": 150
+      }
+    ]
+  },
+  "tags": ["stablecoin", "lending", "staking", "yield-farming", "multi-chain"],
+  "isPublic": false,
+  "deletedAt": null,
+  "createdAt": "2024-01-15T10:00:00Z",
+  "updatedAt": "2024-01-16T10:00:00Z"
+}

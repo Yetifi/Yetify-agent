@@ -55,8 +55,7 @@ export class OpenRouterService {
     this.siteName = process.env.OPENROUTER_SITE_NAME || 'Yetify';
 
     if (!this.apiKey) {
-      console.error('OPENROUTER_API_KEY not found in environment variables');
-      throw new Error('OpenRouter API key is required');
+      console.warn('OPENROUTER_API_KEY not found in environment variables - OpenRouter service will be disabled');
     }
   }
 
@@ -68,6 +67,10 @@ export class OpenRouterService {
       maxTokens?: number;
     }
   ): Promise<string> {
+    if (!this.apiKey) {
+      throw new Error('OpenRouter API key is not configured. Please set OPENROUTER_API_KEY environment variable.');
+    }
+
     const startTime = Date.now();
 
     try {
@@ -174,6 +177,11 @@ export class OpenRouterService {
   }
 
   async testConnection(): Promise<boolean> {
+    if (!this.apiKey) {
+      this.logger.warn('OpenRouter API key not configured - skipping connection test');
+      return false;
+    }
+
     try {
       this.logger.info('Testing OpenRouter connection...');
       
