@@ -1,0 +1,98 @@
+# Docker Compose for Development Environment
+version: '3.8'
+
+services:
+  # MongoDB for Development
+  yetify-mongodb-dev:
+    image: mongo:7.0
+    container_name: yetify-mongodb-dev
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_DATABASE=yetify_dev
+    volumes:
+      - mongodb-dev-data:/data/db
+      - mongodb-dev-config:/data/configdb
+      - ./scripts/mongo-init-dev.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    networks:
+      - yetify-dev-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    command: ["mongod", "--bind_ip_all"]
+
+  # Redis for Development
+  yetify-redis-dev:
+    image: redis:7.2-alpine
+    container_name: yetify-redis-dev
+    ports:
+      - "6379:6379"
+    command: >
+      redis-server
+      --appendonly yes
+      --maxmemory 128mb
+      --maxmemory-policy allkeys-lru
+    volumes:
+      - redis-dev-data:/data
+    networks:
+      - yetify-dev-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # MongoDB Admin UI (Optional)
+  mongo-express:
+    image: mongo-express:latest
+    container_name: yetify-mongo-express
+    ports:
+      - "8081:8081"
+    environment:
+      - ME_CONFIG_MONGODB_SERVER=yetify-mongodb-dev
+      - ME_CONFIG_MONGODB_PORT=27017
+      - ME_CONFIG_BASICAUTH_USERNAME=admin
+      - ME_CONFIG_BASICAUTH_PASSWORD=admin
+      - ME_CONFIG_MONGODB_ENABLE_ADMIN=true
+    depends_on:
+      - yetify-mongodb-dev
+    networks:
+      - yetify-dev-network
+    restart: unless-stopped
+
+  # Redis Admin UI (Optional)
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: yetify-redis-commander
+    ports:
+      - "8082:8081"
+    environment:
+      - REDIS_HOSTS=local:yetify-redis-dev:6379
+    depends_on:
+      - yetify-redis-dev
+    networks:
+      - yetify-dev-network
+    restart: unless-stopped
+
+# Named volumes for persistent data
+volumes:
+  mongodb-dev-data:
+    driver: local
+  mongodb-dev-config:
+    driver: local
+  redis-dev-data:
+    driver: local
+
+# Custom network for service communication
+networks:
+  yetify-dev-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.21.0.0/16
+    attachable: true
