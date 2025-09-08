@@ -233,24 +233,43 @@ export const StrategySchema = new mongoose.Schema(
       required: true,
       index: true
     },
-    goal: { type: String, required: true },
-    prompt: { type: String, required: true },
-    chains: [{ type: String, required: true }],
+    version: { type: Number, default: 1 },
+    goal: { type: String, required: true, maxlength: 500 },
+    prompt: { type: String, required: true, maxlength: 2000 },
+    metadata: {
+      investmentAmount: { type: Number, min: 0 },
+      currency: { type: String, enum: ['USDC', 'USDT', 'ETH', 'NEAR', 'BTC'] },
+      timeHorizon: { type: String, enum: ['short', 'medium', 'long'] },
+      riskTolerance: { type: String, enum: ['low', 'medium', 'high'] },
+      userExperience: { type: String, enum: ['beginner', 'intermediate', 'advanced'] }
+    },
+    chains: [{ 
+      type: String, 
+      required: true,
+      enum: ['Ethereum', 'NEAR', 'Arbitrum', 'Polygon', 'Optimism', 'Base']
+    }],
     protocols: [{ type: String, required: true }],
     steps: [
       {
+        stepId: { type: String, required: true },
+        order: { type: Number, required: true },
         action: { 
           type: String, 
           required: true,
-          enum: ['deposit', 'stake', 'yield_farm', 'provide_liquidity', 'leverage', 'bridge']
+          enum: ['deposit', 'stake', 'yield_farm', 'provide_liquidity', 'leverage', 'bridge', 'swap', 'withdraw']
         },
         protocol: { type: String, required: true },
         asset: { type: String, required: true },
         amount: String,
-        expectedApy: Number,
-        riskScore: Number,
+        expectedApy: { type: Number, min: 0, max: 1000 },
+        riskScore: { type: Number, min: 1, max: 10 },
         gasEstimate: String,
-        dependencies: [String]
+        dependencies: [String],
+        conditions: {
+          minAmount: { type: Number },
+          maxSlippage: { type: Number, min: 0, max: 100 },
+          maxGasPrice: { type: String }
+        }
       }
     ],
     riskLevel: {
@@ -260,30 +279,35 @@ export const StrategySchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['draft', 'active', 'paused', 'completed', 'failed'],
-      default: 'draft'
+      enum: ['draft', 'active', 'paused', 'completed', 'failed', 'cancelled'],
+      default: 'draft',
+      index: true
     },
-    estimatedApy: { type: Number, required: true },
+    estimatedApy: { type: Number, required: true, min: 0, max: 1000 },
     estimatedTvl: { type: String, required: true },
-    actualApy: Number,
-    actualTvl: Number,
+    actualApy: { type: Number, min: 0, max: 1000 },
+    actualTvl: { type: Number, min: 0 },
     executionTime: String,
     gasEstimate: {
       ethereum: String,
       near: String,
-      arbitrum: String
+      arbitrum: String,
+      polygon: String,
+      optimism: String
     },
     confidence: { type: Number, min: 0, max: 100 },
-    reasoning: String,
+    reasoning: { type: String, maxlength: 1000 },
     warnings: [String],
     executionHistory: [
       {
         timestamp: { type: Date, default: Date.now },
         action: String,
-        status: { type: String, enum: ['pending', 'success', 'failed'] },
+        status: { type: String, enum: ['pending', 'success', 'failed', 'cancelled'] },
         transactionHash: String,
         gasUsed: String,
-        error: String
+        error: String,
+        blockNumber: Number,
+        stepId: String
       }
     ],
     performance: {
@@ -291,16 +315,30 @@ export const StrategySchema = new mongoose.Schema(
       currentValue: { type: Number, default: 0 },
       totalReturns: { type: Number, default: 0 },
       roi: { type: Number, default: 0 },
-      lastUpdated: Date
+      lastUpdated: { type: Date, index: true },
+      dailyReturns: [{
+        date: { type: String },
+        value: { type: Number },
+        returns: { type: Number }
+      }]
     },
-    createdAt: { type: Date, default: Date.now },
-    updatedAt: { type: Date, default: Date.now }
+    tags: [{ type: String }],
+    isPublic: { type: Boolean, default: false, index: true },
+    deletedAt: { type: Date, default: null }
   },
   {
     timestamps: true,
     collection: 'strategies'
   }
 );
+
+// Create indexes for better query performance
+StrategySchema.index({ userId: 1, status: 1, createdAt: -1 });
+StrategySchema.index({ protocols: 1, status: 1 });
+StrategySchema.index({ chains: 1, status: 1 });
+StrategySchema.index({ 'performance.lastUpdated': -1 });
+StrategySchema.index({ isPublic: 1, createdAt: -1 });
+StrategySchema.index({ goal: 'text', prompt: 'text', tags: 'text' });
 
 export const ProtocolSchema = new mongoose.Schema(
   {
