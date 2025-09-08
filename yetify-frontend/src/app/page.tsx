@@ -5,6 +5,7 @@ import StrategyBuilder from '@/components/StrategyBuilder';
 import StrategyDashboard from '@/components/StrategyDashboard';
 import WalletConnection from '@/components/WalletConnection';
 import PortfolioValue from '@/components/PortfolioValue';
+import NoSSR from '@/components/NoSSR';
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<'builder' | 'dashboard'>('builder');
@@ -27,8 +28,12 @@ export default function Home() {
             </div>
             
             <div className="flex items-center space-x-4">
-              <PortfolioValue />
-              <WalletConnection />
+              <NoSSR fallback={<div className="bg-slate-600 animate-pulse rounded px-4 py-2 w-24 h-6"></div>}>
+                <PortfolioValue />
+              </NoSSR>
+              <NoSSR fallback={<div className="bg-slate-600 animate-pulse rounded px-4 py-2 w-32 h-10"></div>}>
+                <WalletConnection />
+              </NoSSR>
             </div>
           </div>
         </div>

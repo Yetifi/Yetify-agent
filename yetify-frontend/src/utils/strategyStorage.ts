@@ -66,11 +66,11 @@ export function getSavedStrategies(): SavedStrategy[] {
     const strategies = JSON.parse(stored);
     
     // Convert date strings back to Date objects
-    return strategies.map((strategy: any) => ({
+    return strategies.map((strategy: SavedStrategy) => ({
       ...strategy,
       createdAt: new Date(strategy.createdAt),
       updatedAt: strategy.updatedAt ? new Date(strategy.updatedAt) : undefined,
-      executionHistory: strategy.executionHistory?.map((record: any) => ({
+      executionHistory: strategy.executionHistory?.map((record: ExecutionRecord) => ({
         ...record,
         timestamp: new Date(record.timestamp)
       })) || [],

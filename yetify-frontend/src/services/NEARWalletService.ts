@@ -1,7 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { BrowserLocalStorageKeyStore } from '@near-js/keystores-browser';
 import { 
   getSignerFromKeystore, 
-  getProviderByNetwork, 
   getTestnetRpcProvider,
   getMainnetRpcProvider,
   view,
@@ -42,8 +42,9 @@ export class NEARWalletService {
    */
   async isWalletConnected(): Promise<boolean> {
     try {
-      const keys = await this.keystore.getKeys(this.network);
-      return keys.length > 0;
+      // Check if any keys exist in localStorage for this network
+      const accounts = await this.keystore.getAccounts(this.network);
+      return accounts.length > 0;
     } catch {
       return false;
     }
@@ -54,8 +55,8 @@ export class NEARWalletService {
    */
   async getConnectedAccountId(): Promise<string | null> {
     try {
-      const keys = await this.keystore.getKeys(this.network);
-      return keys.length > 0 ? keys[0] : null;
+      const accounts = await this.keystore.getAccounts(this.network);
+      return accounts.length > 0 ? accounts[0] : null;
     } catch {
       return null;
     }
@@ -165,7 +166,7 @@ export class NEARWalletService {
         account_id: accountId,
       });
       return response as AccountInfo;
-    } catch (error) {
+    } catch {
       throw new Error(`Account ${accountId} does not exist on ${this.network}`);
     }
   }
@@ -177,7 +178,7 @@ export class NEARWalletService {
     try {
       const accountInfo = await this.getAccountInfo(accountId);
       return this.formatNearAmount(accountInfo.amount);
-    } catch (error) {
+    } catch {
       throw new Error(`Failed to get balance for ${accountId}`);
     }
   }
@@ -208,7 +209,7 @@ export class NEARWalletService {
         }
       });
 
-      return result.transaction.hash;
+      return result.outcome.transaction.hash;
     } catch (error) {
       throw new Error(`Failed to send NEAR: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
@@ -220,16 +221,16 @@ export class NEARWalletService {
   async callViewMethod<T>(
     contractId: string, 
     methodName: string, 
-    args: any = {}
+    args: Record<string, unknown> = {}
   ): Promise<T> {
     try {
-      const result = await view<T>({
+      const result = await view({
         account: contractId,
         method: methodName,
         args,
         deps: { rpcProvider: this.rpcProvider }
       });
-      return result;
+      return result as T;
     } catch (error) {
       throw new Error(`Failed to call view method: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }

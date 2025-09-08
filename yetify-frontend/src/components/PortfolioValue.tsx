@@ -13,17 +13,42 @@ export default function PortfolioValue() {
   useEffect(() => {
     const fetchEthPrice = async () => {
       try {
-        const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd');
+        const response = await fetch(
+          'https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd',
+          {
+            method: 'GET',
+            headers: {
+              'Accept': 'application/json',
+            },
+            // Add timeout
+            signal: AbortSignal.timeout(10000)
+          }
+        );
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
         const data = await response.json();
-        setEthPrice(data.ethereum.usd);
+        
+        if (data?.ethereum?.usd) {
+          setEthPrice(data.ethereum.usd);
+        } else {
+          throw new Error('Invalid response format');
+        }
       } catch (error) {
-        console.error('Failed to fetch ETH price:', error);
-        setEthPrice(3000); // Fallback price
+        console.warn('Failed to fetch ETH price, using fallback:', error);
+        setEthPrice(3500); // Fallback price
       }
     };
 
-    fetchEthPrice();
-    const interval = setInterval(fetchEthPrice, 60000); // Update every minute
+    // Set initial fallback immediately to prevent errors
+    setEthPrice(3500);
+    
+    // Then try to fetch real price
+    setTimeout(fetchEthPrice, 1000);
+    
+    const interval = setInterval(fetchEthPrice, 300000); // Update every 5 minutes (less frequent)
 
     return () => clearInterval(interval);
   }, []);

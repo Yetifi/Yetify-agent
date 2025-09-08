@@ -25,18 +25,12 @@ export default function WalletConnection() {
     balance: null
   });
 
-  const [isConnectingNear, setIsConnectingNear] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
-
-  // Handle client-side mounting to prevent hydration mismatch
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
+  // const [isConnectingNear, setIsConnectingNear] = useState(false);
 
 
   const connectNear = async () => {
     try {
-      setIsConnectingNear(true);
+      // setIsConnectingNear(true);
       
       // Import NEAR wallet service dynamically to avoid SSR issues
       const { NEARWalletService } = await import('../services/NEARWalletService');
@@ -77,7 +71,7 @@ export default function WalletConnection() {
       console.error('NEAR connection failed:', error);
       alert(`NEAR connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
-      setIsConnectingNear(false);
+      // setIsConnectingNear(false);
     }
   };
 
@@ -217,15 +211,6 @@ export default function WalletConnection() {
             </button>
           </div>
         )}
-      </div>
-    );
-  }
-
-  // Don't render until client is mounted to prevent hydration mismatch
-  if (!isMounted) {
-    return (
-      <div className="flex items-center space-x-2">
-        <div className="bg-slate-600 animate-pulse px-4 py-2 rounded-lg w-32 h-10"></div>
       </div>
     );
   }
