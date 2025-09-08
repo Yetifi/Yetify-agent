@@ -25,12 +25,12 @@ export default function WalletConnection() {
     balance: null
   });
 
-  const [isConnectingNear, setIsConnectingNear] = useState(false);
+  // const [isConnectingNear, setIsConnectingNear] = useState(false);
 
 
   const connectNear = async () => {
     try {
-      setIsConnectingNear(true);
+      // setIsConnectingNear(true);
       
       // Import NEAR wallet service dynamically to avoid SSR issues
       const { NEARWalletService } = await import('../services/NEARWalletService');
@@ -71,7 +71,7 @@ export default function WalletConnection() {
       console.error('NEAR connection failed:', error);
       alert(`NEAR connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
-      setIsConnectingNear(false);
+      // setIsConnectingNear(false);
     }
   };
 

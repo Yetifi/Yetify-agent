@@ -24,8 +24,8 @@ export interface AccountInfo {
 
 export class NEARWalletService {
   private keystore: BrowserLocalStorageKeyStore;
-  private signer: unknown;
-  private rpcProvider: unknown;
+  private signer: any;
+  private rpcProvider: any;
   private network: 'testnet' | 'mainnet';
 
   constructor(network: 'testnet' | 'mainnet' = 'testnet') {
