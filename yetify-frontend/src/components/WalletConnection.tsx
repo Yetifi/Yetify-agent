@@ -25,7 +25,7 @@ export default function WalletConnection() {
     balance: null
   });
 
-  const [isConnectingNear, setIsConnectingNear] = useState(false);
+  // const [isConnectingNear, setIsConnectingNear] = useState(false);
 
 
   const connectNear = async () => {
