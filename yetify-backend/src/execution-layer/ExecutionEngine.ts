@@ -313,7 +313,9 @@ class EthereumExecutor implements ChainExecutor {
         yield_farm: 300000,
         provide_liquidity: 250000,
         leverage: 400000,
-        bridge: 350000
+        bridge: 350000,
+        swap: 180000,
+        withdraw: 120000
       };
 
       const gasEstimate = baseGas[step.action as keyof typeof baseGas] || 150000;
@@ -397,7 +399,9 @@ class NearExecutor implements ChainExecutor {
       stake: '50',
       yield_farm: '80',
       provide_liquidity: '60',
-      bridge: '100'
+      bridge: '100',
+      swap: '40',
+      withdraw: '25'
     };
 
     const gasEstimate = baseGas[step.action as keyof typeof baseGas] || '50';
