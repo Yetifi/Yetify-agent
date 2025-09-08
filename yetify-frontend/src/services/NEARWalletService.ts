@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { BrowserLocalStorageKeyStore } from '@near-js/keystores-browser';
 import { 
   getSignerFromKeystore, 
@@ -208,7 +209,7 @@ export class NEARWalletService {
         }
       });
 
-      return result.transaction.hash;
+      return result.outcome.transaction.hash;
     } catch (error) {
       throw new Error(`Failed to send NEAR: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
