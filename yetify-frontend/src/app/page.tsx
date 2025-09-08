@@ -4,6 +4,7 @@ import { useState } from 'react';
 import StrategyBuilder from '@/components/StrategyBuilder';
 import StrategyDashboard from '@/components/StrategyDashboard';
 import WalletConnection from '@/components/WalletConnection';
+import PortfolioValue from '@/components/PortfolioValue';
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<'builder' | 'dashboard'>('builder');
@@ -26,9 +27,7 @@ export default function Home() {
             </div>
             
             <div className="flex items-center space-x-4">
-              <div className="text-sm text-gray-300">
-                Total Portfolio: <span className="font-semibold text-white">$66,480</span>
-              </div>
+              <PortfolioValue />
               <WalletConnection />
             </div>
           </div>
