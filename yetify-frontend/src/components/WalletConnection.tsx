@@ -18,15 +18,15 @@ export default function WalletConnection() {
   const { open } = useWeb3Modal();
   const { disconnect } = useDisconnect();
 
-  // NEAR wallet state
+  // NEAR wallet state (kept for future integration)
   const [nearWallet, setNearWallet] = useState<NEARWalletState>({
     isConnected: false,
     address: null,
     balance: null
   });
 
-  const [showNearModal, setShowNearModal] = useState(false);
   const [isConnectingNear, setIsConnectingNear] = useState(false);
+
 
   const connectNear = async () => {
     try {
@@ -49,7 +49,6 @@ export default function WalletConnection() {
             address: walletState.accountId,
             balance: walletState.balance
           });
-          setShowNearModal(false);
           return;
         }
       }
@@ -62,7 +61,6 @@ export default function WalletConnection() {
           address: callbackState.accountId,
           balance: callbackState.balance
         });
-        setShowNearModal(false);
         return;
       }
 
@@ -219,61 +217,13 @@ export default function WalletConnection() {
 
   return (
     <>
-      <div className="flex items-center space-x-2">
-        <button
-          onClick={connectEthereumWallet}
-          className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 transition-all"
-        >
-          Connect Ethereum
-        </button>
-        
-        <button
-          onClick={() => setShowNearModal(true)}
-          className="bg-gradient-to-r from-green-600 to-teal-600 text-white px-4 py-2 rounded-lg font-medium hover:from-green-700 hover:to-teal-700 transition-all"
-        >
-          Connect NEAR
-        </button>
-      </div>
+      <button
+        onClick={connectEthereumWallet}
+        className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 transition-all"
+      >
+        Connect Ethereum
+      </button>
 
-      {showNearModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-semibold text-gray-900">Connect NEAR Wallet</h3>
-              <button
-                onClick={() => setShowNearModal(false)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
-            <div className="space-y-3">
-              <button
-                onClick={connectNear}
-                disabled={isConnectingNear}
-                className="w-full flex items-center space-x-4 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
-              >
-                <span className="text-lg font-bold text-gray-700 bg-gray-100 px-2 py-1 rounded">N</span>
-                <div className="flex-1 text-left">
-                  <div className="font-medium text-gray-900">NEAR Wallet</div>
-                  <div className="text-sm text-gray-500">Connect to NEAR Protocol</div>
-                </div>
-                {isConnectingNear && <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>}
-              </button>
-            </div>
-
-            <div className="mt-6 text-center">
-              <p className="text-sm text-gray-500">
-                By connecting a wallet, you agree to our{' '}
-                <a href="#" className="text-blue-600 hover:underline">Terms of Service</a>
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 }
