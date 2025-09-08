@@ -1,7 +1,6 @@
 import { BrowserLocalStorageKeyStore } from '@near-js/keystores-browser';
 import { 
   getSignerFromKeystore, 
-  getProviderByNetwork, 
   getTestnetRpcProvider,
   getMainnetRpcProvider,
   view,
@@ -25,8 +24,8 @@ export interface AccountInfo {
 
 export class NEARWalletService {
   private keystore: BrowserLocalStorageKeyStore;
-  private signer: any;
-  private rpcProvider: any;
+  private signer: unknown;
+  private rpcProvider: unknown;
   private network: 'testnet' | 'mainnet';
 
   constructor(network: 'testnet' | 'mainnet' = 'testnet') {
@@ -220,7 +219,7 @@ export class NEARWalletService {
   async callViewMethod<T>(
     contractId: string, 
     methodName: string, 
-    args: any = {}
+    args: Record<string, unknown> = {}
   ): Promise<T> {
     try {
       const result = await view<T>({
