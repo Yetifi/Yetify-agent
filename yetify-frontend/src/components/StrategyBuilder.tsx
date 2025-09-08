@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { saveStrategy, SavedStrategy } from '@/utils/strategyStorage';
+import { saveStrategy } from '@/utils/strategyStorage';
 
 interface StrategyPlan {
   id?: string;
