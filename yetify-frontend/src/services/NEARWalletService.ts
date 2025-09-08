@@ -224,13 +224,13 @@ export class NEARWalletService {
     args: Record<string, unknown> = {}
   ): Promise<T> {
     try {
-      const result = await view<T>({
+      const result = await view({
         account: contractId,
         method: methodName,
         args,
         deps: { rpcProvider: this.rpcProvider }
       });
-      return result;
+      return result as T;
     } catch (error) {
       throw new Error(`Failed to call view method: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
