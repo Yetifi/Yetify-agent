@@ -9,25 +9,25 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<'builder' | 'dashboard'>('builder');
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 flex flex-col">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200">
+      <header className="bg-slate-800/50 backdrop-blur-sm border-b border-slate-700/50">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <div className="text-3xl font-bold">
-                <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                <span className="text-white">
                   Yetify
                 </span>
               </div>
-              <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">
+              <span className="px-3 py-1 bg-blue-500/20 text-blue-300 text-sm font-medium rounded-full border border-blue-500/30">
                 AI-Powered Yield Agent
               </span>
             </div>
             
             <div className="flex items-center space-x-4">
-              <div className="text-sm text-gray-600">
-                Total Portfolio: <span className="font-semibold text-gray-900">$66,480</span>
+              <div className="text-sm text-gray-300">
+                Total Portfolio: <span className="font-semibold text-white">$66,480</span>
               </div>
               <WalletConnection />
             </div>
@@ -37,13 +37,13 @@ export default function Home() {
 
       {/* Navigation Tabs */}
       <div className="max-w-7xl mx-auto px-6 py-6">
-        <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg w-fit">
+        <div className="flex space-x-1 bg-slate-800/30 p-1 rounded-lg w-fit backdrop-blur-sm">
           <button
             onClick={() => setActiveTab('builder')}
             className={`px-6 py-3 rounded-md font-medium transition-all ${
               activeTab === 'builder'
-                ? 'bg-white text-blue-600 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
+                ? 'bg-blue-600 text-white shadow-lg'
+                : 'text-gray-300 hover:text-white hover:bg-slate-700/50'
             }`}
           >
             Strategy Builder
@@ -52,8 +52,8 @@ export default function Home() {
             onClick={() => setActiveTab('dashboard')}
             className={`px-6 py-3 rounded-md font-medium transition-all ${
               activeTab === 'dashboard'
-                ? 'bg-white text-blue-600 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
+                ? 'bg-blue-600 text-white shadow-lg'
+                : 'text-gray-300 hover:text-white hover:bg-slate-700/50'
             }`}
           >
             Dashboard
