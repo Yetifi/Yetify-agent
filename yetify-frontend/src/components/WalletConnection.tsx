@@ -26,6 +26,12 @@ export default function WalletConnection() {
   });
 
   const [isConnectingNear, setIsConnectingNear] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  // Handle client-side mounting to prevent hydration mismatch
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
 
   const connectNear = async () => {
@@ -211,6 +217,15 @@ export default function WalletConnection() {
             </button>
           </div>
         )}
+      </div>
+    );
+  }
+
+  // Don't render until client is mounted to prevent hydration mismatch
+  if (!isMounted) {
+    return (
+      <div className="flex items-center space-x-2">
+        <div className="bg-slate-600 animate-pulse px-4 py-2 rounded-lg w-32 h-10"></div>
       </div>
     );
   }
