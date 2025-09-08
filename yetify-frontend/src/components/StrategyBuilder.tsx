@@ -23,31 +23,31 @@ interface StrategyPlan {
   warnings?: string[];
 }
 
-interface ExecutionRecord {
-  id: string;
-  timestamp: Date;
-  status: 'started' | 'in_progress' | 'completed' | 'failed';
-  transactionHash?: string;
-  errorMessage?: string;
-  gasUsed?: string;
-  actualReturn?: number;
-}
+// interface ExecutionRecord {
+//   id: string;
+//   timestamp: Date;
+//   status: 'started' | 'in_progress' | 'completed' | 'failed';
+//   transactionHash?: string;
+//   errorMessage?: string;
+//   gasUsed?: string;
+//   actualReturn?: number;
+// }
 
-interface SavedStrategy extends StrategyPlan {
-  id: string;
-  name: string;
-  createdAt: Date;
-  updatedAt?: Date;
-  status: 'saved' | 'executing' | 'completed' | 'failed';
-  executionHistory?: ExecutionRecord[];
-  performance?: {
-    actualApy?: number;
-    totalReturn?: number;
-    executionTime?: number;
-    lastUpdated?: Date;
-  };
-  tags?: string[];
-}
+// interface SavedStrategy extends StrategyPlan {
+//   id: string;
+//   name: string;
+//   createdAt: Date;
+//   updatedAt?: Date;
+//   status: 'saved' | 'executing' | 'completed' | 'failed';
+//   executionHistory?: ExecutionRecord[];
+//   performance?: {
+//     actualApy?: number;
+//     totalReturn?: number;
+//     executionTime?: number;
+//     lastUpdated?: Date;
+//   };
+//   tags?: string[];
+// }
 
 export default function StrategyBuilder() {
   const [prompt, setPrompt] = useState('');

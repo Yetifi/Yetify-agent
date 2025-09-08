@@ -41,8 +41,9 @@ export class NEARWalletService {
    */
   async isWalletConnected(): Promise<boolean> {
     try {
-      const keys = await this.keystore.getKeys(this.network);
-      return keys.length > 0;
+      // Check if any keys exist in localStorage for this network
+      const accounts = await this.keystore.getAccounts(this.network);
+      return accounts.length > 0;
     } catch {
       return false;
     }
@@ -53,8 +54,8 @@ export class NEARWalletService {
    */
   async getConnectedAccountId(): Promise<string | null> {
     try {
-      const keys = await this.keystore.getKeys(this.network);
-      return keys.length > 0 ? keys[0] : null;
+      const accounts = await this.keystore.getAccounts(this.network);
+      return accounts.length > 0 ? accounts[0] : null;
     } catch {
       return null;
     }
@@ -164,7 +165,7 @@ export class NEARWalletService {
         account_id: accountId,
       });
       return response as AccountInfo;
-    } catch (error) {
+    } catch {
       throw new Error(`Account ${accountId} does not exist on ${this.network}`);
     }
   }
@@ -176,7 +177,7 @@ export class NEARWalletService {
     try {
       const accountInfo = await this.getAccountInfo(accountId);
       return this.formatNearAmount(accountInfo.amount);
-    } catch (error) {
+    } catch {
       throw new Error(`Failed to get balance for ${accountId}`);
     }
   }
