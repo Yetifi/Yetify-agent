@@ -36,7 +36,7 @@ export interface GeneratedStrategy {
 }
 
 export interface StrategyStep {
-  action: 'deposit' | 'stake' | 'yield_farm' | 'provide_liquidity' | 'leverage' | 'bridge';
+  action: 'deposit' | 'stake' | 'yield_farm' | 'provide_liquidity' | 'leverage' | 'bridge' | 'swap' | 'withdraw';
   protocol: string;
   asset: string;
   amount?: string;
@@ -141,24 +141,17 @@ export class StrategyEngine {
     const userPrompt = this.buildUserPrompt(prompt);
 
     try {
-      // Try OpenRouter (DeepSeek R1) first, then fallback to Gemini, then OpenAI
+      // Use Gemini directly for faster response
       let response: string;
       
       try {
-        response = await this.openRouter.generateStrategy(systemPrompt, userPrompt);
-        logger.ai('Strategy generated using OpenRouter (DeepSeek R1)');
-      } catch (openRouterError) {
-        logger.warn('OpenRouter failed, falling back to Gemini:', openRouterError);
-        
-        try {
-          const model = this.geminiAI.getGenerativeModel({ model: 'gemini-pro' });
-          const result = await model.generateContent(`${systemPrompt}\n\n${userPrompt}`);
-          response = result.response.text();
-          logger.ai('Strategy generated using Gemini');
-        } catch (geminiError) {
-          logger.error('Both OpenRouter and Gemini failed:', geminiError);
-          throw new Error('All AI services unavailable');
-        }
+        const model = this.geminiAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+        const result = await model.generateContent(`${systemPrompt}\n\n${userPrompt}`);
+        response = result.response.text();
+        logger.ai('Strategy generated using Gemini 1.5 Flash');
+      } catch (geminiError) {
+        logger.error('Gemini failed:', geminiError);
+        throw new Error('AI service unavailable');
       }
 
       return this.parseStrategyResponse(response, prompt);
@@ -219,9 +212,49 @@ Please generate an optimal DeFi yield strategy that addresses this request.`;
 
   private parseStrategyResponse(response: string, prompt: StrategyPrompt): GeneratedStrategy {
     try {
-      // Extract JSON from response (handle potential markdown formatting)
-      const jsonMatch = response.match(/```json\n([\s\S]*?)\n```/) || response.match(/\{[\s\S]*\}/);
-      const jsonStr = jsonMatch ? (jsonMatch[1] || jsonMatch[0]) : response;
+      // Log raw response for debugging
+      logger.info('Raw AI response:', { responseLength: response.length, preview: response.substring(0, 200) });
+      
+      // Try multiple JSON extraction methods
+      let jsonStr = '';
+      
+      // Method 1: Look for JSON in code blocks
+      const jsonCodeBlock = response.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
+      if (jsonCodeBlock) {
+        jsonStr = jsonCodeBlock[1].trim();
+      }
+      // Method 2: Look for JSON object
+      else {
+        const jsonObject = response.match(/\{[\s\S]*\}/);
+        if (jsonObject) {
+          jsonStr = jsonObject[0];
+        } else {
+          jsonStr = response;
+        }
+      }
+      
+      // Clean up the JSON string
+      jsonStr = jsonStr.trim();
+      
+      // Fix common JSON issues
+      jsonStr = jsonStr
+        .replace(/\/\/[^\n\r]*/g, '') // Remove single-line comments
+        .replace(/\/\*[\s\S]*?\*\//g, '') // Remove multi-line comments
+        .replace(/,(\s*[}\]])/g, '$1') // Remove trailing commas
+        .replace(/([{,]\s*)(\w+):/g, '$1"$2":') // Quote unquoted keys
+        .replace(/:\s*([^",{\[\s][^",}\]]*[^",}\]\s])(\s*[,}])/g, ':"$1"$2') // Quote unquoted string values
+        .replace(/\n/g, ' ') // Remove newlines
+        .replace(/\s+/g, ' ') // Normalize whitespace
+        .replace(/,\s*}/g, '}') // Remove trailing commas before closing braces
+        .replace(/,\s*]/g, ']') // Remove trailing commas before closing brackets
+        .replace(/([^"])(\w+)(\s*:)/g, '$1"$2"$3') // Quote any remaining unquoted keys
+        .trim();
+      
+      logger.info('Cleaned JSON string:', { 
+        jsonStr: jsonStr.substring(0, 500),
+        position662: jsonStr.substring(650, 680),
+        fullLength: jsonStr.length 
+      });
       
       const parsed = JSON.parse(jsonStr);
       
@@ -230,9 +263,13 @@ Please generate an optimal DeFi yield strategy that addresses this request.`;
         goal: parsed.goal || prompt.prompt,
         chains: parsed.chains || ['Ethereum', 'NEAR'],
         protocols: parsed.protocols || ['Aave', 'Lido'],
-        steps: parsed.steps || [],
+        steps: (parsed.steps || []).map((step: any) => ({
+          ...step,
+          expectedApy: typeof step.expectedApy === 'string' ? parseFloat(step.expectedApy) : step.expectedApy,
+          riskScore: typeof step.riskScore === 'string' ? parseFloat(step.riskScore) : step.riskScore
+        })),
         riskLevel: parsed.riskLevel || 'Medium',
-        estimatedApy: parsed.estimatedApy || 8.5,
+        estimatedApy: typeof parsed.estimatedApy === 'string' ? parseFloat(parsed.estimatedApy) : (parsed.estimatedApy || 8.5),
         estimatedTvl: prompt.investmentAmount ? `$${prompt.investmentAmount}` : '$1,000',
         executionTime: this.calculateExecutionTime(parsed.steps?.length || 1),
         gasEstimate: {
@@ -240,7 +277,7 @@ Please generate an optimal DeFi yield strategy that addresses this request.`;
           near: '0.1 NEAR',
           arbitrum: '0.005 ETH'
         },
-        confidence: parsed.confidence || 85,
+        confidence: typeof parsed.confidence === 'string' ? parseFloat(parsed.confidence) : (parsed.confidence || 85),
         reasoning: parsed.reasoning || 'Strategy generated based on current market conditions',
         warnings: parsed.warnings || []
       };

@@ -110,3 +110,4 @@ test-report/
 
 # Local development
 .local/
+.idea
