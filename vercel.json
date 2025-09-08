@@ -1,5 +1,0 @@
-{
-  "buildCommand": "cd yetify-frontend && npm run build",
-  "installCommand": "cd yetify-frontend && npm install",
-  "outputDirectory": "yetify-frontend/.next"
-}
