@@ -8,9 +8,25 @@ pub struct StrategyData {
     pub goal: String,
     pub chains: Vec<String>,
     pub protocols: Vec<String>,
+    pub steps: Vec<StrategyStep>,
     pub risk_level: String,
+    pub estimated_apy: Option<f64>,
+    pub estimated_tvl: Option<String>,
+    pub confidence: Option<f64>,
+    pub reasoning: Option<String>,
+    pub warnings: Option<Vec<String>>,
     pub creator: AccountId,
     pub created_at: u64,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+#[serde(crate = "near_sdk::serde")]
+pub struct StrategyStep {
+    pub action: String,
+    pub protocol: String,
+    pub asset: String,
+    pub expected_apy: Option<f64>,
+    pub amount: Option<String>,
 }
 
 #[near_bindgen]
@@ -40,7 +56,13 @@ impl YetifyStrategyStorage {
             goal,
             chains: vec![],
             protocols: vec![],
+            steps: vec![],
             risk_level: "medium".to_string(),
+            estimated_apy: None,
+            estimated_tvl: None,
+            confidence: None,
+            reasoning: None,
+            warnings: None,
             creator,
             created_at: timestamp,
         };
@@ -57,5 +79,30 @@ impl YetifyStrategyStorage {
 
     pub fn total_strategies(&self) -> u64 {
         self.strategy_count
+    }
+
+    pub fn get_contract_info(&self) -> String {
+        format!("Yetify Strategy Storage - Total strategies: {}", self.strategy_count)
+    }
+
+    pub fn store_complete_strategy(&mut self, strategy_json: String) -> String {
+        let creator = env::predecessor_account_id();
+        let timestamp = env::block_timestamp_ms();
+        
+        let mut strategy_data: StrategyData = match serde_json::from_str(&strategy_json) {
+            Ok(data) => data,
+            Err(err) => {
+                return format!("Error: Failed to parse strategy JSON - {}", err);
+            }
+        };
+        
+        strategy_data.creator = creator;
+        strategy_data.created_at = timestamp;
+        
+        let strategy_id = strategy_data.id.clone();
+        self.strategies.insert(strategy_id.clone(), strategy_data);
+        self.strategy_count += 1;
+        
+        format!("Complete strategy '{}' stored successfully! Total strategies: {}", strategy_id, self.strategy_count)
     }
 }
