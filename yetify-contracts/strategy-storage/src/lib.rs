@@ -1,4 +1,4 @@
-use near_sdk::{near_bindgen, AccountId, collections::UnorderedMap, BorshDeserialize, BorshSerialize};
+use near_sdk::{near_bindgen, AccountId, collections::UnorderedMap, BorshDeserialize, BorshSerialize, env};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -31,5 +31,23 @@ impl Default for YetifyStrategyStorage {
 
 #[near_bindgen]
 impl YetifyStrategyStorage {
-    // Functions will be added step by step
+    pub fn store_strategy(&mut self, id: String, goal: String) -> String {
+        let creator = env::predecessor_account_id();
+        let timestamp = env::block_timestamp_ms();
+        
+        let strategy_data = StrategyData {
+            id: id.clone(),
+            goal,
+            chains: vec![],
+            protocols: vec![],
+            risk_level: "medium".to_string(),
+            creator,
+            created_at: timestamp,
+        };
+        
+        self.strategies.insert(id.clone(), strategy_data);
+        self.strategy_count += 1;
+        
+        format!("Strategy '{}' stored successfully!", id)
+    }
 }
