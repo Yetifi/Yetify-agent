@@ -54,4 +54,8 @@ impl YetifyStrategyStorage {
     pub fn get_strategy(&self, id: String) -> Option<StrategyData> {
         self.strategies.get(&id).cloned()
     }
+
+    pub fn total_strategies(&self) -> u64 {
+        self.strategy_count
+    }
 }
