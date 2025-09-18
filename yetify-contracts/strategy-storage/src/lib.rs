@@ -1,4 +1,4 @@
-use near_sdk::{near_bindgen, AccountId};
+use near_sdk::{near_bindgen, AccountId, collections::UnorderedMap, BorshDeserialize, BorshSerialize};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -14,9 +14,19 @@ pub struct StrategyData {
 }
 
 #[near_bindgen]
-#[derive(Default)]
+#[derive(BorshDeserialize, BorshSerialize)]
 pub struct YetifyStrategyStorage {
-    // Contract state will be added incrementally
+    strategies: UnorderedMap<String, StrategyData>,
+    strategy_count: u64,
+}
+
+impl Default for YetifyStrategyStorage {
+    fn default() -> Self {
+        Self {
+            strategies: UnorderedMap::new(b"strategies"),
+            strategy_count: 0,
+        }
+    }
 }
 
 #[near_bindgen]
