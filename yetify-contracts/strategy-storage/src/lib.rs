@@ -50,4 +50,8 @@ impl YetifyStrategyStorage {
         
         format!("Strategy '{}' stored successfully!", id)
     }
+
+    pub fn get_strategy(&self, id: String) -> Option<StrategyData> {
+        self.strategies.get(&id).cloned()
+    }
 }
