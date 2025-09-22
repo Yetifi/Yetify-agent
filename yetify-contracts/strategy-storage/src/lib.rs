@@ -50,10 +50,18 @@ impl Default for StrategyData {
 }
 
 #[near(contract_state)]
-#[derive(Default)]
 pub struct YetifyStrategyStorage {
     strategies: HashMap<String, StrategyData>,
     strategy_count: u64,
+}
+
+impl Default for YetifyStrategyStorage {
+    fn default() -> Self {
+        Self {
+            strategies: HashMap::new(),
+            strategy_count: 0,
+        }
+    }
 }
 
 #[near]
@@ -117,16 +125,23 @@ impl YetifyStrategyStorage {
         format!("Strategy '{}' stored successfully!", id)
     }
 
-    pub fn get_strategy(&self, id: String) -> Option<StrategyData> {
-        self.strategies.get(&id).cloned()
+    pub fn get_strategy(&self, id: String) -> String {
+        match self.strategies.get(&id) {
+            Some(strategy) => serde_json::to_string(&strategy).unwrap(),
+            None => serde_json::to_string(&None::<StrategyData>).unwrap()
+        }
     }
 
     pub fn total_strategies(&self) -> u64 {
         self.strategy_count
     }
 
+    pub fn test_simple(&self) -> u64 {
+        42
+    }
+
     pub fn get_contract_info(&self) -> String {
-        format!("Yetify Strategy Storage - Total strategies: {}", self.strategy_count)
+        serde_json::to_string(&format!("Yetify Strategy Storage - Total strategies: {}", self.strategy_count)).unwrap()
     }
 
     #[payable]
@@ -190,15 +205,17 @@ impl YetifyStrategyStorage {
         format!("Strategy '{}' deleted successfully! Total strategies: {}", id, self.strategy_count)
     }
 
-    pub fn get_strategies_by_creator(&self, creator: AccountId) -> Vec<StrategyData> {
-        self.strategies
+    pub fn get_strategies_by_creator(&self, creator: AccountId) -> String {
+        let strategies: Vec<StrategyData> = self.strategies
             .values()
             .filter(|strategy| strategy.creator == creator)
             .cloned()
-            .collect()
+            .collect();
+        serde_json::to_string(&strategies).unwrap()
     }
 
-    pub fn get_all_strategies(&self) -> Vec<StrategyData> {
-        self.strategies.values().cloned().collect()
+    pub fn get_all_strategies(&self) -> String {
+        let strategies: Vec<StrategyData> = self.strategies.values().cloned().collect();
+        serde_json::to_string(&strategies).unwrap()
     }
 }
