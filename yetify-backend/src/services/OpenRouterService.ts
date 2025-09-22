@@ -65,10 +65,13 @@ export class OpenRouterService {
       model?: string;
       temperature?: number;
       maxTokens?: number;
+      userApiKey?: string;
     }
   ): Promise<string> {
-    if (!this.apiKey) {
-      throw new Error('OpenRouter API key is not configured. Please set OPENROUTER_API_KEY environment variable.');
+    const apiKey = options?.userApiKey || this.apiKey;
+    
+    if (!apiKey) {
+      throw new Error('OpenRouter API key is not configured. Please provide a user API key or set OPENROUTER_API_KEY environment variable.');
     }
 
     const startTime = Date.now();
@@ -90,7 +93,7 @@ export class OpenRouterService {
       const response = await fetch(this.baseUrl, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
+          'Authorization': `Bearer ${apiKey}`,
           'HTTP-Referer': this.httpReferer,
           'X-Title': this.siteName,
           'Content-Type': 'application/json',
