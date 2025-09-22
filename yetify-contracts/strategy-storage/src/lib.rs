@@ -56,8 +56,41 @@ pub struct YetifyStrategyStorage {
     strategy_count: u64,
 }
 
-#[near_bindgen]
+#[near]
 impl YetifyStrategyStorage {
+    #[payable]
+    pub fn store_complete_strategy(&mut self, strategy_json: String) -> String {
+        let creator = env::predecessor_account_id();
+        let timestamp = env::block_timestamp_ms();
+        
+        // Parse the JSON strategy data with better error handling
+        let mut strategy_data: StrategyData = match serde_json::from_str(&strategy_json) {
+            Ok(data) => data,
+            Err(err) => {
+                env::log_str(&format!("JSON Parse Error: {}", err));
+                env::log_str(&format!("Input JSON: {}", strategy_json));
+                return format!("Error: Failed to parse strategy JSON - {}", err);
+            }
+        };
+        
+        // Validate required fields
+        if strategy_data.id.is_empty() {
+            return "Error: Strategy ID is required".to_string();
+        }
+        
+        // Set additional metadata
+        strategy_data.creator = creator;
+        strategy_data.created_at = timestamp;
+        
+        // Store the complete strategy data
+        let strategy_id = strategy_data.id.clone();
+        self.strategies.insert(strategy_id.clone(), strategy_data);
+        self.strategy_count += 1;
+        
+        format!("Complete strategy '{}' stored successfully! Total strategies: {}", strategy_id, self.strategy_count)
+    }
+
+    #[payable]
     pub fn store_strategy(&mut self, id: String, goal: String) -> String {
         let creator = env::predecessor_account_id();
         let timestamp = env::block_timestamp_ms();
@@ -81,7 +114,7 @@ impl YetifyStrategyStorage {
         self.strategies.insert(id.clone(), strategy_data);
         self.strategy_count += 1;
         
-        format!("Strategy '{}' stored successfully!", id)
+        format!("Strategy '{}' stored successfully! Total strategies: {}", id, self.strategy_count)
     }
 
     pub fn get_strategy(&self, id: String) -> Option<StrategyData> {
@@ -96,27 +129,7 @@ impl YetifyStrategyStorage {
         format!("Yetify Strategy Storage - Total strategies: {}", self.strategy_count)
     }
 
-    pub fn store_complete_strategy(&mut self, strategy_json: String) -> String {
-        let creator = env::predecessor_account_id();
-        let timestamp = env::block_timestamp_ms();
-        
-        let mut strategy_data: StrategyData = match serde_json::from_str(&strategy_json) {
-            Ok(data) => data,
-            Err(err) => {
-                return format!("Error: Failed to parse strategy JSON - {}", err);
-            }
-        };
-        
-        strategy_data.creator = creator;
-        strategy_data.created_at = timestamp;
-        
-        let strategy_id = strategy_data.id.clone();
-        self.strategies.insert(strategy_id.clone(), strategy_data);
-        self.strategy_count += 1;
-        
-        format!("Complete strategy '{}' stored successfully! Total strategies: {}", strategy_id, self.strategy_count)
-    }
-
+    #[payable]
     pub fn update_strategy(&mut self, strategy_json: String) -> String {
         let caller = env::predecessor_account_id();
         
@@ -148,6 +161,7 @@ impl YetifyStrategyStorage {
         format!("Strategy '{}' updated successfully!", strategy_id)
     }
 
+    #[payable]
     pub fn delete_strategy(&mut self, id: String) -> String {
         let caller = env::predecessor_account_id();
         
