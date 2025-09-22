@@ -1,8 +1,18 @@
 use near_sdk::{near, env, AccountId, serde_json};
 use std::collections::HashMap;
 
-#[derive(Serialize, Deserialize, Clone)]
-#[serde(crate = "near_sdk::serde")]
+#[near(serializers = [borsh, json])]
+#[derive(Default, Clone)]
+pub struct StrategyStep {
+    pub action: String,
+    pub protocol: String,
+    pub asset: String,
+    pub expected_apy: Option<f64>,
+    pub amount: Option<String>,
+}
+
+#[near(serializers = [borsh, json])]
+#[derive(Clone)]
 pub struct StrategyData {
     pub id: String,
     pub goal: String,
@@ -17,16 +27,6 @@ pub struct StrategyData {
     pub warnings: Option<Vec<String>>,
     pub creator: AccountId,
     pub created_at: u64,
-}
-
-#[derive(Serialize, Deserialize, Clone)]
-#[serde(crate = "near_sdk::serde")]
-pub struct StrategyStep {
-    pub action: String,
-    pub protocol: String,
-    pub asset: String,
-    pub expected_apy: Option<f64>,
-    pub amount: Option<String>,
 }
 
 #[near_bindgen]
