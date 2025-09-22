@@ -164,4 +164,8 @@ impl YetifyStrategyStorage {
             .cloned()
             .collect()
     }
+
+    pub fn get_all_strategies(&self) -> Vec<StrategyData> {
+        self.strategies.values().cloned().collect()
+    }
 }
