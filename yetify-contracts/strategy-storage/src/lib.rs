@@ -29,20 +29,31 @@ pub struct StrategyData {
     pub created_at: u64,
 }
 
-#[near_bindgen]
-#[derive(BorshDeserialize, BorshSerialize)]
-pub struct YetifyStrategyStorage {
-    strategies: UnorderedMap<String, StrategyData>,
-    strategy_count: u64,
-}
-
-impl Default for YetifyStrategyStorage {
+impl Default for StrategyData {
     fn default() -> Self {
         Self {
-            strategies: UnorderedMap::new(b"strategies"),
-            strategy_count: 0,
+            id: String::new(),
+            goal: String::new(),
+            chains: Vec::new(),
+            protocols: Vec::new(),
+            steps: Vec::new(),
+            risk_level: "medium".to_string(),
+            estimated_apy: None,
+            estimated_tvl: None,
+            confidence: None,
+            reasoning: None,
+            warnings: None,
+            creator: "default.testnet".parse().unwrap(),
+            created_at: 0,
         }
     }
+}
+
+#[near(contract_state)]
+#[derive(Default)]
+pub struct YetifyStrategyStorage {
+    strategies: HashMap<String, StrategyData>,
+    strategy_count: u64,
 }
 
 #[near_bindgen]
