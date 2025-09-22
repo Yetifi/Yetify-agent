@@ -310,6 +310,29 @@ export const StrategySchema = new mongoose.Schema(
         stepId: String
       }
     ],
+    // On-chain data from NEAR blockchain
+    onChain: {
+      isStored: { type: Boolean, default: false },
+      contractAccount: { type: String },
+      transactionHash: { type: String },
+      blockHeight: { type: Number },
+      storedAt: { type: Date },
+      nearExplorerUrl: { type: String },
+      storedData: {
+        creator: { type: String },
+        created_at: { type: Number },
+        // Complete strategy data as stored on blockchain
+        completeStrategyJson: { type: String }
+      },
+      updateHistory: [
+        {
+          transactionHash: { type: String },
+          updatedAt: { type: Date },
+          changes: { type: String }, // JSON string of what was changed
+          blockHeight: { type: Number }
+        }
+      ]
+    },
     performance: {
       totalInvested: { type: Number, default: 0 },
       currentValue: { type: Number, default: 0 },
