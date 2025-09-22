@@ -50,10 +50,18 @@ impl Default for StrategyData {
 }
 
 #[near(contract_state)]
-#[derive(Default)]
 pub struct YetifyStrategyStorage {
-    strategies: HashMap<String, StrategyData>,
+    strategies: UnorderedMap<String, StrategyData>,
     strategy_count: u64,
+}
+
+impl Default for YetifyStrategyStorage {
+    fn default() -> Self {
+        Self {
+            strategies: UnorderedMap::new(b"s"),
+            strategy_count: 0,
+        }
+    }
 }
 
 #[near]
