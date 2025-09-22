@@ -1,11 +1,17 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getSavedStrategies, SavedStrategy, deleteStrategy, updateStrategy } from '@/utils/strategyStorage';
+import { getSavedStrategies, SavedStrategy, deleteStrategy, updateStrategy, addExecutionRecord } from '@/utils/strategyStorage';
+import { NEARWalletService } from '@/services/NEARWalletService';
+import SuccessModal from '@/components/SuccessModal';
 
 export default function StrategyDashboard() {
   const [savedStrategies, setSavedStrategies] = useState<SavedStrategy[]>([]);
   const [selectedFilter, setSelectedFilter] = useState<'all' | 'saved' | 'executing' | 'completed' | 'failed'>('all');
+  const [nearService] = useState(() => new NEARWalletService('testnet'));
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successData, setSuccessData] = useState<{transactionHash: string; strategyId: string} | null>(null);
 
   // Load saved strategies on component mount
   useEffect(() => {
@@ -26,15 +32,47 @@ export default function StrategyDashboard() {
     }
   };
 
-  const handleExecuteStrategy = (strategy: SavedStrategy) => {
-    // Update status to executing
-    updateStrategy(strategy.id, { status: 'executing' });
-    setSavedStrategies(prev => 
-      prev.map(s => s.id === strategy.id ? { ...s, status: 'executing' } : s)
-    );
-    
-    // Simulate execution (in real app, this would call smart contracts)
-    alert(`Executing strategy: ${strategy.name}\n\nThis would connect to your wallet and execute the DeFi strategy.`);
+  const handleExecuteStrategy = async (strategy: SavedStrategy) => {
+    setIsConnecting(true);
+    try {
+      // Store complete strategy on NEAR blockchain
+      const transactionHash = await nearService.storeCompleteStrategy(strategy);
+      
+      // Add execution record with transaction hash
+      addExecutionRecord(strategy.id, {
+        status: 'completed',
+        transactionHash: transactionHash,
+        timestamp: new Date()
+      });
+
+      // Reload strategies to reflect changes
+      const strategies = getSavedStrategies();
+      setSavedStrategies(strategies);
+      
+      // Show success modal instead of alert
+      setSuccessData({
+        transactionHash,
+        strategyId: strategy.id
+      });
+      setShowSuccessModal(true);
+    } catch (error) {
+      console.error('Failed to execute strategy:', error);
+      
+      // Add failed execution record
+      addExecutionRecord(strategy.id, {
+        status: 'failed',
+        errorMessage: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: new Date()
+      });
+
+      // Reload strategies to reflect changes
+      const strategies = getSavedStrategies();
+      setSavedStrategies(strategies);
+      
+      alert(`Failed to store strategy on blockchain:\n\n${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsConnecting(false);
+    }
   };
 
   const getStatusColor = (status: SavedStrategy['status']) => {
@@ -79,9 +117,14 @@ export default function StrategyDashboard() {
         <h2 className="text-3xl font-bold text-white mb-4">
           Strategy Dashboard
         </h2>
-        <p className="text-gray-300 text-lg">
+        <p className="text-gray-300 text-lg mb-2">
           Monitor and manage your saved DeFi strategies.
         </p>
+        <div className="flex items-center space-x-2 text-sm">
+          <span className="inline-flex items-center px-2 py-1 bg-green-500/20 text-green-300 border border-green-500/30 rounded-full">
+            🟢 Connected to NEAR Testnet (strategy-storage-yetify.testnet)
+          </span>
+        </div>
       </div>
 
       {/* Summary Stats */}
@@ -186,6 +229,21 @@ export default function StrategyDashboard() {
                         {formatDate(strategy.createdAt)}
                       </span>
                     </div>
+
+                    {strategy.executionHistory && strategy.executionHistory.length > 0 && strategy.executionHistory[0].transactionHash && (
+                      <div className="flex items-center">
+                        <span className="text-gray-400">TX Hash:</span>
+                        <a 
+                          href={`https://testnet.nearblocks.io/txns/${strategy.executionHistory[0].transactionHash}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="ml-2 text-blue-400 hover:text-blue-300 font-mono text-sm truncate max-w-[100px]"
+                          title={strategy.executionHistory[0].transactionHash}
+                        >
+                          {strategy.executionHistory[0].transactionHash.substring(0, 8)}...
+                        </a>
+                      </div>
+                    )}
                   </div>
                 </div>
                 
@@ -193,9 +251,10 @@ export default function StrategyDashboard() {
                   {strategy.status === 'saved' && (
                     <button
                       onClick={() => handleExecuteStrategy(strategy)}
-                      className="bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700 transition-colors"
+                      disabled={isConnecting}
+                      className="bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      Execute Now
+                      {isConnecting ? 'Storing on NEAR...' : '🚀 Store on NEAR'}
                     </button>
                   )}
                   
@@ -260,6 +319,19 @@ export default function StrategyDashboard() {
             </div>
           ))}
         </div>
+      )}
+
+      {/* Success Modal */}
+      {successData && (
+        <SuccessModal
+          isOpen={showSuccessModal}
+          onClose={() => {
+            setShowSuccessModal(false);
+            setSuccessData(null);
+          }}
+          transactionHash={successData.transactionHash}
+          strategyId={successData.strategyId}
+        />
       )}
     </div>
   );
