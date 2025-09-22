@@ -453,4 +453,82 @@ router.get('/analytics/summary', async (req: AuthenticatedRequest, res: Response
   }
 });
 
+// POST /api/v1/strategies/update-onchain - Update strategy with on-chain data
+router.post('/update-onchain', async (req: Request, res: Response) => {
+  try {
+    const { strategyId, onChainData } = req.body;
+
+    if (!strategyId || !onChainData) {
+      return res.status(400).json({
+        error: 'Missing required fields',
+        message: 'strategyId and onChainData are required'
+      });
+    }
+
+    const strategy = await Strategy.findOne({ id: strategyId });
+
+    if (!strategy) {
+      return res.status(404).json({
+        error: 'Strategy not found',
+        message: 'Strategy does not exist'
+      });
+    }
+
+    // Extract transaction details from CLI output if needed
+    let transactionHash = onChainData.transactionHash;
+    let blockHeight = onChainData.blockHeight;
+    
+    // Initialize onChain if not exists
+    if (!strategy.onChain) {
+      strategy.onChain = {
+        isStored: false,
+        updateHistory: [] as any
+      } as any;
+    }
+
+    // Update strategy with on-chain data
+    strategy.onChain!.isStored = true;
+    strategy.onChain!.contractAccount = onChainData.contractAccount || 'strategy-storage-yetify.testnet';
+    strategy.onChain!.transactionHash = transactionHash;
+    strategy.onChain!.blockHeight = blockHeight;
+    strategy.onChain!.storedAt = new Date(onChainData.storedAt || Date.now());
+    strategy.onChain!.nearExplorerUrl = `https://testnet.nearblocks.io/txns/${transactionHash}`;
+    
+    // Initialize storedData if not exists
+    if (!strategy.onChain!.storedData) {
+      strategy.onChain!.storedData = {} as any;
+    }
+    
+    strategy.onChain!.storedData!.creator = onChainData.storedData?.creator || 'strategy-storage-yetify.testnet';
+    strategy.onChain!.storedData!.created_at = onChainData.storedData?.created_at || Date.now();
+    strategy.onChain!.storedData!.completeStrategyJson = onChainData.storedData?.completeStrategyJson || '';
+
+    // Update strategy status to indicate it's been stored on-chain
+    if (strategy.status === 'draft') {
+      strategy.status = 'active';
+    }
+
+    await strategy.save();
+
+    logger.info(`Strategy ${strategyId} updated with on-chain data`, {
+      strategyId,
+      transactionHash: transactionHash,
+      contractAccount: strategy.onChain!.contractAccount
+    });
+
+    res.json({
+      success: true,
+      message: 'Strategy updated with on-chain data successfully',
+      onChain: strategy.onChain
+    });
+
+  } catch (error) {
+    logger.error('Failed to update strategy with on-chain data:', error);
+    res.status(500).json({
+      error: 'Failed to update on-chain data',
+      message: error instanceof Error ? error.message : String(error)
+    });
+  }
+});
+
 export default router;

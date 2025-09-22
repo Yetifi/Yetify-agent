@@ -1,11 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { BrowserLocalStorageKeyStore } from '@near-js/keystores-browser';
+import { KeyPair } from '@near-js/crypto';
 import { 
   getSignerFromKeystore, 
   getTestnetRpcProvider,
   getMainnetRpcProvider,
   view,
-  transfer
+  transfer,
+  functionCall
 } from '@near-js/client';
 
 export interface NEARWalletState {
@@ -237,11 +239,91 @@ export class NEARWalletService {
   }
 
   /**
+   * Store strategy on-chain using server-side call
+   */
+  async storeStrategy(id: string, goal: string): Promise<string> {
+    try {
+      console.log('Attempting to store strategy on NEAR blockchain:', {
+        contractId: 'strategy-v2.testnet',
+        signerAccount: 'strategy-storage-yetify.testnet',
+        method: 'store_strategy',
+        args: { id, goal }
+      });
+
+      // Call our backend API to handle the NEAR transaction
+      const response = await fetch('/api/store-strategy', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id, goal }),
+      });
+
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(`API call failed: ${error}`);
+      }
+
+      const result = await response.json();
+      
+      // Even if contract call failed, we got a transaction hash
+      if (result.transactionHash) {
+        return result.transactionHash;
+      }
+      
+      throw new Error(result.error || 'Unknown error');
+    } catch (error) {
+      console.error('Failed to store strategy:', error);
+      throw new Error(`Failed to store strategy: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  /**
+   * Store complete strategy on-chain using server-side call
+   */
+  async storeCompleteStrategy(strategy: any): Promise<string> {
+    try {
+      console.log('Attempting to store complete strategy on NEAR blockchain:', {
+        contractId: 'strategy-storage-yetify.testnet',
+        method: 'store_complete_strategy',
+        strategyData: strategy
+      });
+
+      // Call our backend API to handle the NEAR transaction
+      const response = await fetch('/api/store-complete-strategy', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ strategy }),
+      });
+
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(`API call failed: ${error}`);
+      }
+
+      const result = await response.json();
+      
+      // Even if contract call failed, we got a transaction hash
+      if (result.transactionHash) {
+        return result.transactionHash;
+      }
+      
+      throw new Error(result.error || 'Unknown error');
+    } catch (error) {
+      console.error('Failed to store complete strategy:', error);
+      throw new Error(`Failed to store complete strategy: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+
+  /**
    * Validate NEAR account ID format
    */
   private isValidAccountId(accountId: string): boolean {
-    // NEAR account ID validation
-    const nearAccountRegex = /^[a-z0-9._-]+\.near$|^[a-f0-9]{64}$/;
+    // NEAR account ID validation - supports .near, .testnet, and mainnet implicit accounts
+    const nearAccountRegex = /^[a-z0-9._-]+\.(near|testnet)$|^[a-f0-9]{64}$/;
     return nearAccountRegex.test(accountId);
   }
 

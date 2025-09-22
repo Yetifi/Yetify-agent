@@ -116,6 +116,7 @@ export class OpenRouterService {
       const duration = Date.now() - startTime;
       this.logger.performance('OpenRouter API call', duration, {
         model: data.model,
+        duration,
         tokensUsed: data.usage?.total_tokens || 0,
         promptTokens: data.usage?.prompt_tokens || 0,
         completionTokens: data.usage?.completion_tokens || 0
