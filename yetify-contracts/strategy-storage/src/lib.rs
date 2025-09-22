@@ -136,4 +136,24 @@ impl YetifyStrategyStorage {
         
         format!("Strategy '{}' updated successfully!", strategy_id)
     }
+
+    pub fn delete_strategy(&mut self, id: String) -> String {
+        let caller = env::predecessor_account_id();
+        
+        let existing_strategy = match self.strategies.get(&id) {
+            Some(strategy) => strategy,
+            None => {
+                return format!("Error: Strategy '{}' not found", id);
+            }
+        };
+        
+        if existing_strategy.creator != caller {
+            return format!("Error: Only the strategy creator can delete this strategy");
+        }
+        
+        self.strategies.remove(&id);
+        self.strategy_count -= 1;
+        
+        format!("Strategy '{}' deleted successfully! Total strategies: {}", id, self.strategy_count)
+    }
 }
