@@ -192,6 +192,10 @@ export const UserSchema = new mongoose.Schema(
       enum: ['metamask', 'near', 'walletconnect'],
       required: true
     },
+    apiKeys: {
+      openRouter: { type: String, default: null },
+      groq: { type: String, default: null }
+    },
     preferences: {
       riskTolerance: {
         type: String,
