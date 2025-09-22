@@ -156,4 +156,12 @@ impl YetifyStrategyStorage {
         
         format!("Strategy '{}' deleted successfully! Total strategies: {}", id, self.strategy_count)
     }
+
+    pub fn get_strategies_by_creator(&self, creator: AccountId) -> Vec<StrategyData> {
+        self.strategies
+            .values()
+            .filter(|strategy| strategy.creator == creator)
+            .cloned()
+            .collect()
+    }
 }
