@@ -114,7 +114,7 @@ impl YetifyStrategyStorage {
         self.strategies.insert(id.clone(), strategy_data);
         self.strategy_count += 1;
         
-        format!("Strategy '{}' stored successfully! Total strategies: {}", id, self.strategy_count)
+        format!("Strategy '{}' stored successfully!", id)
     }
 
     pub fn get_strategy(&self, id: String) -> Option<StrategyData> {
@@ -133,6 +133,7 @@ impl YetifyStrategyStorage {
     pub fn update_strategy(&mut self, strategy_json: String) -> String {
         let caller = env::predecessor_account_id();
         
+        // Parse the JSON strategy data
         let mut strategy_data: StrategyData = match serde_json::from_str(&strategy_json) {
             Ok(data) => data,
             Err(err) => {
@@ -141,6 +142,7 @@ impl YetifyStrategyStorage {
             }
         };
         
+        // Check if strategy exists
         let existing_strategy = match self.strategies.get(&strategy_data.id) {
             Some(strategy) => strategy,
             None => {
@@ -148,13 +150,16 @@ impl YetifyStrategyStorage {
             }
         };
         
+        // Verify ownership (only creator can update)
         if existing_strategy.creator != caller {
             return format!("Error: Only the strategy creator can update this strategy");
         }
         
+        // Preserve original creator and created_at
         strategy_data.creator = existing_strategy.creator.clone();
         strategy_data.created_at = existing_strategy.created_at;
         
+        // Update the strategy
         let strategy_id = strategy_data.id.clone();
         self.strategies.insert(strategy_id.clone(), strategy_data);
         
@@ -165,6 +170,7 @@ impl YetifyStrategyStorage {
     pub fn delete_strategy(&mut self, id: String) -> String {
         let caller = env::predecessor_account_id();
         
+        // Check if strategy exists
         let existing_strategy = match self.strategies.get(&id) {
             Some(strategy) => strategy,
             None => {
@@ -172,10 +178,12 @@ impl YetifyStrategyStorage {
             }
         };
         
+        // Verify ownership (only creator can delete)
         if existing_strategy.creator != caller {
             return format!("Error: Only the strategy creator can delete this strategy");
         }
         
+        // Delete the strategy
         self.strategies.remove(&id);
         self.strategy_count -= 1;
         
