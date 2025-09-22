@@ -105,4 +105,35 @@ impl YetifyStrategyStorage {
         
         format!("Complete strategy '{}' stored successfully! Total strategies: {}", strategy_id, self.strategy_count)
     }
+
+    pub fn update_strategy(&mut self, strategy_json: String) -> String {
+        let caller = env::predecessor_account_id();
+        
+        let mut strategy_data: StrategyData = match serde_json::from_str(&strategy_json) {
+            Ok(data) => data,
+            Err(err) => {
+                env::log_str(&format!("JSON Parse Error: {}", err));
+                return format!("Error: Failed to parse strategy JSON - {}", err);
+            }
+        };
+        
+        let existing_strategy = match self.strategies.get(&strategy_data.id) {
+            Some(strategy) => strategy,
+            None => {
+                return format!("Error: Strategy '{}' not found", strategy_data.id);
+            }
+        };
+        
+        if existing_strategy.creator != caller {
+            return format!("Error: Only the strategy creator can update this strategy");
+        }
+        
+        strategy_data.creator = existing_strategy.creator.clone();
+        strategy_data.created_at = existing_strategy.created_at;
+        
+        let strategy_id = strategy_data.id.clone();
+        self.strategies.insert(strategy_id.clone(), strategy_data);
+        
+        format!("Strategy '{}' updated successfully!", strategy_id)
+    }
 }
