@@ -1,6 +1,5 @@
-use near_sdk::{near_bindgen, env, AccountId, serde_json, BorshDeserialize, BorshSerialize};
-use near_sdk::collections::UnorderedMap;
-use serde::{Deserialize, Serialize};
+use near_sdk::{near, env, AccountId, serde_json};
+use std::collections::HashMap;
 
 #[near(serializers = [borsh, json])]
 #[derive(Default, Clone)]
@@ -52,14 +51,14 @@ impl Default for StrategyData {
 
 #[near(contract_state)]
 pub struct YetifyStrategyStorage {
-    strategies: IterableMap<String, StrategyData>,
+    strategies: HashMap<String, StrategyData>,
     strategy_count: u64,
 }
 
 impl Default for YetifyStrategyStorage {
     fn default() -> Self {
         Self {
-            strategies: IterableMap::new(b"s"),
+            strategies: HashMap::new(),
             strategy_count: 0,
         }
     }
@@ -133,12 +132,12 @@ impl YetifyStrategyStorage {
         }
     }
 
-    pub fn total_strategies(&self) -> String {
-        serde_json::to_string(&self.strategy_count).unwrap()
+    pub fn total_strategies(&self) -> u64 {
+        self.strategy_count
     }
 
-    pub fn test_simple(&self) -> String {
-        serde_json::to_string(&42u64).unwrap()
+    pub fn test_simple(&self) -> u64 {
+        42
     }
 
     pub fn get_contract_info(&self) -> String {
