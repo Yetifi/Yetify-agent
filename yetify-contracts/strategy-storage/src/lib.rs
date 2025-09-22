@@ -1,5 +1,5 @@
 use near_sdk::{near, env, AccountId, serde_json};
-use std::collections::HashMap;
+use near_sdk::store::UnorderedMap;
 
 #[near(serializers = [borsh, json])]
 #[derive(Default, Clone)]
