@@ -111,3 +111,5 @@ test-report/
 # Local development
 .local/
 .idea
+docs
+tests
