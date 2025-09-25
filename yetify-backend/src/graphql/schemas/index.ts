@@ -339,6 +339,8 @@ export const typeDefs = gql`
     PROVIDE_LIQUIDITY
     LEVERAGE
     BRIDGE
+    SWAP
+    WITHDRAW
   }
 
   enum ProtocolCategory {

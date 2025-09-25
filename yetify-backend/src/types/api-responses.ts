@@ -123,7 +123,7 @@ export interface Strategy {
 }
 
 export interface StrategyStep {
-  action: 'deposit' | 'stake' | 'yield_farm' | 'provide_liquidity' | 'leverage' | 'bridge';
+  action: 'deposit' | 'stake' | 'yield_farm' | 'provide_liquidity' | 'leverage' | 'bridge' | 'swap' | 'withdraw';
   protocol: string;
   asset: string;
   amount: string;
