@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
       goal: strategy.goal,
       chains: strategy.chains || [],
       protocols: strategy.protocols || [],
-      steps: (strategy.steps || []).map((step: any) => ({
+      steps: (strategy.steps || []).map((step: Record<string, unknown>) => ({
         action: step.action,
         protocol: step.protocol,
         asset: step.asset,
@@ -42,9 +42,9 @@ export async function POST(request: NextRequest) {
 
     // Use NEAR CLI to call the contract with complete strategy data
     // Use temporary file approach to avoid shell escaping issues
-    const fs = require('fs');
-    const os = require('os');
-    const path = require('path');
+    const fs = await import('fs');
+    const os = await import('os');
+    const path = await import('path');
     
     const tempFile = path.join(os.tmpdir(), `strategy-${Date.now()}.json`);
     // Wrap strategy JSON as parameter for contract method
@@ -108,11 +108,11 @@ export async function POST(request: NextRequest) {
         output: stdout
       });
 
-    } catch (execError: any) {
+    } catch (execError: unknown) {
       console.error('NEAR CLI execution failed:', execError);
       
       // Extract transaction hash even from failed execution
-      const stderr = execError.stderr || '';
+      const stderr = (execError as { stderr?: string })?.stderr || '';
       const hashMatch = stderr.match(/Transaction ID: ([A-Za-z0-9]+)/);
       const explorerMatch = stderr.match(/https:\/\/explorer\.testnet\.near\.org\/transactions\/([A-Za-z0-9]+)/);
       
@@ -130,7 +130,7 @@ export async function POST(request: NextRequest) {
       
       // If no transaction hash found, it's a real error
       return NextResponse.json(
-        { error: 'Failed to submit transaction', details: execError.message },
+        { error: 'Failed to submit transaction', details: (execError as Error)?.message || 'Unknown error' },
         { status: 500 }
       );
     }
