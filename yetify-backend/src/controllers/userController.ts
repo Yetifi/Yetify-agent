@@ -17,7 +17,24 @@ export interface GetApiKeysRequest {
 export class UserController {
   
   /**
+   * Detect wallet type based on address format
+   * Supports both Metamask (ETH) and NEAR wallet addresses
+   */
+  private detectWalletType(walletAddress: string): 'metamask' | 'near' | 'walletconnect' {
+    // NEAR wallet addresses end with .near or .testnet
+    if (walletAddress.endsWith('.near') || walletAddress.endsWith('.testnet')) {
+      return 'near';
+    }
+    // Ethereum addresses start with 0x and are 42 characters long
+    if (walletAddress.startsWith('0x') && walletAddress.length === 42) {
+      return 'metamask'; // Could also be walletconnect, but default to metamask
+    }
+    return 'metamask'; // Default fallback for unknown formats
+  }
+  
+  /**
    * Update user API keys
+   * Supports both Metamask and NEAR wallet addresses
    */
   async updateApiKeys(req: Request, res: Response): Promise<void> {
     try {
@@ -33,6 +50,9 @@ export class UserController {
         return;
       }
 
+      // Detect wallet type based on address format
+      const walletType = this.detectWalletType(walletAddress);
+      
       // Find or create user
       let user = await User.findOne({ walletAddress });
       
@@ -40,18 +60,20 @@ export class UserController {
         // Create new user if doesn't exist
         user = new User({
           walletAddress,
-          walletType: 'metamask', // Default, can be updated later
+          walletType,
           apiKeys: {
             openRouter: apiKeys.openRouter,
             groq: apiKeys.groq
           }
         });
       } else {
-        // Update existing user
+        // Update existing user API keys and wallet type
         user.apiKeys = {
           openRouter: apiKeys.openRouter || user.apiKeys?.openRouter,
           groq: apiKeys.groq || user.apiKeys?.groq
         };
+        // Update wallet type in case it was incorrectly set before
+        user.walletType = walletType;
       }
 
       await user.save();
