@@ -42,15 +42,15 @@ export class UserController {
           walletAddress,
           walletType: 'metamask', // Default, can be updated later
           apiKeys: {
-            openRouter: apiKeys.openRouter || null,
-            groq: apiKeys.groq || null
+            openRouter: apiKeys.openRouter,
+            groq: apiKeys.groq
           }
         });
       } else {
         // Update existing user
         user.apiKeys = {
-          openRouter: apiKeys.openRouter || user.apiKeys?.openRouter || null,
-          groq: apiKeys.groq || user.apiKeys?.groq || null
+          openRouter: apiKeys.openRouter || user.apiKeys?.openRouter,
+          groq: apiKeys.groq || user.apiKeys?.groq
         };
       }
 
@@ -153,8 +153,8 @@ export class UserController {
       }
 
       user.apiKeys = {
-        openRouter: null,
-        groq: null
+        openRouter: undefined,
+        groq: undefined
       };
 
       await user.save();

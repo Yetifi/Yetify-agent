@@ -13,6 +13,7 @@ import strategyRoutes from './controllers/strategyController';
 import executionRoutes from './controllers/executionController';
 import monitoringRoutes from './controllers/monitoringController';
 import testRoutes from './controllers/testController';
+import userRoutes from './routes/userRoutes';
 
 interface AuthenticatedRequest extends Request {
   user?: { id: string; walletAddress: string; walletType: string };
@@ -63,6 +64,7 @@ app.get('/health', (req, res) => {
 app.use('/api/v1/strategies', authMiddleware, strategyRoutes);
 app.use('/api/v1/execution', authMiddleware, executionRoutes);
 app.use('/api/v1/monitoring', authMiddleware, monitoringRoutes);
+app.use('/api/v1/users', authMiddleware, userRoutes);
 
 // Test Routes (no auth required for testing)
 app.use('/api/v1/test', testRoutes);

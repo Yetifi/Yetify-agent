@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
+import { Settings } from 'lucide-react';
 import StrategyBuilder from '@/components/StrategyBuilder';
 import StrategyDashboard from '@/components/StrategyDashboard';
 import WalletConnection from '@/components/WalletConnection';
@@ -31,6 +33,9 @@ export default function Home() {
               <NoSSR fallback={<div className="bg-slate-600 animate-pulse rounded px-4 py-2 w-24 h-6"></div>}>
                 <PortfolioValue />
               </NoSSR>
+              <Link href="/settings" className="text-gray-300 hover:text-white transition-colors">
+                <Settings className="w-6 h-6" />
+              </Link>
               <NoSSR fallback={<div className="bg-slate-600 animate-pulse rounded px-4 py-2 w-32 h-10"></div>}>
                 <WalletConnection />
               </NoSSR>
