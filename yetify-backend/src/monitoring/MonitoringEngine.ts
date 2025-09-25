@@ -69,7 +69,7 @@ export class MonitoringEngine {
   };
 
   constructor() {
-    this.marketService = new MarketDataService();
+    this.marketService = MarketDataService.getInstance();
     this.protocolService = new ProtocolDataService();
     this.startMonitoring();
   }

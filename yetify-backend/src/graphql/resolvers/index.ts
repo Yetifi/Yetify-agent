@@ -11,7 +11,7 @@ import { logger } from '../../utils/logger';
 const strategyEngine = new StrategyEngine();
 const executionEngine = new ExecutionEngine();
 const monitoringEngine = new MonitoringEngine();
-const marketDataService = new MarketDataService();
+const marketDataService = MarketDataService.getInstance();
 const protocolDataService = new ProtocolDataService();
 
 export const resolvers = {
