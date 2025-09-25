@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Key, Save, Eye, EyeOff, CheckCircle, AlertCircle } from 'lucide-react';
 
@@ -24,16 +24,9 @@ export default function SettingsPage({ walletAddress }: SettingsPageProps) {
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [hasKeys, setHasKeys] = useState({ openRouter: false, groq: false });
 
-  // Load existing API key status
-  useEffect(() => {
-    if (walletAddress) {
-      loadApiKeyStatus();
-    }
-  }, [walletAddress]);
-
-  const loadApiKeyStatus = async () => {
+  const loadApiKeyStatus = useCallback(async () => {
     try {
-      const response = await fetch(`/api/users/${walletAddress}/api-keys`);
+      const response = await fetch(`/api/v1/users/${walletAddress}/api-keys`);
       if (response.ok) {
         const data = await response.json();
         setHasKeys({
@@ -44,7 +37,14 @@ export default function SettingsPage({ walletAddress }: SettingsPageProps) {
     } catch (error) {
       console.error('Failed to load API key status:', error);
     }
-  };
+  }, [walletAddress]);
+
+  // Load existing API key status
+  useEffect(() => {
+    if (walletAddress) {
+      loadApiKeyStatus();
+    }
+  }, [walletAddress, loadApiKeyStatus]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,7 +63,7 @@ export default function SettingsPage({ walletAddress }: SettingsPageProps) {
     setMessage(null);
 
     try {
-      const response = await fetch('/api/users/api-keys', {
+      const response = await fetch('/api/v1/users/api-keys', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -78,7 +78,7 @@ export default function SettingsPage({ walletAddress }: SettingsPageProps) {
       });
 
       if (response.ok) {
-        const data = await response.json();
+        await response.json();
         setMessage({ type: 'success', text: 'API keys saved successfully!' });
         setHasKeys({
           openRouter: !!apiKeys.openRouter,
@@ -87,10 +87,10 @@ export default function SettingsPage({ walletAddress }: SettingsPageProps) {
         // Clear input fields after successful save
         setApiKeys({ openRouter: '', groq: '' });
       } else {
-        const error = await response.text();
-        setMessage({ type: 'error', text: `Failed to save API keys: ${error}` });
+        const errorText = await response.text();
+        setMessage({ type: 'error', text: `Failed to save API keys: ${errorText}` });
       }
-    } catch (error) {
+    } catch {
       setMessage({ type: 'error', text: 'Network error. Please try again.' });
     } finally {
       setLoading(false);
@@ -106,7 +106,7 @@ export default function SettingsPage({ walletAddress }: SettingsPageProps) {
 
     setLoading(true);
     try {
-      const response = await fetch(`/api/users/${walletAddress}/api-keys`, {
+      const response = await fetch(`/api/v1/users/${walletAddress}/api-keys`, {
         method: 'DELETE',
       });
 
@@ -115,10 +115,10 @@ export default function SettingsPage({ walletAddress }: SettingsPageProps) {
         setHasKeys({ openRouter: false, groq: false });
         setApiKeys({ openRouter: '', groq: '' });
       } else {
-        const error = await response.text();
-        setMessage({ type: 'error', text: `Failed to delete API keys: ${error}` });
+        const errorText = await response.text();
+        setMessage({ type: 'error', text: `Failed to delete API keys: ${errorText}` });
       }
-    } catch (error) {
+    } catch {
       setMessage({ type: 'error', text: 'Network error. Please try again.' });
     } finally {
       setLoading(false);
