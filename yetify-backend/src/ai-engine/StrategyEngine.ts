@@ -13,6 +13,7 @@ export interface StrategyPrompt {
   investmentAmount?: number;
   preferredChains?: string[];
   timeHorizon?: 'short' | 'medium' | 'long';
+  userApiKey?: string;
 }
 
 export interface GeneratedStrategy {
@@ -145,10 +146,13 @@ export class StrategyEngine {
       let response: string;
       
       try {
-        const model = this.geminiAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+        // Use user's API key if provided, otherwise use default
+        const apiKey = prompt.userApiKey || process.env.GEMINI_API_KEY || 'dummy-key';
+        const geminiAI = new GoogleGenerativeAI(apiKey);
+        const model = geminiAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
         const result = await model.generateContent(`${systemPrompt}\n\n${userPrompt}`);
         response = result.response.text();
-        logger.ai('Strategy generated using Gemini 1.5 Flash');
+        logger.ai('Strategy generated using Gemini 1.5 Flash', { userKey: !!prompt.userApiKey });
       } catch (geminiError) {
         logger.error('Gemini failed:', geminiError);
         throw new Error('AI service unavailable');

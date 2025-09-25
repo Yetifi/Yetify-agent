@@ -4,6 +4,7 @@ import { StrategyEngine } from '../ai-engine/StrategyEngine';
 import { Strategy, User } from '../utils/database';
 import { logger } from '../utils/logger';
 import { AuthenticatedRequest } from '../middleware/auth';
+import userController from './userController';
 
 const router = Router();
 const strategyEngine = new StrategyEngine();
@@ -108,9 +109,13 @@ router.post('/generate', async (req: AuthenticatedRequest, res: Response) => {
       });
     }
 
+    // Get user's API key if available
+    const userApiKey = await userController.getUserApiKey(req.user!.walletAddress, 'groq');
+    
     const strategyInput = {
       ...value,
-      userAddress: req.user!.walletAddress
+      userAddress: req.user!.walletAddress,
+      userApiKey: userApiKey || undefined
     };
 
     logger.ai('Generating strategy via REST API', {
