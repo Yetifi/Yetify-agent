@@ -9,7 +9,7 @@ import { AuthenticatedRequest } from '../middleware/auth';
 
 const router = Router();
 const monitoringEngine = new MonitoringEngine();
-const marketDataService = new MarketDataService();
+const marketDataService = MarketDataService.getInstance();
 const protocolDataService = new ProtocolDataService();
 
 // Validation schemas

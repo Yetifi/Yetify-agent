@@ -51,15 +51,31 @@ export interface MarketSummary {
 }
 
 export class MarketDataService {
+  private static instance: MarketDataService;
   private priceCache: Map<string, TokenPrice> = new Map();
   private apyCache: Map<string, APYData[]> = new Map();
   private gasCache: GasPrices | null = null;
   private tvlCache: Map<string, TVLData[]> = new Map();
   private cacheExpiry: number = 2 * 60 * 1000; // 2 minutes
+  private refreshInterval: NodeJS.Timeout | null = null;
 
-  constructor() {
-    // Start periodic cache refresh
-    setInterval(() => this.refreshAllCaches(), this.cacheExpiry);
+  private constructor() {
+    // Start periodic cache refresh only once
+    this.refreshInterval = setInterval(() => this.refreshAllCaches(), this.cacheExpiry);
+  }
+
+  public static getInstance(): MarketDataService {
+    if (!MarketDataService.instance) {
+      MarketDataService.instance = new MarketDataService();
+    }
+    return MarketDataService.instance;
+  }
+
+  public destroy(): void {
+    if (this.refreshInterval) {
+      clearInterval(this.refreshInterval);
+      this.refreshInterval = null;
+    }
   }
 
   async getTokenPrices(symbols: string[]): Promise<Map<string, TokenPrice>> {
