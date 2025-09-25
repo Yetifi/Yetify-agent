@@ -1,19 +1,27 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useAccount } from 'wagmi';
+import { useNEARWallet } from '@/contexts/NEARWalletContext';
 import SettingsPage from '@/components/SettingsPage';
+import Layout from '@/components/Layout';
 
 export default function Settings() {
-  const [walletAddress, setWalletAddress] = useState<string | null>(null);
+  // Get wallet address from Web3 providers
+  const { address: ethAddress } = useAccount();
+  const { nearWallet } = useNEARWallet();
+  
+  // Prioritize NEAR wallet, fallback to ETH wallet
+  const walletAddress = nearWallet.accountId || ethAddress || null;
 
-  useEffect(() => {
-    // Get wallet address from localStorage or Web3 provider
-    // This is a simplified implementation - in production you'd use your Web3 context
-    const savedAddress = localStorage.getItem('walletAddress');
-    if (savedAddress) {
-      setWalletAddress(savedAddress);
-    }
-  }, []);
+  console.log('🔧 Settings: Wallet addresses detected:', {
+    nearAddress: nearWallet.accountId,
+    ethAddress,
+    selectedAddress: walletAddress
+  });
 
-  return <SettingsPage walletAddress={walletAddress} />;
+  return (
+    <Layout>
+      <SettingsPage walletAddress={walletAddress} />
+    </Layout>
+  );
 }
