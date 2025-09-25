@@ -1,14 +1,50 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { useAccount, useDisconnect, useBalance } from 'wagmi';
 import { useWeb3Modal } from '@web3modal/wagmi/react';
 import { formatEther } from 'viem';
+import { useEffect } from 'react';
+import { useNEARWallet } from '../contexts/NEARWalletContext';
 
-interface NEARWalletState {
-  isConnected: boolean;
-  address: string | null;
-  balance: string | null;
+// User creation helper function for ETH wallets
+async function createUserIfNeeded(walletAddress: string, walletType: 'near' | 'metamask'): Promise<void> {
+  try {
+    console.log(`🔧 WalletConnection: Creating/updating ${walletType} user for:`, walletAddress);
+    
+    // First check if user already exists to avoid unnecessary API calls
+    try {
+      const checkResponse = await fetch(`/api/v1/users/${walletAddress}/api-keys`);
+      if (checkResponse.ok) {
+        console.log('✅ WalletConnection: User already exists, skipping creation');
+        return;
+      }
+    } catch (checkError) {
+      // Ignore check error, proceed with creation
+    }
+    
+    const response = await fetch('/api/v1/users/api-keys', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        walletAddress,
+        apiKeys: { 
+          openRouter: undefined,
+          groq: undefined 
+        } // Empty API keys, user will add them later in settings
+      }),
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+      console.log(`✅ WalletConnection: ${walletType} user created/updated successfully:`, result);
+    } else {
+      console.warn(`⚠️ WalletConnection: ${walletType} user creation failed:`, response.status);
+    }
+  } catch (error) {
+    console.error(`❌ WalletConnection: ${walletType} user creation error:`, error);
+  }
 }
 
 export default function WalletConnection() {
@@ -18,97 +54,20 @@ export default function WalletConnection() {
   const { open } = useWeb3Modal();
   const { disconnect } = useDisconnect();
 
-  // NEAR wallet state (kept for future integration)
-  const [nearWallet, setNearWallet] = useState<NEARWalletState>({
-    isConnected: false,
-    address: null,
-    balance: null
-  });
+  // NEAR wallet from context
+  const { nearWallet, connectNear, disconnectNear, isConnecting } = useNEARWallet();
 
-  // const [isConnectingNear, setIsConnectingNear] = useState(false);
+  // Debug NEAR wallet state
+  console.log('🔍 WalletConnection - NEAR wallet state:', nearWallet);
+  console.log('🔍 WalletConnection - isConnecting:', isConnecting);
 
-
-  const connectNear = async () => {
-    try {
-      // setIsConnectingNear(true);
-      
-      // Import NEAR wallet service dynamically to avoid SSR issues
-      const { NEARWalletService } = await import('../services/NEARWalletService');
-      const nearWalletService = new NEARWalletService('testnet');
-
-      // Check if wallet is already connected
-      const isConnected = await nearWalletService.isWalletConnected();
-      
-      if (isConnected) {
-        // Get existing connection
-        const accountId = await nearWalletService.getConnectedAccountId();
-        if (accountId) {
-          const walletState = await nearWalletService.connectWallet(accountId);
-          setNearWallet({
-            isConnected: walletState.isConnected,
-            address: walletState.accountId,
-            balance: walletState.balance
-          });
-          return;
-        }
-      }
-
-      // Check for wallet redirect callback
-      const callbackState = await nearWalletService.handleWalletCallback();
-      if (callbackState) {
-        setNearWallet({
-          isConnected: callbackState.isConnected,
-          address: callbackState.accountId,
-          balance: callbackState.balance
-        });
-        return;
-      }
-
-      // Redirect to NEAR wallet for new connection
-      await nearWalletService.connectWithWalletRedirect();
-      
-    } catch (error) {
-      console.error('NEAR connection failed:', error);
-      alert(`NEAR connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    } finally {
-      // setIsConnectingNear(false);
-    }
-  };
-
-  // Check for existing NEAR wallet connection on component mount
+  // Create user when ETH wallet connects
   useEffect(() => {
-    const checkExistingNearConnection = async () => {
-      try {
-        // Check for NEAR wallet callback first
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get('account_id')) {
-          await connectNear();
-          return;
-        }
-
-        // Check for existing NEAR connection
-        const { NEARWalletService } = await import('../services/NEARWalletService');
-        const nearWalletService = new NEARWalletService('testnet');
-        const isConnected = await nearWalletService.isWalletConnected();
-        
-        if (isConnected) {
-          const accountId = await nearWalletService.getConnectedAccountId();
-          if (accountId) {
-            const walletState = await nearWalletService.connectWallet(accountId);
-            setNearWallet({
-              isConnected: walletState.isConnected,
-              address: walletState.accountId,
-              balance: walletState.balance
-            });
-          }
-        }
-      } catch (error) {
-        console.error('Failed to check existing NEAR wallet connection:', error);
-      }
-    };
-
-    checkExistingNearConnection();
-  }, []);
+    if (address && isConnected) {
+      console.log('🔧 WalletConnection: ETH wallet connected, creating user for:', address);
+      createUserIfNeeded(address, 'metamask');
+    }
+  }, [address, isConnected]);
 
   // Open Web3Modal for Ethereum wallet connections
   const connectEthereumWallet = async () => {
@@ -127,28 +86,7 @@ export default function WalletConnection() {
     }
   };
 
-  const disconnectNearWallet = async () => {
-    try {
-      // Disconnect NEAR wallet
-      const { NEARWalletService } = await import('../services/NEARWalletService');
-      const nearWalletService = new NEARWalletService('testnet');
-      await nearWalletService.disconnectWallet();
-      
-      setNearWallet({
-        isConnected: false,
-        address: null,
-        balance: null
-      });
-    } catch (error) {
-      console.error('NEAR wallet disconnect failed:', error);
-      // Still update UI state even if disconnect fails
-      setNearWallet({
-        isConnected: false,
-        address: null,
-        balance: null
-      });
-    }
-  };
+  // disconnectNearWallet is now handled by context
 
   const formatAddress = (address: string) => {
     if (address.includes('.near')) return address;
@@ -191,12 +129,12 @@ export default function WalletConnection() {
         )}
         
         {/* NEAR Wallet */}
-        {nearWallet.isConnected && nearWallet.address && (
+        {nearWallet.isConnected && nearWallet.accountId && (
           <div className="flex items-center space-x-3 border border-green-200 bg-green-50 text-green-800 rounded-lg px-4 py-2">
             <div className="flex items-center space-x-2">
               <div>
                 <div className="text-sm font-medium">
-                  NEAR - {formatAddress(nearWallet.address)}
+                  NEAR - {formatAddress(nearWallet.accountId)}
                 </div>
                 <div className="text-xs opacity-75">
                   {nearWallet.balance || '0 NEAR'}
@@ -204,7 +142,7 @@ export default function WalletConnection() {
               </div>
             </div>
             <button
-              onClick={disconnectNearWallet}
+              onClick={disconnectNear}
               className="text-xs hover:opacity-80 font-medium"
             >
               Disconnect
@@ -216,7 +154,7 @@ export default function WalletConnection() {
   }
 
   return (
-    <>
+    <div className="flex space-x-3">
       <button
         onClick={connectEthereumWallet}
         className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 transition-all"
@@ -224,6 +162,13 @@ export default function WalletConnection() {
         Connect Ethereum
       </button>
 
-    </>
+      <button
+        onClick={connectNear}
+        disabled={isConnecting}
+        className="bg-gradient-to-r from-green-600 to-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:from-green-700 hover:to-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {isConnecting ? 'Connecting...' : 'Connect NEAR'}
+      </button>
+    </div>
   );
 }

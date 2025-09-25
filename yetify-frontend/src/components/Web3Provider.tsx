@@ -6,6 +6,7 @@ import { WagmiProvider } from 'wagmi';
 import { mainnet, sepolia, polygon } from 'wagmi/chains';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactNode } from 'react';
+import { NEARWalletProvider } from '../contexts/NEARWalletContext';
 
 // 1. Get projectId from https://cloud.walletconnect.com
 const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || 'demo-project-id';
@@ -43,7 +44,9 @@ export default function Web3Provider({ children }: Web3ProviderProps) {
   return (
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
-        {children}
+        <NEARWalletProvider>
+          {children}
+        </NEARWalletProvider>
       </QueryClientProvider>
     </WagmiProvider>
   );
