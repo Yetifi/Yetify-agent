@@ -7,6 +7,7 @@ export interface UpdateApiKeysRequest {
   apiKeys: {
     openRouter?: string;
     groq?: string;
+    gemini?: string;
   };
 }
 
@@ -45,7 +46,7 @@ export class UserController {
         return;
       }
 
-      if (!apiKeys || ((!apiKeys.openRouter) && (!apiKeys.groq))) {
+      if (!apiKeys || ((!apiKeys.openRouter) && (!apiKeys.groq) && (!apiKeys.gemini))) {
         res.status(400).json({ error: 'At least one API key is required' });
         return;
       }
@@ -63,14 +64,16 @@ export class UserController {
           walletType,
           apiKeys: {
             openRouter: apiKeys.openRouter,
-            groq: apiKeys.groq
+            groq: apiKeys.groq,
+            gemini: apiKeys.gemini
           }
         });
       } else {
         // Update existing user API keys and wallet type
         user.apiKeys = {
           openRouter: apiKeys.openRouter || user.apiKeys?.openRouter,
-          groq: apiKeys.groq || user.apiKeys?.groq
+          groq: apiKeys.groq || user.apiKeys?.groq,
+          gemini: apiKeys.gemini || user.apiKeys?.gemini
         };
         // Update wallet type in case it was incorrectly set before
         user.walletType = walletType;
@@ -81,7 +84,8 @@ export class UserController {
       logger.info('User API keys updated', { 
         walletAddress: walletAddress.slice(0, 10) + '...',
         hasOpenRouter: !!apiKeys.openRouter,
-        hasGroq: !!apiKeys.groq
+        hasGroq: !!apiKeys.groq,
+        hasGemini: !!apiKeys.gemini
       });
 
       res.json({
@@ -90,7 +94,8 @@ export class UserController {
         user: {
           walletAddress: user.walletAddress,
           hasOpenRouter: !!user.apiKeys?.openRouter,
-          hasGroq: !!user.apiKeys?.groq
+          hasGroq: !!user.apiKeys?.groq,
+          hasGemini: !!user.apiKeys?.gemini
         }
       });
 
@@ -119,6 +124,7 @@ export class UserController {
           walletAddress,
           hasOpenRouter: false,
           hasGroq: false,
+          hasGemini: false,
           message: 'User not found'
         });
         return;
@@ -127,7 +133,8 @@ export class UserController {
       res.json({
         walletAddress: user.walletAddress,
         hasOpenRouter: !!user.apiKeys?.openRouter,
-        hasGroq: !!user.apiKeys?.groq
+        hasGroq: !!user.apiKeys?.groq,
+        hasGemini: !!user.apiKeys?.gemini
       });
 
     } catch (error) {
@@ -139,7 +146,7 @@ export class UserController {
   /**
    * Get user API key for internal service usage
    */
-  async getUserApiKey(walletAddress: string, keyType: 'openRouter' | 'groq'): Promise<string | null> {
+  async getUserApiKey(walletAddress: string, keyType: 'openRouter' | 'groq' | 'gemini'): Promise<string | null> {
     try {
       const user = await User.findOne({ walletAddress });
       
@@ -176,7 +183,8 @@ export class UserController {
 
       user.apiKeys = {
         openRouter: undefined,
-        groq: undefined
+        groq: undefined,
+        gemini: undefined
       };
 
       await user.save();

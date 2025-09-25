@@ -194,7 +194,8 @@ export const UserSchema = new mongoose.Schema(
     },
     apiKeys: {
       openRouter: { type: String, default: undefined },
-      groq: { type: String, default: undefined }
+      groq: { type: String, default: undefined },
+      gemini: { type: String, default: undefined }
     },
     preferences: {
       riskTolerance: {

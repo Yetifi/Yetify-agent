@@ -41,7 +41,7 @@ export class TestController {
 
   async testStrategyGeneration(req: Request, res: Response) {
     try {
-      const { prompt } = req.body;
+      const { prompt, userAddress, userApiKey } = req.body;
       
       if (!prompt) {
         return res.status(400).json({
@@ -54,6 +54,8 @@ export class TestController {
 
       const strategy = await this.strategyEngine.generateStrategy({
         prompt,
+        userAddress, // Optional: for testing database API key
+        userApiKey, // Optional: for testing request API key
         riskTolerance: 'medium',
         investmentAmount: 1000,
         preferredChains: ['Ethereum', 'NEAR'],

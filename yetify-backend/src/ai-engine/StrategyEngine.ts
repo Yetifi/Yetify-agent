@@ -1,6 +1,7 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { createLogger } from '../utils/logger';
 import { OpenRouterService } from '../services/OpenRouterService';
+import { UserController } from '../controllers/userController';
 
 const logger = createLogger();
 import { ProtocolDataService } from '../services/ProtocolDataService';
@@ -52,6 +53,7 @@ export class StrategyEngine {
   private openRouter: OpenRouterService;
   private protocolService: ProtocolDataService;
   private marketService: MarketDataService;
+  private userController: UserController;
 
   constructor() {
     // Initialize AI models
@@ -62,7 +64,8 @@ export class StrategyEngine {
 
     // Initialize services
     this.protocolService = new ProtocolDataService();
-    this.marketService = new MarketDataService();
+    this.marketService = MarketDataService.getInstance();
+    this.userController = new UserController();
   }
 
   // Vector store temporarily disabled - will implement with alternative embedding
@@ -146,13 +149,36 @@ export class StrategyEngine {
       let response: string;
       
       try {
-        // Use user's API key if provided, otherwise use default
-        const apiKey = prompt.userApiKey || process.env.GEMINI_API_KEY || 'dummy-key';
+        // API Key Priority:
+        // 1. User's database API key (gemini field)
+        // 2. API key from request
+        // 3. System default API key
+        let apiKey = process.env.GEMINI_API_KEY || 'dummy-key';
+        let keySource = 'system';
+        
+        if (prompt.userAddress) {
+          const dbApiKey = await this.userController.getUserApiKey(prompt.userAddress, 'gemini');
+          if (dbApiKey) {
+            apiKey = dbApiKey;
+            keySource = 'database';
+          }
+        }
+        
+        if (prompt.userApiKey) {
+          apiKey = prompt.userApiKey;
+          keySource = 'request';
+        }
+        
         const geminiAI = new GoogleGenerativeAI(apiKey);
         const model = geminiAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
         const result = await model.generateContent(`${systemPrompt}\n\n${userPrompt}`);
         response = result.response.text();
-        logger.ai('Strategy generated using Gemini 1.5 Flash', { userKey: !!prompt.userApiKey });
+        
+        logger.ai('Strategy generated using Gemini 1.5 Flash', { 
+          keySource,
+          userKey: keySource !== 'system',
+          userAddress: prompt.userAddress?.slice(0, 10) + '...'
+        });
       } catch (geminiError) {
         logger.error('Gemini failed:', geminiError);
         throw new Error('AI service unavailable');
