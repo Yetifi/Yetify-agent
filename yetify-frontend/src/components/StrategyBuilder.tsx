@@ -68,7 +68,7 @@ export default function StrategyBuilder() {
     
     try {
       // Call backend API instead of local mock
-      const response = await fetch('/api/v1/test/strategy', {
+      const response = await fetch('/api/generate-strategy', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
