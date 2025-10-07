@@ -9,21 +9,11 @@ export default function PortfolioValue() {
   const { data: balance } = useBalance({ address });
   const [ethPrice, setEthPrice] = useState<number | null>(null);
 
-  // Fetch ETH price (simple implementation)
+  // Fetch ETH price via Next.js API route (avoids CORS)
   useEffect(() => {
     const fetchEthPrice = async () => {
       try {
-        const response = await fetch(
-          'https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd',
-          {
-            method: 'GET',
-            headers: {
-              'Accept': 'application/json',
-            },
-            // Add timeout
-            signal: AbortSignal.timeout(10000)
-          }
-        );
+        const response = await fetch('/api/price/eth');
         
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -31,8 +21,8 @@ export default function PortfolioValue() {
         
         const data = await response.json();
         
-        if (data?.ethereum?.usd) {
-          setEthPrice(data.ethereum.usd);
+        if (data?.price) {
+          setEthPrice(data.price);
         } else {
           throw new Error('Invalid response format');
         }
@@ -48,7 +38,7 @@ export default function PortfolioValue() {
     // Then try to fetch real price
     setTimeout(fetchEthPrice, 1000);
     
-    const interval = setInterval(fetchEthPrice, 300000); // Update every 5 minutes (less frequent)
+    const interval = setInterval(fetchEthPrice, 300000); // Update every 5 minutes
 
     return () => clearInterval(interval);
   }, []);

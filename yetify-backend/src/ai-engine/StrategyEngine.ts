@@ -170,7 +170,7 @@ export class StrategyEngine {
         }
         
         const geminiAI = new GoogleGenerativeAI(apiKey);
-        const model = geminiAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+        const model = geminiAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
         const result = await model.generateContent(`${systemPrompt}\n\n${userPrompt}`);
         response = result.response.text();
         

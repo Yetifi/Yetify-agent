@@ -1,57 +1,14 @@
 'use client';
 
-import { useAccount, useDisconnect, useBalance } from 'wagmi';
-import { useWeb3Modal } from '@web3modal/wagmi/react';
+import { useAccount, useDisconnect, useBalance, useConnect } from 'wagmi';
 import { formatEther } from 'viem';
-import { useEffect } from 'react';
 import { useNEARWallet } from '../contexts/NEARWalletContext';
-
-// User creation helper function for ETH wallets
-async function createUserIfNeeded(walletAddress: string, walletType: 'near' | 'metamask'): Promise<void> {
-  try {
-    console.log(`🔧 WalletConnection: Creating/updating ${walletType} user for:`, walletAddress);
-    
-    // First check if user already exists to avoid unnecessary API calls
-    try {
-      const checkResponse = await fetch(`/api/v1/users/${walletAddress}/api-keys`);
-      if (checkResponse.ok) {
-        console.log('✅ WalletConnection: User already exists, skipping creation');
-        return;
-      }
-    } catch (checkError) {
-      // Ignore check error, proceed with creation
-    }
-    
-    const response = await fetch('/api/v1/users/api-keys', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        walletAddress,
-        apiKeys: { 
-          openRouter: undefined,
-          groq: undefined 
-        } // Empty API keys, user will add them later in settings
-      }),
-    });
-
-    if (response.ok) {
-      const result = await response.json();
-      console.log(`✅ WalletConnection: ${walletType} user created/updated successfully:`, result);
-    } else {
-      console.warn(`⚠️ WalletConnection: ${walletType} user creation failed:`, response.status);
-    }
-  } catch (error) {
-    console.error(`❌ WalletConnection: ${walletType} user creation error:`, error);
-  }
-}
 
 export default function WalletConnection() {
   // Wagmi hooks for Ethereum wallets
   const { address, isConnected, chain } = useAccount();
   const { data: balance } = useBalance({ address });
-  const { open } = useWeb3Modal();
+  const { connect, connectors } = useConnect();
   const { disconnect } = useDisconnect();
 
   // NEAR wallet from context
@@ -61,18 +18,21 @@ export default function WalletConnection() {
   console.log('🔍 WalletConnection - NEAR wallet state:', nearWallet);
   console.log('🔍 WalletConnection - isConnecting:', isConnecting);
 
-  // Create user when ETH wallet connects
-  useEffect(() => {
-    if (address && isConnected) {
-      console.log('🔧 WalletConnection: ETH wallet connected, creating user for:', address);
-      createUserIfNeeded(address, 'metamask');
-    }
-  }, [address, isConnected]);
+  // Note: User creation moved to manual connect actions only
+  // ETH wallet auto-restore no longer triggers user creation
 
-  // Open Web3Modal for Ethereum wallet connections
+  // Manual Ethereum wallet connection
   const connectEthereumWallet = async () => {
     try {
-      await open();
+      // Use MetaMask connector if available, otherwise use first available connector
+      const metaMaskConnector = connectors.find(connector => connector.name === 'MetaMask');
+      const connectorToUse = metaMaskConnector || connectors[0];
+      
+      if (connectorToUse) {
+        await connect({ connector: connectorToUse });
+        // User creation will happen in wagmi onConnect callback
+        // when address becomes available
+      }
     } catch (error) {
       console.error('Ethereum wallet connection failed:', error);
     }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getSavedStrategies, SavedStrategy, deleteStrategy, updateStrategy, addExecutionRecord } from '@/utils/strategyStorage';
+import { getSavedStrategies, SavedStrategy, deleteStrategy, addExecutionRecord } from '@/utils/strategyStorage';
 import { NEARWalletService } from '@/services/NEARWalletService';
 import SuccessModal from '@/components/SuccessModal';
 

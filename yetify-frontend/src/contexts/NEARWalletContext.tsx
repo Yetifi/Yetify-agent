@@ -15,7 +15,7 @@ async function createUserIfNeeded(walletAddress: string, walletType: 'near' | 'm
         console.log('✅ NEARWalletContext: User already exists, skipping creation');
         return;
       }
-    } catch (checkError) {
+    } catch {
       // Ignore check error, proceed with creation
     }
     
@@ -122,7 +122,7 @@ export function NEARWalletProvider({ children }: NEARWalletProviderProps) {
         return;
       }
 
-      // Check for existing NEAR connection
+          // Check for existing NEAR connection in localStorage only for UI state
       const nearWalletService = new NEARWalletService('testnet');
       const isConnected = await nearWalletService.isWalletConnected();
       
@@ -131,9 +131,8 @@ export function NEARWalletProvider({ children }: NEARWalletProviderProps) {
         if (accountId) {
           const walletState = await nearWalletService.connectWallet(accountId);
           setNearWallet(walletState);
-          // Create user for existing NEAR wallet connection
-          await createUserIfNeeded(accountId, 'near');
-          console.log('Existing NEAR wallet connection restored:', walletState);
+          // Do NOT create user automatically - only on manual connection
+          console.log('Existing NEAR wallet connection detected (no user creation):', walletState);
         }
       }
     } catch (error) {
@@ -160,6 +159,8 @@ export function NEARWalletProvider({ children }: NEARWalletProviderProps) {
           const walletState = await nearWalletService.connectWallet(accountId);
           console.log('✅ NEARWalletContext: Updating state with existing connection:', walletState);
           setNearWallet(walletState);
+          // Create user only on manual connect action
+          await createUserIfNeeded(accountId, 'near');
           console.log('NEAR wallet already connected:', walletState);
           return;
         }
@@ -170,6 +171,10 @@ export function NEARWalletProvider({ children }: NEARWalletProviderProps) {
       if (callbackState) {
         console.log('✅ NEARWalletContext: Updating state with callback result:', callbackState);
         setNearWallet(callbackState);
+        // Create user only on manual connect callback
+        if (callbackState.accountId) {
+          await createUserIfNeeded(callbackState.accountId, 'near');
+        }
         console.log('NEAR wallet callback handled:', callbackState);
         return;
       }
