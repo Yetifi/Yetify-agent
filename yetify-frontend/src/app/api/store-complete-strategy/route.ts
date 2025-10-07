@@ -79,7 +79,8 @@ export async function POST(request: NextRequest) {
       }
 
       // Store successful on-chain data to database
-      await fetch('http://localhost:3001/api/v1/strategies/update-onchain', {
+      const backendUrl = process.env.BACKEND_URL || 'http://localhost:3001';
+      await fetch(`${backendUrl}/api/v1/strategies/update-onchain`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
