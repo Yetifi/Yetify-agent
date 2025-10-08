@@ -210,3 +210,29 @@ export function searchStrategies(query: string): SavedStrategy[] {
     (s.tags && s.tags.some(tag => tag.toLowerCase().includes(lowercaseQuery)))
   );
 }
+
+/**
+ * Reset failed strategies back to saved status
+ */
+export function resetFailedStrategies(): boolean {
+  try {
+    const strategies = getSavedStrategies();
+    const updatedStrategies = strategies.map(strategy => {
+      if (strategy.status === 'failed') {
+        return {
+          ...strategy,
+          status: 'saved' as const,
+          executionHistory: strategy.executionHistory?.filter(record => record.status !== 'failed') || [],
+          updatedAt: new Date()
+        };
+      }
+      return strategy;
+    });
+    
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedStrategies));
+    return true;
+  } catch (error) {
+    console.error('Error resetting failed strategies:', error);
+    return false;
+  }
+}

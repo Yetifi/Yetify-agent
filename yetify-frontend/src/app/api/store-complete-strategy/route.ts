@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { exec } from 'child_process';
-import { promisify } from 'util';
-
-const execAsync = promisify(exec);
+import { KeyPair } from '@near-js/crypto';
+import { KeyPairSigner } from '@near-js/signers';
+import { JsonRpcProvider } from '@near-js/providers';
+import { Account } from '@near-js/accounts';
 
 export async function POST(request: NextRequest) {
   try {
@@ -40,43 +40,43 @@ export async function POST(request: NextRequest) {
       created_at: Date.now()
     });
 
-    // Use NEAR CLI to call the contract with complete strategy data
-    // Use temporary file approach to avoid shell escaping issues
-    const fs = await import('fs');
-    const os = await import('os');
-    const path = await import('path');
-    
-    const tempFile = path.join(os.tmpdir(), `strategy-${Date.now()}.json`);
-    // Wrap strategy JSON as parameter for contract method
-    const wrappedJson = JSON.stringify({ strategy_json: strategyJson });
-    fs.writeFileSync(tempFile, wrappedJson);
-    
-    const command = `near contract call-function as-transaction test-storage-yetify.testnet store_complete_strategy json-args "$(cat ${tempFile})" prepaid-gas '30 Tgas' attached-deposit '0 NEAR' sign-as test-storage-yetify.testnet network-config testnet sign-with-keychain send && rm ${tempFile}`;
-    
-    console.log('Executing command:', command);
-
+    // NEAR API-JS approach 
     try {
-      const { stdout, stderr } = await execAsync(command, {
-        timeout: 30000, // 30 second timeout
-        cwd: process.cwd()
+      // Get the service account private key from environment
+      const privateKey = process.env.NEAR_PRIVATE_KEY;
+      if (!privateKey) {
+        throw new Error('NEAR_PRIVATE_KEY environment variable not set');
+      }
+
+      const accountId = 'strategy-storage-yetify.testnet';
+
+      // Create KeyPair from private key string (modern approach)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const keyPair = KeyPair.fromString(privateKey as any);
+
+      // Create KeyPairSigner directly (this is the correct modern signer)
+      const signer = new KeyPairSigner(keyPair);
+
+      // Create JSON RPC Provider
+      const provider = new JsonRpcProvider({
+        url: 'https://rpc.testnet.near.org'
       });
 
-      console.log('NEAR CLI stdout:', stdout);
-      if (stderr) {
-        console.log('NEAR CLI stderr:', stderr);
-      }
+      // Create Account directly (no need for deprecated Connection)
+      const account = new Account(accountId, provider, signer);
 
-      // Extract transaction hash from output (check both stdout and stderr)
-      const combinedOutput = stdout + stderr;
-      const hashMatch = combinedOutput.match(/Transaction ID: ([A-Za-z0-9]+)/);
-      const explorerMatch = combinedOutput.match(/https:\/\/explorer\.testnet\.near\.org\/transactions\/([A-Za-z0-9]+)/);
+      // Call contract method using functionCall
+      const result = await account.functionCall({
+        contractId: 'strategy-storage-yetify.testnet',
+        methodName: 'store_complete_strategy',
+        args: { strategy_json: strategyJson },
+        gas: BigInt('30000000000000'), // 30 Tgas
+        attachedDeposit: BigInt('0'),
+      });
+
+      const transactionHash = result.transaction.hash;
       
-      const transactionHash = hashMatch?.[1] || explorerMatch?.[1] || null;
-      
-      if (!transactionHash) {
-        console.error('Could not extract transaction hash from NEAR CLI output');
-        throw new Error('Transaction hash not found in CLI output');
-      }
+      console.log('NEAR transaction successful:', transactionHash);
 
       // Store successful on-chain data to database
       const backendUrl = process.env.BACKEND_URL || 'http://localhost:3001';
@@ -106,32 +106,13 @@ export async function POST(request: NextRequest) {
         transactionHash,
         message: 'Complete strategy stored successfully',
         explorerUrl: `https://testnet.nearblocks.io/txns/${transactionHash}`,
-        output: stdout
       });
 
-    } catch (execError: unknown) {
-      console.error('NEAR CLI execution failed:', execError);
+    } catch (nearError: unknown) {
+      console.error('NEAR API call failed:', nearError);
       
-      // Extract transaction hash even from failed execution
-      const stderr = (execError as { stderr?: string })?.stderr || '';
-      const hashMatch = stderr.match(/Transaction ID: ([A-Za-z0-9]+)/);
-      const explorerMatch = stderr.match(/https:\/\/explorer\.testnet\.near\.org\/transactions\/([A-Za-z0-9]+)/);
-      
-      const transactionHash = hashMatch?.[1] || explorerMatch?.[1];
-      
-      if (transactionHash) {
-        return NextResponse.json({
-          success: false,
-          transactionHash,
-          message: 'Transaction submitted but contract call failed',
-          error: 'CompilationError(PrepareError(Deserialization))',
-          explorerUrl: `https://testnet.nearblocks.io/txns/${transactionHash}`
-        });
-      }
-      
-      // If no transaction hash found, it's a real error
       return NextResponse.json(
-        { error: 'Failed to submit transaction', details: (execError as Error)?.message || 'Unknown error' },
+        { error: 'Failed to submit transaction', details: (nearError as Error)?.message || 'Unknown error' },
         { status: 500 }
       );
     }
