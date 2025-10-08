@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { Request, Response, Router } from 'express';
 import { OpenRouterService } from '../services/OpenRouterService';
 import { StrategyEngine } from '../ai-engine/StrategyEngine';
 import { createLogger } from '../utils/logger';
@@ -12,6 +12,44 @@ export class TestController {
   constructor() {
     this.openRouter = new OpenRouterService();
     this.strategyEngine = new StrategyEngine();
+  }
+
+  async generateStrategy(req: Request, res: Response) {
+    try {
+      const { prompt, userAddress } = req.body;
+
+      if (!prompt || prompt.trim().length < 10) {
+        return res.status(400).json({
+          success: false,
+          error: 'Prompt must be at least 10 characters long'
+        });
+      }
+
+      logger.info('Generating strategy via test endpoint', { 
+        prompt: prompt.substring(0, 50) + '...',
+        userAddress: userAddress?.substring(0, 10) + '...'
+      });
+
+      const strategy = await this.strategyEngine.generateStrategy({
+        prompt,
+        userAddress,
+        riskTolerance: 'medium'
+      });
+
+      res.json({
+        success: true,
+        strategy,
+        timestamp: new Date().toISOString()
+      });
+
+    } catch (error) {
+      logger.error('Strategy generation test failed:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to generate strategy',
+        message: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
   }
 
   async testOpenRouter(req: Request, res: Response) {
@@ -109,12 +147,11 @@ export class TestController {
 }
 
 // Export router
-import { Router } from 'express';
 const router = Router();
 const testController = new TestController();
 
 router.get('/openrouter', testController.testOpenRouter.bind(testController));
-router.post('/strategy', testController.testStrategyGeneration.bind(testController));
+router.post('/generate-strategy', testController.generateStrategy.bind(testController));
 router.get('/health', testController.healthCheck.bind(testController));
 
 export default router;

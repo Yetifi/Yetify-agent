@@ -23,64 +23,46 @@ interface StrategyResponse {
   executionTime: string;
 }
 
-// Mock strategy generation - In production, this would integrate with your LLM
-const generateStrategy = async (prompt: string): Promise<StrategyResponse> => {
-  // Simulate AI processing time
-  await new Promise(resolve => setTimeout(resolve, 1000));
+// Proxy to backend API for real AI strategy generation
+const generateStrategy = async (prompt: string, userAddress?: string): Promise<StrategyResponse> => {
+  try {
+    const backendResponse = await fetch('http://localhost:3001/api/v1/test/generate-strategy', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        prompt,
+        userAddress
+      }),
+    });
 
-  // Simple keyword-based strategy generation (replace with actual LLM)
-  const lowerPrompt = prompt.toLowerCase();
-  
-  let strategy: StrategyResponse;
+    if (!backendResponse.ok) {
+      throw new Error(`Backend API failed: ${backendResponse.status}`);
+    }
 
-  if (lowerPrompt.includes('stablecoin') || lowerPrompt.includes('stable') || lowerPrompt.includes('usdc') || lowerPrompt.includes('usdt')) {
-    strategy = {
-      goal: prompt,
-      chains: ['NEAR', 'Ethereum'],
-      protocols: ['Ref Finance', 'Curve', 'Aave'],
-      steps: [
-        { action: 'deposit', protocol: 'Curve', asset: 'USDC', amount: '1000', expectedApy: 8.5 },
-        { action: 'stake', protocol: 'Ref Finance', asset: 'USDC-LP', expectedApy: 12.2 },
-        { action: 'yield_farm', protocol: 'Aave', asset: 'aUSDC', expectedApy: 6.8 }
-      ],
-      riskLevel: 'Low',
-      estimatedApy: 9.2,
-      estimatedTvl: '$1,000',
-      executionTime: '~2 minutes'
-    };
-  } else if (lowerPrompt.includes('eth') || lowerPrompt.includes('ethereum')) {
-    strategy = {
-      goal: prompt,
-      chains: ['Ethereum', 'Arbitrum'],
-      protocols: ['Lido', 'Aave', 'Rocket Pool'],
-      steps: [
-        { action: 'stake', protocol: 'Lido', asset: 'ETH', expectedApy: 4.2 },
-        { action: 'deposit', protocol: 'Aave', asset: 'stETH', expectedApy: 8.5 },
-        { action: 'leverage', protocol: 'Rocket Pool', asset: 'rETH', expectedApy: 12.3 }
-      ],
-      riskLevel: lowerPrompt.includes('low risk') ? 'Low' : 'Medium',
-      estimatedApy: 8.3,
-      estimatedTvl: '$2,500',
-      executionTime: '~5 minutes'
-    };
-  } else if (lowerPrompt.includes('high yield') || lowerPrompt.includes('maximum') || lowerPrompt.includes('aggressive')) {
-    strategy = {
-      goal: prompt,
-      chains: ['Ethereum', 'Polygon', 'NEAR'],
-      protocols: ['Uniswap', 'SushiSwap', 'Ref Finance', 'Balancer'],
-      steps: [
-        { action: 'provide_liquidity', protocol: 'Uniswap', asset: 'ETH-USDC', expectedApy: 15.2 },
-        { action: 'stake', protocol: 'SushiSwap', asset: 'UNI-LP', expectedApy: 22.1 },
-        { action: 'yield_farm', protocol: 'Ref Finance', asset: 'NEAR-USDC', expectedApy: 28.5 }
-      ],
-      riskLevel: 'High',
-      estimatedApy: 21.9,
-      estimatedTvl: '$5,000',
-      executionTime: '~10 minutes'
-    };
-  } else {
-    // Default balanced strategy
-    strategy = {
+    const data = await backendResponse.json();
+    
+    if (data.success && data.strategy) {
+      // Transform backend response to match frontend interface
+      return {
+        goal: data.strategy.goal,
+        chains: data.strategy.chains,
+        protocols: data.strategy.protocols,
+        steps: data.strategy.steps,
+        riskLevel: data.strategy.riskLevel,
+        estimatedApy: data.strategy.estimatedApy,
+        estimatedTvl: data.strategy.estimatedTvl,
+        executionTime: data.strategy.executionTime
+      };
+    } else {
+      throw new Error('Invalid backend response');
+    }
+  } catch (error) {
+    console.error('Backend API failed, using fallback:', error);
+    
+    // Fallback to simple mock if backend fails
+    return {
       goal: prompt,
       chains: ['NEAR', 'Ethereum'],
       protocols: ['Ref Finance', 'Lido', 'Aave'],
@@ -95,8 +77,6 @@ const generateStrategy = async (prompt: string): Promise<StrategyResponse> => {
       executionTime: '~3 minutes'
     };
   }
-
-  return strategy;
 };
 
 export async function POST(request: NextRequest) {
@@ -110,7 +90,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const strategy = await generateStrategy(body.prompt);
+    const strategy = await generateStrategy(body.prompt, body.userAddress);
 
     return NextResponse.json({
       success: true,

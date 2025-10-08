@@ -46,8 +46,9 @@ export class UserController {
         return;
       }
 
-      if (!apiKeys || ((!apiKeys.openRouter) && (!apiKeys.groq) && (!apiKeys.gemini))) {
-        res.status(400).json({ error: 'At least one API key is required' });
+      // Allow empty API keys for initial wallet connection
+      if (!apiKeys) {
+        res.status(400).json({ error: 'API keys object is required' });
         return;
       }
 

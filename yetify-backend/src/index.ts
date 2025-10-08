@@ -69,6 +69,16 @@ app.use('/api/v1/users', userRoutes);
 // Test Routes (no auth required for testing)
 app.use('/api/v1/test', testRoutes);
 
+// Add 404 handler AFTER all routes are defined
+app.use('*', (req, res) => {
+  res.status(404).json({
+    success: false,
+    error: 'NOT_FOUND',
+    message: `Route ${req.originalUrl} not found`,
+    timestamp: new Date().toISOString()
+  });
+});
+
 // GraphQL endpoint
 async function startApolloServer() {
   const server = new ApolloServer({
@@ -128,15 +138,6 @@ async function startServer() {
     // Start Apollo GraphQL server
     const apolloServer = await startApolloServer();
     logger.info(`GraphQL server ready at http://localhost:${PORT}${apolloServer.graphqlPath}`);
-
-    // Add 404 handler AFTER all routes are defined
-    app.use('*', (req, res) => {
-      res.status(404).json({
-        error: 'Not Found',
-        message: `Route ${req.originalUrl} not found`,
-        timestamp: new Date().toISOString()
-      });
-    });
 
     // Start Express server
     app.listen(PORT, () => {

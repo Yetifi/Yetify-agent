@@ -5,8 +5,7 @@ import { motion } from 'framer-motion';
 import { Key, Save, Eye, EyeOff, CheckCircle, AlertCircle } from 'lucide-react';
 
 interface ApiKeys {
-  openRouter: string;
-  groq: string;
+  gemini: string;
 }
 
 interface SettingsPageProps {
@@ -15,14 +14,12 @@ interface SettingsPageProps {
 
 export default function SettingsPage({ walletAddress }: SettingsPageProps) {
   const [apiKeys, setApiKeys] = useState<ApiKeys>({
-    openRouter: '',
-    groq: ''
+    gemini: ''
   });
-  const [showOpenRouter, setShowOpenRouter] = useState(false);
-  const [showGroq, setShowGroq] = useState(false);
+  const [showGemini, setShowGemini] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-  const [hasKeys, setHasKeys] = useState({ openRouter: false, groq: false });
+  const [hasKeys, setHasKeys] = useState({ gemini: false });
 
   const loadApiKeyStatus = useCallback(async () => {
     try {
@@ -30,8 +27,7 @@ export default function SettingsPage({ walletAddress }: SettingsPageProps) {
       if (response.ok) {
         const data = await response.json();
         setHasKeys({
-          openRouter: data.hasOpenRouter,
-          groq: data.hasGroq
+          gemini: data.hasGemini
         });
       }
     } catch (error) {
@@ -54,8 +50,8 @@ export default function SettingsPage({ walletAddress }: SettingsPageProps) {
       return;
     }
 
-    if (!apiKeys.openRouter && !apiKeys.groq) {
-      setMessage({ type: 'error', text: 'Please provide at least one API key' });
+    if (!apiKeys.gemini) {
+      setMessage({ type: 'error', text: 'Please provide your Gemini API key' });
       return;
     }
 
@@ -71,8 +67,7 @@ export default function SettingsPage({ walletAddress }: SettingsPageProps) {
         body: JSON.stringify({
           walletAddress,
           apiKeys: {
-            openRouter: apiKeys.openRouter || undefined,
-            groq: apiKeys.groq || undefined
+            gemini: apiKeys.gemini || undefined
           }
         }),
       });
@@ -81,11 +76,10 @@ export default function SettingsPage({ walletAddress }: SettingsPageProps) {
         await response.json();
         setMessage({ type: 'success', text: 'API keys saved successfully!' });
         setHasKeys({
-          openRouter: !!apiKeys.openRouter,
-          groq: !!apiKeys.groq
+          gemini: !!apiKeys.gemini
         });
         // Clear input fields after successful save
-        setApiKeys({ openRouter: '', groq: '' });
+        setApiKeys({ gemini: '' });
       } else {
         const errorText = await response.text();
         setMessage({ type: 'error', text: `Failed to save API keys: ${errorText}` });
@@ -112,8 +106,8 @@ export default function SettingsPage({ walletAddress }: SettingsPageProps) {
 
       if (response.ok) {
         setMessage({ type: 'success', text: 'API keys deleted successfully!' });
-        setHasKeys({ openRouter: false, groq: false });
-        setApiKeys({ openRouter: '', groq: '' });
+        setHasKeys({ gemini: false });
+        setApiKeys({ gemini: '' });
       } else {
         const errorText = await response.text();
         setMessage({ type: 'error', text: `Failed to delete API keys: ${errorText}` });
@@ -166,25 +160,9 @@ export default function SettingsPage({ walletAddress }: SettingsPageProps) {
             <h3 className="text-xl font-semibold text-white mb-4">Current Status</h3>
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-gray-300">OpenRouter API Key:</span>
+                <span className="text-gray-300">Gemini API Key:</span>
                 <div className="flex items-center">
-                  {hasKeys.openRouter ? (
-                    <>
-                      <CheckCircle className="w-5 h-5 text-green-400 mr-2" />
-                      <span className="text-green-400">Configured</span>
-                    </>
-                  ) : (
-                    <>
-                      <AlertCircle className="w-5 h-5 text-red-400 mr-2" />
-                      <span className="text-red-400">Not Set</span>
-                    </>
-                  )}
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-gray-300">Groq API Key:</span>
-                <div className="flex items-center">
-                  {hasKeys.groq ? (
+                  {hasKeys.gemini ? (
                     <>
                       <CheckCircle className="w-5 h-5 text-green-400 mr-2" />
                       <span className="text-green-400">Configured</span>
@@ -209,55 +187,29 @@ export default function SettingsPage({ walletAddress }: SettingsPageProps) {
           className="bg-white/10 backdrop-blur-sm rounded-lg border border-white/20 p-6"
         >
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* OpenRouter API Key */}
+            {/* Gemini API Key */}
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
-                OpenRouter API Key
+                Gemini API Key
               </label>
               <div className="relative">
                 <input
-                  type={showOpenRouter ? 'text' : 'password'}
-                  value={apiKeys.openRouter}
-                  onChange={(e) => setApiKeys(prev => ({ ...prev, openRouter: e.target.value }))}
-                  placeholder="sk-or-v1-..."
+                  type={showGemini ? 'text' : 'password'}
+                  value={apiKeys.gemini}
+                  onChange={(e) => setApiKeys(prev => ({ ...prev, gemini: e.target.value }))}
+                  placeholder="AIza..."
                   className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-12"
                 />
                 <button
                   type="button"
-                  onClick={() => setShowOpenRouter(!showOpenRouter)}
+                  onClick={() => setShowGemini(!showGemini)}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
                 >
-                  {showOpenRouter ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  {showGemini ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
               <p className="text-xs text-gray-400 mt-1">
-                Get your API key from <a href="https://openrouter.ai" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">openrouter.ai</a>
-              </p>
-            </div>
-
-            {/* Groq API Key */}
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Groq API Key
-              </label>
-              <div className="relative">
-                <input
-                  type={showGroq ? 'text' : 'password'}
-                  value={apiKeys.groq}
-                  onChange={(e) => setApiKeys(prev => ({ ...prev, groq: e.target.value }))}
-                  placeholder="gsk_..."
-                  className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-12"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowGroq(!showGroq)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
-                >
-                  {showGroq ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                </button>
-              </div>
-              <p className="text-xs text-gray-400 mt-1">
-                Get your API key from <a href="https://console.groq.com" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">console.groq.com</a>
+                Get your API key from <a href="https://aistudio.google.com" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">Google AI Studio</a>
               </p>
             </div>
 
@@ -273,19 +225,19 @@ export default function SettingsPage({ walletAddress }: SettingsPageProps) {
                 ) : (
                   <>
                     <Save className="w-5 h-5 mr-2" />
-                    Save API Keys
+                    Save Gemini API Key
                   </>
                 )}
               </button>
 
-              {(hasKeys.openRouter || hasKeys.groq) && (
+              {hasKeys.gemini && (
                 <button
                   type="button"
                   onClick={handleDelete}
                   disabled={loading}
                   className="bg-red-600 hover:bg-red-700 disabled:bg-gray-600 text-white px-6 py-3 rounded-lg font-medium transition-colors"
                 >
-                  Delete All
+                  Delete Key
                 </button>
               )}
             </div>
@@ -321,10 +273,10 @@ export default function SettingsPage({ walletAddress }: SettingsPageProps) {
         >
           <h3 className="text-lg font-semibold text-white mb-3">Why API Keys?</h3>
           <div className="space-y-2 text-gray-300 text-sm">
-            <p>• Use your own AI API keys for better rate limits and personalized usage</p>
-            <p>• Your keys are stored securely and only used for your strategy generation</p>
-            <p>• Fallback to default keys if no personal keys are provided</p>
-            <p>• Delete your keys anytime to stop using personal API access</p>
+            <p>• Use your own Gemini API key for better rate limits and personalized usage</p>
+            <p>• Your key is stored securely and only used for your strategy generation</p>
+            <p>• Fallback to default key if no personal key is provided</p>
+            <p>• Delete your key anytime to stop using personal API access</p>
           </div>
         </motion.div>
       </div>

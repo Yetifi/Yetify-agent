@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import { saveStrategy } from '@/utils/strategyStorage';
+import { useAccount } from 'wagmi';
+import { useNEARWallet } from '@/contexts/NEARWalletContext';
 
 interface StrategyPlan {
   id?: string;
@@ -54,6 +56,10 @@ export default function StrategyBuilder() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [strategyPlan, setStrategyPlan] = useState<StrategyPlan | null>(null);
   
+  // Wallet connections
+  const { address: ethAddress } = useAccount();
+  const { nearWallet } = useNEARWallet();
+  
   // Save strategy state
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [strategyName, setStrategyName] = useState('');
@@ -67,13 +73,16 @@ export default function StrategyBuilder() {
     setIsGenerating(true);
     
     try {
-      // Call backend API instead of local mock
+      // Call backend via frontend proxy (with fallback)
       const response = await fetch('/api/generate-strategy', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ prompt }),
+        body: JSON.stringify({ 
+          prompt,
+          userAddress: nearWallet.accountId || ethAddress || null
+        }),
       });
 
       if (!response.ok) {
