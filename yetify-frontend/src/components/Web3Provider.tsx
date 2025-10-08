@@ -26,13 +26,13 @@ const queryClient = new QueryClient();
 // User creation helper function for ETH wallets
 async function createUserIfNeeded(walletAddress: string, walletType: 'near' | 'metamask'): Promise<void> {
   try {
-    console.log(`🔧 Web3Provider: Creating/updating ${walletType} user for:`, walletAddress);
+    console.log(`Web3Provider: Creating/updating ${walletType} user for:`, walletAddress);
     
     // First check if user already exists to avoid unnecessary API calls
     try {
       const checkResponse = await fetch(`/api/v1/users/${walletAddress}/api-keys`);
       if (checkResponse.ok) {
-        console.log('✅ Web3Provider: User already exists, skipping creation');
+        console.log('Web3Provider: User already exists, skipping creation');
         return;
       }
     } catch {
@@ -55,12 +55,12 @@ async function createUserIfNeeded(walletAddress: string, walletType: 'near' | 'm
 
     if (response.ok) {
       const result = await response.json();
-      console.log(`✅ Web3Provider: ${walletType} user created/updated successfully:`, result);
+      console.log(`Web3Provider: ${walletType} user created/updated successfully:`, result);
     } else {
-      console.warn(`⚠️ Web3Provider: ${walletType} user creation failed:`, response.status);
+      console.warn(`Web3Provider: ${walletType} user creation failed:`, response.status);
     }
   } catch (error) {
-    console.error(`❌ Web3Provider: ${walletType} user creation error:`, error);
+    console.error(`Web3Provider: ${walletType} user creation error:`, error);
   }
 }
 

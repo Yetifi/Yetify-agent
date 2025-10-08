@@ -13,7 +13,7 @@ export default function Settings() {
   // Prioritize NEAR wallet, fallback to ETH wallet
   const walletAddress = nearWallet.accountId || ethAddress || null;
 
-  console.log('🔧 Settings: Wallet addresses detected:', {
+  console.log('Settings: Wallet addresses detected:', {
     nearAddress: nearWallet.accountId,
     ethAddress,
     selectedAddress: walletAddress
