@@ -131,7 +131,7 @@ export function NEARWalletProvider({ children }: NEARWalletProviderProps) {
       if (isConnected) {
         const accountId = await nearWalletService.getConnectedAccountId();
         if (accountId) {
-          const walletState = await nearWalletService.connectWallet(accountId);
+          const walletState = await nearWalletService.connectWallet();
           setNearWallet(walletState);
           // Do NOT create user automatically - only on manual connection
         }
@@ -266,7 +266,7 @@ export function NEARWalletProvider({ children }: NEARWalletProviderProps) {
         if (isConnected) {
           const accountId = await nearService.getConnectedAccountId();
           if (accountId) {
-            const walletState = await nearService.connectWallet(accountId);
+            const walletState = await nearService.connectWallet();
             setNearWallet(walletState);
             // Do NOT create user automatically - only on manual connection
             return;

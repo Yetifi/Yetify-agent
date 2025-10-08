@@ -7,7 +7,6 @@ import {
   deleteStrategy,
   addExecutionRecord,
 } from "@/utils/strategyStorage";
-import { NEARWalletService } from "@/services/NEARWalletService";
 import { useNEARWallet } from "@/contexts/NEARWalletContext";
 import SuccessModal from "@/components/SuccessModal";
 

@@ -71,7 +71,7 @@ export class NEARWalletService {
       });
       
       // Subscribe to wallet state changes
-      const subscription = this.selector.store.observable.subscribe((state) => {
+      this.selector.store.observable.subscribe(() => {
         if (this.stateChangeCallback) {
           this.handleStateChange();
         }
@@ -95,7 +95,7 @@ export class NEARWalletService {
       
       const wallet = await this.selector?.wallet();
       const accounts = await wallet?.getAccounts();
-      return accounts && accounts.length > 0;
+      return !!(accounts && accounts.length > 0);
     } catch {
       return false;
     }
@@ -183,7 +183,7 @@ export class NEARWalletService {
   /**
    * Connect using NEAR Wallet Selector modal
    */
-  async connectWithWalletRedirect(contractId?: string): Promise<void> {
+  async connectWithWalletRedirect(): Promise<void> {
     if (!this.initialized || !this.modal) {
       await this.initializeWalletSelector();
     }
@@ -297,7 +297,7 @@ export class NEARWalletService {
         ]
       });
 
-      return result.transaction.hash;
+      return result?.transaction?.hash || 'transaction_signed';
     } catch (error) {
       throw new Error(`Failed to store strategy on blockchain: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
@@ -378,7 +378,7 @@ export class NEARWalletService {
   /**
    * Connect wallet method for compatibility
    */
-  async connectWallet(accountId: string): Promise<NEARWalletState> {
+  async connectWallet(): Promise<NEARWalletState> {
     return this.getWalletState();
   }
 }
