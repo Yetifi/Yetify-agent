@@ -1,13 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { BrowserLocalStorageKeyStore } from '@near-js/keystores-browser';
-import { KeyPair } from '@near-js/crypto';
-import { 
-  getSignerFromKeystore, 
-  getTestnetRpcProvider,
-  getMainnetRpcProvider,
-  view,
-  transfer
-} from '@near-js/client';
+import { setupWalletSelector, WalletSelector } from "@near-wallet-selector/core";
+import { setupModal, WalletSelectorModal } from "@near-wallet-selector/modal-ui";
+import { setupMyNearWallet } from "@near-wallet-selector/my-near-wallet";
+import { providers } from 'near-api-js';
 
 export interface NEARWalletState {
   isConnected: boolean;
@@ -25,37 +20,68 @@ export interface AccountInfo {
 }
 
 export class NEARWalletService {
-  private keystore: BrowserLocalStorageKeyStore;
-  private signer: any;
-  private rpcProvider: any;
+  private selector: WalletSelector | null = null;
+  private modal: WalletSelectorModal | null = null;
   private network: 'testnet' | 'mainnet';
+  private initialized = false;
+  private stateChangeCallback: ((state: NEARWalletState) => void) | null = null;
 
   constructor(network: 'testnet' | 'mainnet' = 'testnet') {
     this.network = network;
-    this.keystore = new BrowserLocalStorageKeyStore();
-    // Use alternative RPC to avoid rate limits
-    this.rpcProvider = {
-      query: async (params: any) => {
-        const rpcUrl = network === 'testnet' 
-          ? 'https://archival-rpc.testnet.near.org'
-          : 'https://archival-rpc.mainnet.near.org';
-        
-        const response = await fetch(rpcUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            jsonrpc: '2.0',
-            id: Date.now(),
-            method: 'query',
-            params
-          })
-        });
-        
-        const result = await response.json();
-        if (result.error) throw new Error(result.error.message);
-        return result.result;
+    // Don't call initialization in constructor since it's async
+    // It will be called when needed
+  }
+
+  /**
+   * Set callback to be called when wallet state changes
+   */
+  setStateChangeCallback(callback: (state: NEARWalletState) => void) {
+    this.stateChangeCallback = callback;
+  }
+
+  /**
+   * Handle wallet state changes
+   */
+  private async handleStateChange() {
+    try {
+      const newState = await this.getWalletState();
+      if (this.stateChangeCallback) {
+        this.stateChangeCallback(newState);
       }
-    };
+    } catch (error) {
+      console.error('Error handling state change:', error);
+    }
+  }
+
+  private async initializeWalletSelector() {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    
+    try {
+      this.selector = await setupWalletSelector({
+        network: this.network,
+        modules: [
+          setupMyNearWallet()
+        ]
+      });
+      
+      this.modal = setupModal(this.selector, {
+        contractId: 'strategy-storage-yetify.testnet'
+      });
+      
+      // Subscribe to wallet state changes
+      const subscription = this.selector.store.observable.subscribe((state) => {
+        if (this.stateChangeCallback) {
+          this.handleStateChange();
+        }
+      });
+      
+      this.initialized = true;
+    } catch (error) {
+      console.error('Failed to initialize wallet selector:', error);
+      this.initialized = false;
+    }
   }
 
   /**
@@ -63,9 +89,13 @@ export class NEARWalletService {
    */
   async isWalletConnected(): Promise<boolean> {
     try {
-      // Check if any keys exist in localStorage for this network
-      const accounts = await this.keystore.getAccounts(this.network);
-      return accounts.length > 0;
+      if (!this.initialized || !this.selector) {
+        await this.initializeWalletSelector();
+      }
+      
+      const wallet = await this.selector?.wallet();
+      const accounts = await wallet?.getAccounts();
+      return accounts && accounts.length > 0;
     } catch {
       return false;
     }
@@ -76,62 +106,93 @@ export class NEARWalletService {
    */
   async getConnectedAccountId(): Promise<string | null> {
     try {
-      const accounts = await this.keystore.getAccounts(this.network);
-      return accounts.length > 0 ? accounts[0] : null;
+      if (!this.initialized || !this.selector) {
+        await this.initializeWalletSelector();
+      }
+      
+      const wallet = await this.selector?.wallet();
+      const accounts = await wallet?.getAccounts();
+      return accounts && accounts.length > 0 ? accounts[0].accountId : null;
     } catch {
       return null;
     }
   }
 
   /**
-   * Connect to NEAR wallet using account ID
+   * Get wallet state from current connection
    */
-  async connectWallet(accountId: string): Promise<NEARWalletState> {
-    try {
-      // Validate account ID format
-      if (!this.isValidAccountId(accountId)) {
-        throw new Error('Invalid account ID format');
-      }
-
-      // Check if account exists on the network
-      const accountInfo = await this.getAccountInfo(accountId);
-      
-      // Create signer for this account
-      this.signer = getSignerFromKeystore(accountId, this.network, this.keystore);
-      
-      // Format balance
-      const balance = this.formatNearAmount(accountInfo.amount);
-
-      const walletState: NEARWalletState = {
-        isConnected: true,
-        accountId,
-        balance: `${balance} NEAR`,
+  async getWalletState(): Promise<NEARWalletState> {
+    if (!this.initialized || !this.selector) {
+      await this.initializeWalletSelector();
+    }
+    
+    if (!this.selector) {
+      return {
+        isConnected: false,
+        accountId: null,
+        balance: null,
         network: this.network
       };
+    }
 
-      return walletState;
-    } catch (error) {
-      console.error('NEAR wallet connection failed:', error);
-      throw new Error(`Failed to connect wallet: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    try {
+      const wallet = await this.selector.wallet();
+      const accounts = await wallet.getAccounts();
+      const isConnected = accounts && accounts.length > 0;
+      const accountId = isConnected ? accounts[0].accountId : null;
+      
+      let balance = null;
+      if (isConnected && accountId) {
+        try {
+          const provider = new providers.JsonRpcProvider({ 
+            url: this.network === 'testnet' 
+              ? 'https://rpc.testnet.near.org'
+              : 'https://rpc.mainnet.near.org'
+          });
+          
+          const accountBalance = await provider.query({
+            request_type: 'view_account',
+            finality: 'final',
+            account_id: accountId
+          }) as any;
+          
+          const nearAmount = (BigInt(accountBalance.amount) / BigInt('1000000000000000000000000')).toString();
+          balance = `${nearAmount} NEAR`;
+        } catch (error) {
+          console.warn('Failed to get balance:', error);
+          balance = '0 NEAR';
+        }
+      }
+
+      return {
+        isConnected,
+        accountId,
+        balance,
+        network: this.network
+      };
+    } catch {
+      return {
+        isConnected: false,
+        accountId: null,
+        balance: null,
+        network: this.network
+      };
     }
   }
 
   /**
-   * Connect using NEAR Wallet redirect flow (for new users)
+   * Connect using NEAR Wallet Selector modal
    */
   async connectWithWalletRedirect(contractId?: string): Promise<void> {
-    const walletUrl = this.network === 'testnet' 
-      ? 'https://testnet.mynearwallet.com'
-      : 'https://app.mynearwallet.com';
-
-    const currentUrl = window.location.origin;
-    const redirectUrl = `${walletUrl}/login/?success_url=${encodeURIComponent(currentUrl)}&failure_url=${encodeURIComponent(currentUrl)}`;
-    
-    if (contractId) {
-      window.location.href = `${redirectUrl}&contract_id=${contractId}`;
-    } else {
-      window.location.href = redirectUrl;
+    if (!this.initialized || !this.modal) {
+      await this.initializeWalletSelector();
     }
+    
+    if (!this.modal) {
+      throw new Error('Failed to initialize wallet selector');
+    }
+
+    this.modal.show();
   }
 
   /**
@@ -139,60 +200,24 @@ export class NEARWalletService {
    */
   async handleWalletCallback(): Promise<NEARWalletState | null> {
     const urlParams = new URLSearchParams(window.location.search);
-    const accountId = urlParams.get('account_id');
-    const publicKey = urlParams.get('public_key') || urlParams.get('all_keys');
-
-    console.log('🔧 NEARWalletService: Callback params:', { 
-      accountId, 
-      publicKey: publicKey?.substring(0, 20) + '...', 
-      allParams: Object.fromEntries(urlParams.entries()) 
-    });
-
-    if (accountId && publicKey) {
-      try {
-        console.log('Processing NEAR wallet callback:', { accountId, publicKey: publicKey.substring(0, 20) + '...' });
-        
-        // Clean up URL FIRST to prevent redirect loop
-        window.history.replaceState({}, document.title, window.location.pathname);
-        
-        // Create and store a keypair in localStorage for this account
-        // This simulates a successful wallet connection
-        try {
-          // Create a dummy keypair for the account (in production this would be handled properly)
-          const keyPair = KeyPair.fromRandom('ed25519');
-          await this.keystore.setKey(this.network, accountId, keyPair);
-          console.log('Stored keypair for account:', accountId);
-        } catch (keystoreError) {
-          console.warn('Failed to store keypair, continuing anyway:', keystoreError);
-        }
-        
-        // Get account info and create wallet state
-        console.log('🔧 NEARWalletService: Getting account info for:', accountId);
-        const accountInfo = await this.getAccountInfo(accountId);
-        console.log('🔧 NEARWalletService: Account info received:', accountInfo);
-        const balance = this.formatNearAmount(accountInfo.amount);
-        
-        const walletState: NEARWalletState = {
-          isConnected: true,
-          accountId,
-          balance: `${balance} NEAR`,
-          network: this.network
-        };
-        
-        return walletState;
-      } catch (error) {
-        console.error('❌ NEARWalletService: Failed to handle NEAR wallet callback:', {
-          error: error instanceof Error ? error.message : error,
-          stack: error instanceof Error ? error.stack : undefined,
-          accountId,
-          publicKey: publicKey?.substring(0, 20) + '...'
-        });
-        // Clean URL even on error
-        window.history.replaceState({}, document.title, window.location.pathname);
-        return null;
-      }
+    const transactionHashes = urlParams.get('transactionHashes');
+    
+    // Check for transaction success callback
+    if (transactionHashes) {
+      // Clean URL and return null (transaction completed, no wallet state change needed)
+      window.history.replaceState({}, document.title, window.location.pathname);
+      return null;
     }
 
+    // With Wallet Selector, connection is handled automatically
+    // Only return state if there's actually a callback parameter or if we're connected
+    const hasCallback = urlParams.has('account_id') || urlParams.has('public_key') || transactionHashes;
+    
+    if (hasCallback) {
+      return await this.getWalletState();
+    }
+    
+    // No callback, return null so normal connection flow continues
     return null;
   }
 
@@ -201,173 +226,80 @@ export class NEARWalletService {
    */
   async disconnectWallet(): Promise<void> {
     try {
-      const accountId = await this.getConnectedAccountId();
-      if (accountId) {
-        await this.keystore.removeKey(this.network, accountId);
+      if (this.selector) {
+        const wallet = await this.selector.wallet();
+        await wallet.signOut();
       }
-      this.signer = null;
     } catch (error) {
       console.error('Failed to disconnect wallet:', error);
     }
   }
 
-  /**
-   * Get account information from NEAR network
-   */
-  async getAccountInfo(accountId: string): Promise<AccountInfo> {
-    try {
-      const response = await this.rpcProvider.query({
-        request_type: 'view_account',
-        finality: 'final',
-        account_id: accountId,
-      });
-      return response as AccountInfo;
-    } catch {
-      throw new Error(`Account ${accountId} does not exist on ${this.network}`);
-    }
-  }
+
 
   /**
-   * Get account balance
-   */
-  async getAccountBalance(accountId: string): Promise<string> {
-    try {
-      const accountInfo = await this.getAccountInfo(accountId);
-      return this.formatNearAmount(accountInfo.amount);
-    } catch {
-      throw new Error(`Failed to get balance for ${accountId}`);
-    }
-  }
-
-  /**
-   * Send NEAR tokens
-   */
-  async sendNear(receiverId: string, amount: string): Promise<string> {
-    if (!this.signer) {
-      throw new Error('Wallet not connected');
-    }
-
-    const senderId = await this.getConnectedAccountId();
-    if (!senderId) {
-      throw new Error('No connected account');
-    }
-
-    try {
-      const amountInYocto = this.parseNearAmount(amount);
-      
-      const result = await transfer({
-        sender: senderId,
-        receiver: receiverId,
-        amount: BigInt(amountInYocto),
-        deps: {
-          rpcProvider: this.rpcProvider,
-          signer: this.signer,
-        }
-      });
-
-      return result.outcome.transaction.hash;
-    } catch (error) {
-      throw new Error(`Failed to send NEAR: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }
-
-  /**
-   * Call a view method on a smart contract
-   */
-  async callViewMethod<T>(
-    contractId: string, 
-    methodName: string, 
-    args: Record<string, unknown> = {}
-  ): Promise<T> {
-    try {
-      const result = await view({
-        account: contractId,
-        method: methodName,
-        args,
-        deps: { rpcProvider: this.rpcProvider }
-      });
-      return result as T;
-    } catch (error) {
-      throw new Error(`Failed to call view method: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }
-
-  /**
-   * Store strategy on-chain using server-side call
-   */
-  async storeStrategy(id: string, goal: string): Promise<string> {
-    try {
-      console.log('Attempting to store strategy on NEAR blockchain:', {
-        contractId: 'strategy-v2.testnet',
-        signerAccount: 'strategy-storage-yetify.testnet',
-        method: 'store_strategy',
-        args: { id, goal }
-      });
-
-      // Call our backend API to handle the NEAR transaction
-      const response = await fetch('/api/store-strategy', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ id, goal }),
-      });
-
-      if (!response.ok) {
-        const error = await response.text();
-        throw new Error(`API call failed: ${error}`);
-      }
-
-      const result = await response.json();
-      
-      // Even if contract call failed, we got a transaction hash
-      if (result.transactionHash) {
-        return result.transactionHash;
-      }
-      
-      throw new Error(result.error || 'Unknown error');
-    } catch (error) {
-      console.error('Failed to store strategy:', error);
-      throw new Error(`Failed to store strategy: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }
-
-  /**
-   * Store complete strategy on-chain using server-side call
+   * Store complete strategy on-chain using Wallet Selector
    */
   async storeCompleteStrategy(strategy: any): Promise<string> {
+    if (!this.initialized || !this.selector) {
+      throw new Error('Wallet selector not initialized');
+    }
+
+    const wallet = await this.selector.wallet();
+    const accounts = await wallet.getAccounts();
+    
+    if (!accounts || accounts.length === 0) {
+      throw new Error('NEAR wallet not connected. Please connect your wallet first.');
+    }
+
+    const senderId = accounts[0].accountId;
+
     try {
-      console.log('Attempting to store complete strategy on NEAR blockchain:', {
-        contractId: 'strategy-storage-yetify.testnet',
-        method: 'store_complete_strategy',
-        strategyData: strategy
+      // Convert strategy object to JSON string for contract call
+      const strategyJson = JSON.stringify({
+        id: strategy.id,
+        goal: strategy.goal,
+        chains: strategy.chains || [],
+        protocols: strategy.protocols || [],
+        steps: (strategy.steps || []).map((step: any) => ({
+          action: step.action,
+          protocol: step.protocol,
+          asset: step.asset,
+          expected_apy: step.expectedApy || step.expected_apy,
+          amount: step.amount
+        })),
+        risk_level: strategy.riskLevel || strategy.risk_level || 'medium',
+        estimated_apy: strategy.estimatedApy || strategy.estimated_apy,
+        estimated_tvl: strategy.estimatedTvl || strategy.estimated_tvl,
+        confidence: strategy.confidence,
+        reasoning: strategy.reasoning,
+        warnings: strategy.warnings,
+        creator: senderId,
+        created_at: Date.now()
       });
 
-      // Call our backend API to handle the NEAR transaction
-      const response = await fetch('/api/store-complete-strategy', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ strategy }),
+      const contractId = 'strategy-storage-yetify.testnet';
+      const methodName = 'store_complete_strategy';
+      const args = { strategy_json: strategyJson };
+      
+      const result = await wallet.signAndSendTransaction({
+        receiverId: contractId,
+        actions: [
+          {
+            type: 'FunctionCall',
+            params: {
+              methodName,
+              args,
+              gas: '100000000000000',
+              deposit: '100000000000000000000000' // 0.1 NEAR in yoctoNEAR
+            }
+          }
+        ]
       });
 
-      if (!response.ok) {
-        const error = await response.text();
-        throw new Error(`API call failed: ${error}`);
-      }
-
-      const result = await response.json();
-      
-      // Even if contract call failed, we got a transaction hash
-      if (result.transactionHash) {
-        return result.transactionHash;
-      }
-      
-      throw new Error(result.error || 'Unknown error');
+      return result.transaction.hash;
     } catch (error) {
-      console.error('Failed to store complete strategy:', error);
-      throw new Error(`Failed to store complete strategy: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(`Failed to store strategy on blockchain: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
@@ -416,5 +348,37 @@ export class NEARWalletService {
    */
   private isBrowser(): boolean {
     return typeof window !== 'undefined';
+  }
+
+  /**
+   * Get account info from RPC
+   */
+  async getAccountInfo(accountId: string): Promise<AccountInfo> {
+    const provider = new providers.JsonRpcProvider({ 
+      url: this.network === 'testnet' 
+        ? 'https://rpc.testnet.near.org'
+        : 'https://rpc.mainnet.near.org'
+    });
+    
+    const result = await provider.query({
+      request_type: 'view_account',
+      finality: 'final',
+      account_id: accountId
+    }) as any;
+    
+    return {
+      account_id: accountId,
+      amount: result.amount,
+      locked: result.locked,
+      code_hash: result.code_hash,
+      storage_usage: result.storage_usage
+    };
+  }
+
+  /**
+   * Connect wallet method for compatibility
+   */
+  async connectWallet(accountId: string): Promise<NEARWalletState> {
+    return this.getWalletState();
   }
 }

@@ -8,6 +8,7 @@ import {
   addExecutionRecord,
 } from "@/utils/strategyStorage";
 import { NEARWalletService } from "@/services/NEARWalletService";
+import { useNEARWallet } from "@/contexts/NEARWalletContext";
 import SuccessModal from "@/components/SuccessModal";
 
 export default function StrategyDashboard() {
@@ -15,7 +16,6 @@ export default function StrategyDashboard() {
   const [selectedFilter, setSelectedFilter] = useState<
     "all" | "saved" | "executing" | "completed" | "failed"
   >("all");
-  const [nearService] = useState(() => new NEARWalletService("testnet"));
   const [isConnecting, setIsConnecting] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successData, setSuccessData] = useState<{
@@ -23,10 +23,27 @@ export default function StrategyDashboard() {
     strategyId: string;
   } | null>(null);
 
+  // NEAR Wallet context - use shared service instance
+  const { nearWallet, connectNear, nearService } = useNEARWallet();
+
   // Load saved strategies on component mount
   useEffect(() => {
     const strategies = getSavedStrategies();
     setSavedStrategies(strategies);
+  }, []);
+
+  // Refresh strategies when URL changes (after transaction)
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const transactionHashes = urlParams.get('transactionHashes');
+    
+    if (transactionHashes) {
+      // Refresh strategies after transaction completion
+      setTimeout(() => {
+        const strategies = getSavedStrategies();
+        setSavedStrategies(strategies);
+      }, 1000);
+    }
   }, []);
 
   // Filter strategies based on selected filter
@@ -43,9 +60,15 @@ export default function StrategyDashboard() {
   };
 
   const handleExecuteStrategy = async (strategy: SavedStrategy) => {
+    // Check if NEAR wallet is connected and service is available
+    if (!nearWallet?.isConnected || !nearWallet?.accountId || !nearService) {
+      alert('Please connect your NEAR wallet first to store strategies on-chain.');
+      return;
+    }
+
     setIsConnecting(true);
     try {
-      // Store complete strategy on NEAR blockchain
+      // Store complete strategy on NEAR blockchain using user's wallet
       const transactionHash = await nearService.storeCompleteStrategy(strategy);
 
       // Only update database if blockchain storage was successful
@@ -278,13 +301,34 @@ export default function StrategyDashboard() {
                 <div className="flex items-center space-x-3">
                   {(strategy.status === "saved" ||
                     strategy.status === "failed") && (
-                    <button
-                      onClick={() => handleExecuteStrategy(strategy)}
-                      disabled={isConnecting}
-                      className="bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {isConnecting ? "Storing on NEAR..." : "🚀 Store on NEAR"}
-                    </button>
+                    <div className="flex flex-col items-end space-y-1">
+                      {!nearWallet?.isConnected ? (
+                        <div>
+                          <button
+                            onClick={() => connectNear()}
+                            className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                          >
+                            🔗 Connect NEAR Wallet
+                          </button>
+                          <div className="text-xs text-gray-400 mt-1">
+                            Required for on-chain storage
+                          </div>
+                        </div>
+                      ) : (
+                        <div>
+                          <button
+                            onClick={() => handleExecuteStrategy(strategy)}
+                            disabled={isConnecting}
+                            className="bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {isConnecting ? "Signing Transaction..." : "Sign & Store on NEAR"}
+                          </button>
+                          <div className="text-xs text-gray-400 mt-1">
+                            Connected: {nearWallet.accountId?.substring(0, 10)}...
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   )}
 
                   <button
@@ -292,7 +336,7 @@ export default function StrategyDashboard() {
                     className="text-red-600 hover:text-red-800 p-2"
                     title="Delete strategy"
                   >
-                    🗑️
+                    Delete
                   </button>
                 </div>
               </div>

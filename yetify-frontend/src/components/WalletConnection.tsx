@@ -15,8 +15,8 @@ export default function WalletConnection() {
   const { nearWallet, connectNear, disconnectNear, isConnecting } = useNEARWallet();
 
   // Debug NEAR wallet state
-  console.log('🔍 WalletConnection - NEAR wallet state:', nearWallet);
-  console.log('🔍 WalletConnection - isConnecting:', isConnecting);
+  console.log('WalletConnection - NEAR wallet state:', nearWallet);
+  console.log('WalletConnection - isConnecting:', isConnecting);
 
   // Note: User creation moved to manual connect actions only
   // ETH wallet auto-restore no longer triggers user creation

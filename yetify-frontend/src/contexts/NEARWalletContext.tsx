@@ -2,17 +2,15 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { NEARWalletService, NEARWalletState } from '../services/NEARWalletService';
+import { getSavedStrategies } from '../utils/strategyStorage';
 
 // User creation helper function for both NEAR and ETH wallets
 async function createUserIfNeeded(walletAddress: string, walletType: 'near' | 'metamask' = 'near'): Promise<void> {
   try {
-    console.log(`🔧 NEARWalletContext: Creating/updating ${walletType} user for:`, walletAddress);
-    
     // First check if user already exists to avoid unnecessary API calls
     try {
       const checkResponse = await fetch(`/api/v1/users/${walletAddress}/api-keys`);
       if (checkResponse.ok) {
-        console.log('✅ NEARWalletContext: User already exists, skipping creation');
         return;
       }
     } catch {
@@ -33,14 +31,11 @@ async function createUserIfNeeded(walletAddress: string, walletType: 'near' | 'm
       }),
     });
 
-    if (response.ok) {
-      const result = await response.json();
-      console.log(`✅ NEARWalletContext: ${walletType} user created/updated successfully:`, result);
-    } else {
-      console.warn(`⚠️ NEARWalletContext: ${walletType} user creation failed:`, response.status);
+    if (!response.ok) {
+      console.warn(`User creation failed for ${walletType}:`, response.status);
     }
   } catch (error) {
-    console.error(`❌ NEARWalletContext: ${walletType} user creation error:`, error);
+    console.error(`User creation error for ${walletType}:`, error);
   }
 }
 
@@ -49,6 +44,7 @@ interface NEARWalletContextType {
   connectNear: () => Promise<void>;
   disconnectNear: () => Promise<void>;
   isConnecting: boolean;
+  nearService: NEARWalletService | null;
 }
 
 const NEARWalletContext = createContext<NEARWalletContextType | undefined>(undefined);
@@ -58,7 +54,6 @@ interface NEARWalletProviderProps {
 }
 
 export function NEARWalletProvider({ children }: NEARWalletProviderProps) {
-  console.log('🔥 NEARWalletProvider: Provider initialized');
   const [nearWallet, setNearWallet] = useState<NEARWalletState>({
     isConnected: false,
     accountId: null,
@@ -67,18 +62,32 @@ export function NEARWalletProvider({ children }: NEARWalletProviderProps) {
   });
   const [isConnecting, setIsConnecting] = useState(false);
   
-  console.log('🔥 NEARWalletProvider: Current state:', nearWallet);
+  // Shared NEAR service instance (only in browser)
+  const [nearService] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const service = new NEARWalletService('testnet');
+      // Set up callback for wallet state changes
+      service.setStateChangeCallback((newState: NEARWalletState) => {
+        setNearWallet(newState);
+        
+        // Create user if newly connected
+        if (newState.isConnected && newState.accountId) {
+          createUserIfNeeded(newState.accountId, 'near');
+        }
+      });
+      return service;
+    }
+    return null;
+  });
 
   // Check for existing connection on mount and URL changes
   useEffect(() => {
-    console.log('NEARWalletContext: Component mounted or URL changed, checking connection...');
     checkExistingConnection();
   }, []);
 
   // Also check when URL changes (for callback)
   useEffect(() => {
     const handleLocationChange = () => {
-      console.log('NEARWalletContext: URL changed, rechecking connection...');
       checkExistingConnection();
     };
 
@@ -88,7 +97,6 @@ export function NEARWalletProvider({ children }: NEARWalletProviderProps) {
     // Also check on URL parameter changes
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('account_id')) {
-      console.log('NEARWalletContext: Account ID detected in URL, processing callback...');
       checkExistingConnection();
     }
 
@@ -99,30 +107,24 @@ export function NEARWalletProvider({ children }: NEARWalletProviderProps) {
 
   const checkExistingConnection = async () => {
     try {
-      console.log('NEARWalletContext: checkExistingConnection started');
       // Check for NEAR wallet callback first
       const urlParams = new URLSearchParams(window.location.search);
       const accountId = urlParams.get('account_id');
-      console.log('NEARWalletContext: URL params check:', { accountId, url: window.location.href });
       
       if (accountId) {
-        console.log('NEARWalletContext: Detecting NEAR wallet callback...', accountId);
         const nearWalletService = new NEARWalletService('testnet');
         const callbackState = await nearWalletService.handleWalletCallback();
         if (callbackState) {
-          console.log('NEARWalletContext: NEAR wallet callback processed:', callbackState);
           setNearWallet(callbackState);
           // Create user for NEAR wallet
           if (callbackState.accountId) {
             await createUserIfNeeded(callbackState.accountId, 'near');
           }
-        } else {
-          console.log('NEARWalletContext: Callback processing returned null');
         }
         return;
       }
 
-          // Check for existing NEAR connection in localStorage only for UI state
+      // Check for existing NEAR connection in localStorage only for UI state
       const nearWalletService = new NEARWalletService('testnet');
       const isConnected = await nearWalletService.isWalletConnected();
       
@@ -132,7 +134,6 @@ export function NEARWalletProvider({ children }: NEARWalletProviderProps) {
           const walletState = await nearWalletService.connectWallet(accountId);
           setNearWallet(walletState);
           // Do NOT create user automatically - only on manual connection
-          console.log('Existing NEAR wallet connection detected (no user creation):', walletState);
         }
       }
     } catch (error) {
@@ -141,47 +142,39 @@ export function NEARWalletProvider({ children }: NEARWalletProviderProps) {
   };
 
   const connectNear = async () => {
-    if (isConnecting) return;
+    if (isConnecting || !nearService) {
+      return;
+    }
     
     try {
-      console.log('🚀 NEARWalletContext: connectNear started');
       setIsConnecting(true);
-      
-      const nearWalletService = new NEARWalletService('testnet');
 
       // Check if wallet is already connected
-      const isConnected = await nearWalletService.isWalletConnected();
+      const isConnected = await nearService.isWalletConnected();
       
       if (isConnected) {
-        // Get existing connection
-        const accountId = await nearWalletService.getConnectedAccountId();
-        if (accountId) {
-          const walletState = await nearWalletService.connectWallet(accountId);
-          console.log('✅ NEARWalletContext: Updating state with existing connection:', walletState);
-          setNearWallet(walletState);
-          // Create user only on manual connect action
-          await createUserIfNeeded(accountId, 'near');
-          console.log('NEAR wallet already connected:', walletState);
-          return;
+        // Get existing connection state
+        const walletState = await nearService.getWalletState();
+        setNearWallet(walletState);
+        if (walletState.accountId) {
+          await createUserIfNeeded(walletState.accountId, 'near');
         }
+        return;
       }
 
       // Check for wallet redirect callback
-      const callbackState = await nearWalletService.handleWalletCallback();
+      const callbackState = await nearService.handleWalletCallback();
       if (callbackState) {
-        console.log('✅ NEARWalletContext: Updating state with callback result:', callbackState);
         setNearWallet(callbackState);
         // Create user only on manual connect callback
         if (callbackState.accountId) {
           await createUserIfNeeded(callbackState.accountId, 'near');
         }
-        console.log('NEAR wallet callback handled:', callbackState);
         return;
       }
 
       // Redirect to NEAR wallet for new connection
-      console.log('Redirecting to NEAR wallet...');
-      await nearWalletService.connectWithWalletRedirect();
+      await nearService.connectWithWalletRedirect();
       
     } catch (error) {
       console.error('NEAR connection failed:', error);
@@ -192,9 +185,10 @@ export function NEARWalletProvider({ children }: NEARWalletProviderProps) {
   };
 
   const disconnectNear = async () => {
+    if (!nearService) return;
+    
     try {
-      const nearWalletService = new NEARWalletService('testnet');
-      await nearWalletService.disconnectWallet();
+      await nearService.disconnectWallet();
       
       setNearWallet({
         isConnected: false,
@@ -216,13 +210,85 @@ export function NEARWalletProvider({ children }: NEARWalletProviderProps) {
     }
   };
 
+  // Auto-check for wallet callback on page load
+  useEffect(() => {
+    const checkWalletCallback = async () => {
+      if (!nearService) return;
+      
+      
+      try {
+        // Check for transaction success first
+        const urlParams = new URLSearchParams(window.location.search);
+        const transactionHashes = urlParams.get('transactionHashes');
+        
+        if (transactionHashes) {
+          
+          // Find the strategy with "redirected_to_wallet" hash and update it
+          const strategies = getSavedStrategies();
+          const pendingStrategy = strategies.find(s => 
+            s.executionHistory?.some(h => h.transactionHash === 'redirected_to_wallet')
+          );
+          
+          if (pendingStrategy) {
+            // Update with real transaction hash
+            const updatedStrategies = strategies.map(s => {
+              if (s.id === pendingStrategy.id) {
+                const updatedHistory = s.executionHistory?.map(h => 
+                  h.transactionHash === 'redirected_to_wallet' 
+                    ? { ...h, transactionHash: transactionHashes }
+                    : h
+                ) || [];
+                return { ...s, executionHistory: updatedHistory };
+              }
+              return s;
+            });
+            
+            localStorage.setItem('yetify_saved_strategies', JSON.stringify(updatedStrategies));
+          }
+          
+          // Clean URL
+          window.history.replaceState({}, document.title, window.location.pathname);
+          return;
+        }
+        
+        // Handle wallet connection callback if present
+        const callbackState = await nearService.handleWalletCallback();
+        if (callbackState) {
+          setNearWallet(callbackState);
+          if (callbackState.accountId) {
+            await createUserIfNeeded(callbackState.accountId, 'near');
+          }
+          return;
+        }
+        
+        // Check existing connection
+        const isConnected = await nearService.isWalletConnected();
+        if (isConnected) {
+          const accountId = await nearService.getConnectedAccountId();
+          if (accountId) {
+            const walletState = await nearService.connectWallet(accountId);
+            setNearWallet(walletState);
+            // Do NOT create user automatically - only on manual connection
+            return;
+          }
+        }
+        
+      } catch (error) {
+        console.error('Auto-connection failed:', error);
+      }
+    };
+    
+    checkWalletCallback();
+  }, [nearService]);
+
   return (
     <NEARWalletContext.Provider
       value={{
         nearWallet,
         connectNear,
         disconnectNear,
-        isConnecting
+        isConnecting,
+        nearService
       }}
     >
       {children}
